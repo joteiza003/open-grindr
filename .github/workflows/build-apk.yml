@@ -1,4 +1,3 @@
-```yaml
 name: Build Android APK
 
 on:
@@ -27,35 +26,11 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      # ============================================================
-      # 1. CHECKOUT
-      # ============================================================
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 1
-
-      # ============================================================
-      # 2. INFORMACIÓN DEL BUILD
-      # ============================================================
-
-      - name: Show build information
-        shell: bash
-        run: |
-          echo "=========================================="
-          echo "Open Grind Android build"
-          echo "=========================================="
-          echo "Repository : $GITHUB_REPOSITORY"
-          echo "Branch     : $GITHUB_REF_NAME"
-          echo "Commit     : $GITHUB_SHA"
-          echo "Runner     : $RUNNER_OS"
-          echo "=========================================="
-
-      # ============================================================
-      # 3. BUN
-      # ============================================================
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -65,10 +40,6 @@ jobs:
       - name: Show Bun version
         run: bun --version
 
-      # ============================================================
-      # 4. RUST
-      # ============================================================
-
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -76,10 +47,6 @@ jobs:
         run: |
           rustc --version
           cargo --version
-
-      # ============================================================
-      # 5. JAVA 17
-      # ============================================================
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -89,32 +56,15 @@ jobs:
           cache: gradle
 
       - name: Show Java version
-        run: |
-          java -version
-          echo "JAVA_HOME=$JAVA_HOME"
-
-      # ============================================================
-      # 6. ANDROID SDK
-      # ============================================================
+        run: java -version
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # ============================================================
-      # 7. ANDROID ENVIRONMENT
-      # ============================================================
-
       - name: Show Android environment
-        shell: bash
         run: |
           echo "ANDROID_HOME=$ANDROID_HOME"
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          sdkmanager --version || true
-
-      # ============================================================
-      # 8. CACHE
-      # ============================================================
 
       - name: Cache Rust
         uses: actions/cache@v4
@@ -131,64 +81,34 @@ jobs:
       - name: Cache Bun
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.bun/install/cache
+          path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: |
             ${{ runner.os }}-bun-
 
-      # ============================================================
-      # 9. INSTALL DEPENDENCIES
-      # ============================================================
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      # ============================================================
-      # 10. VERIFY TAURI CLI
-      # ============================================================
-
       - name: Verify Tauri CLI
-        shell: bash
-        run: |
-          echo "Checking Tauri..."
-          bun run tauri --version || bunx tauri --version
-
-      # ============================================================
-      # 11. VERIFY ANDROID PROJECT
-      # ============================================================
+        run: bun run tauri --version
 
       - name: Verify Android project
         shell: bash
         run: |
-          echo "Checking Android project..."
-
           if [ ! -d "src-tauri/gen/android" ]; then
             echo "ERROR: src-tauri/gen/android does not exist."
-            echo ""
-            echo "The generated Tauri Android project is missing."
-            echo "Check that the repository contains the Android project"
-            echo "or that the Android initialization step is required."
             exit 1
           fi
 
-          echo "Android project found:"
+          echo "Android project found."
           find src-tauri/gen/android -maxdepth 2 -type f \
             \( -name "gradlew" -o -name "build.gradle*" -o -name "settings.gradle*" \) \
             -print
-
-      # ============================================================
-      # 12. BUILD ANDROID DEBUG APK
-      # ============================================================
 
       - name: Build Android Debug APK
         run: bun run build:android:debug
         env:
           CI: "true"
-
-      # ============================================================
-      # 13. FIND GENERATED APK
-      # ============================================================
 
       - name: Locate APK
         id: apk
@@ -205,8 +125,8 @@ jobs:
           if [ -z "$APK" ]; then
             echo "ERROR: No APK was generated."
             echo ""
-            echo "Contents of src-tauri/gen/android:"
-            find src-tauri/gen/android -maxdepth 5 -type f | sort
+            echo "Files inside Android build directory:"
+            find src-tauri/gen/android -type f | sort
             exit 1
           fi
 
@@ -215,34 +135,7 @@ jobs:
 
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
-      # ============================================================
-      # 14. DISPLAY APK INFORMATION
-      # ============================================================
-
-      - name: APK information
-        shell: bash
-        run: |
-          APK="${{ steps.apk.outputs.apk_path }}"
-
-          echo "=========================================="
-          echo "APK INFORMATION"
-          echo "=========================================="
-
-          ls -lh "$APK"
-
-          echo ""
-          echo "SHA256:"
-          sha256sum "$APK"
-
-          echo ""
-          echo "APK path:"
-          echo "$APK"
-
-      # ============================================================
-      # 15. NORMALIZE APK NAME
-      # ============================================================
-
-      - name: Prepare APK artifact
+      - name: Prepare APK
         id: artifact
         shell: bash
         run: |
@@ -257,12 +150,13 @@ jobs:
 
           echo "output=$OUTPUT" >> "$GITHUB_OUTPUT"
 
-          echo "Prepared artifact:"
+          echo "Prepared APK:"
           ls -lh "$OUTPUT"
 
-      # ============================================================
-      # 16. UPLOAD APK
-      # ============================================================
+      - name: Calculate SHA256
+        shell: bash
+        run: |
+          sha256sum "${{ steps.artifact.outputs.output }}"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -272,31 +166,20 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-      # ============================================================
-      # 17. BUILD SUMMARY
-      # ============================================================
-
       - name: Build summary
         shell: bash
         run: |
           APK="${{ steps.artifact.outputs.output }}"
+          SHA256=$(sha256sum "$APK" | cut -d ' ' -f 1)
 
-          {
-            echo "## Android APK build"
-            echo ""
-            echo "### Result"
-            echo "Build completed successfully."
-            echo ""
-            echo "### Commit"
-            echo "\`${GITHUB_SHA}\`"
-            echo ""
-            echo "### Branch"
-            echo "\`${GITHUB_REF_NAME}\`"
-            echo ""
-            echo "### APK"
-            echo "\`${APK}\`"
-            echo ""
-            echo "### SHA256"
-            echo "\`$(sha256sum "$APK" | cut -d ' ' -f 1)\`"
-          } >> "$GITHUB_STEP_SUMMARY"
-```
+          echo "## Android APK build" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Build completed successfully." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Commit:** \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**APK:** \`${APK}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**SHA256:** \`${SHA256}\`" >> "$GITHUB_STEP_SUMMARY"
