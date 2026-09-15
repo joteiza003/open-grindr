@@ -39,7 +39,7 @@
 		filters.meetAtEnabled,
 		filters.haventChattedTodayEnabled,
 		filters.healthPracticesEnabled,
-	].filter(Boolean).length;
+	].filter(Boolean).length);
 </script>
 
 <Button

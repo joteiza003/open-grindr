@@ -32,7 +32,9 @@
 
 	const browsePreferences = $derived(preferencesSnapshot().browse);
 
-	const cardVariant = $derived(browsePreferences.viewMode);
+	const cardVariant = $derived(
+		browsePreferences.viewMode === "grid" ? "standard" : browsePreferences.viewMode,
+	);
 
 	const pendingSkeletons = $derived(
 		gridState.loadingMore ? PAGE_SKELETONS : 0,

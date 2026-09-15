@@ -38,7 +38,11 @@ const preferencesSchema = z.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			animations: z.boolean().default(true),
 		})
-		.default({}),
+		.default({
+		theme: "system",
+		density: "comfortable",
+		animations: true,
+	}),
 	browse: z
 		.object({
 			viewMode: z
@@ -49,13 +53,22 @@ const preferencesSchema = z.object({
 			showAge: z.boolean().default(true),
 			showOnlineStatus: z.boolean().default(true),
 		})
-		.default({}),
+		.default({
+		viewMode: "grid",
+		cardDensity: "comfortable",
+		showDistance: true,
+		showAge: true,
+		showOnlineStatus: true,
+	}),
 	chat: z
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
 		})
-		.default({}),
+		.default({
+		density: "comfortable",
+		mediaPreview: true,
+	}),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;
