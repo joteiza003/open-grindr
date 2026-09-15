@@ -22,15 +22,45 @@ concurrency:
 
 jobs:
   build-android:
-    name: Build Android Debug APK
+    name: Build Android APK
     runs-on: ubuntu-24.04
 
     steps:
+      # ============================================================
+      # 1. CHECKOUT
+      # ============================================================
+
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 1
+
+      # ============================================================
+      # 2. SYSTEM INFORMATION
+      # ============================================================
+
+      - name: Show system information
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "SYSTEM"
+          echo "=========================================="
+
+          echo "OS:"
+          lsb_release -a || true
+
+          echo ""
+          echo "Kernel:"
+          uname -a
+
+          echo ""
+          echo "Architecture:"
+          uname -m
+
+      # ============================================================
+      # 3. BUN
+      # ============================================================
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -40,6 +70,10 @@ jobs:
       - name: Show Bun version
         run: bun --version
 
+      # ============================================================
+      # 4. RUST
+      # ============================================================
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
@@ -47,6 +81,10 @@ jobs:
         run: |
           rustc --version
           cargo --version
+
+      # ============================================================
+      # 5. JAVA 17
+      # ============================================================
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -58,86 +96,353 @@ jobs:
       - name: Show Java version
         run: java -version
 
+      # ============================================================
+      # 6. ANDROID SDK
+      #
+      # IMPORTANT:
+      # Do not install the obsolete "tools" package.
+      # The GitHub Ubuntu runner already provides Android SDK.
+      # ============================================================
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: ''
+          packages: ""
 
-      - name: Show Android environment
+      # ============================================================
+      # 7. ANDROID ENVIRONMENT
+      # ============================================================
+
+      - name: Inspect Android environment
+        shell: bash
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          echo "=========================================="
+          echo "ANDROID ENVIRONMENT"
+          echo "=========================================="
 
-      - name: Cache Rust
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-            src-tauri/target
-          key: ${{ runner.os }}-rust-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-rust-
+          echo "ANDROID_HOME:"
+          echo "$ANDROID_HOME"
 
-      - name: Cache Bun
-        uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-bun-
+          echo ""
+          echo "ANDROID_SDK_ROOT:"
+          echo "$ANDROID_SDK_ROOT"
+
+          echo ""
+          echo "sdkmanager:"
+          command -v sdkmanager || true
+
+          echo ""
+          echo "adb:"
+          command -v adb || true
+
+          echo ""
+          echo "Installed SDK packages:"
+          sdkmanager --list_installed || true
+
+      # ============================================================
+      # 8. REPOSITORY STRUCTURE
+      # ============================================================
+
+      - name: Inspect repository
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "REPOSITORY"
+          echo "=========================================="
+
+          echo "Root directory:"
+          pwd
+
+          echo ""
+          echo "Top-level files:"
+          find . -maxdepth 2 -type f \
+            | grep -v "^./.git/" \
+            | sort \
+            | head -n 250
+
+      # ============================================================
+      # 9. VERIFY PACKAGE.JSON
+      # ============================================================
+
+      - name: Verify package.json
+        shell: bash
+        run: |
+          if [ ! -f "package.json" ]; then
+            echo "ERROR: package.json not found."
+            exit 1
+          fi
+
+          echo "package.json found."
+
+      # ============================================================
+      # 10. INSTALL DEPENDENCIES
+      # ============================================================
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Verify Tauri CLI
-        run: bun run tauri --version
+      # ============================================================
+      # 11. SHOW PACKAGE SCRIPTS
+      #
+      # This is intentionally done BEFORE the Android build.
+      # We no longer assume that build:android:debug exists.
+      # ============================================================
+
+      - name: Inspect package scripts
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "PACKAGE.JSON SCRIPTS"
+          echo "=========================================="
+
+          node -e '
+          const fs = require("fs");
+          const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+
+          console.log("Available scripts:");
+
+          if (!pkg.scripts) {
+            console.log("No scripts section found.");
+            process.exit(0);
+          }
+
+          for (const [name, command] of Object.entries(pkg.scripts)) {
+            console.log(`  ${name}: ${command}`);
+          }
+          '
+
+      # ============================================================
+      # 12. VERIFY TAURI CONFIGURATION
+      # ============================================================
+
+      - name: Inspect Tauri configuration
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "TAURI CONFIGURATION"
+          echo "=========================================="
+
+          if [ -f "src-tauri/tauri.conf.json" ]; then
+            echo "Found src-tauri/tauri.conf.json"
+            cat src-tauri/tauri.conf.json
+          elif [ -f "src-tauri/tauri.conf.json5" ]; then
+            echo "Found src-tauri/tauri.conf.json5"
+            cat src-tauri/tauri.conf.json5
+          elif [ -f "src-tauri/tauri.conf.jsonc" ]; then
+            echo "Found src-tauri/tauri.conf.jsonc"
+            cat src-tauri/tauri.conf.jsonc
+          else
+            echo "WARNING: Tauri configuration file not found."
+          fi
+
+      # ============================================================
+      # 13. VERIFY ANDROID PROJECT
+      # ============================================================
 
       - name: Verify Android project
         shell: bash
         run: |
+          echo "=========================================="
+          echo "ANDROID PROJECT"
+          echo "=========================================="
+
           if [ ! -d "src-tauri/gen/android" ]; then
-            echo "ERROR: src-tauri/gen/android does not exist."
+            echo "ERROR:"
+            echo "src-tauri/gen/android does not exist."
+            echo ""
+            echo "Available src-tauri contents:"
+            find src-tauri -maxdepth 3 -type f | sort | head -n 300
             exit 1
           fi
 
           echo "Android project found."
-          find src-tauri/gen/android -maxdepth 2 -type f \
-            \( -name "gradlew" -o -name "build.gradle*" -o -name "settings.gradle*" \) \
+
+          echo ""
+          echo "Android project files:"
+
+          find src-tauri/gen/android -maxdepth 3 -type f \
+            \( \
+              -name "gradlew" \
+              -o -name "build.gradle" \
+              -o -name "build.gradle.kts" \
+              -o -name "settings.gradle" \
+              -o -name "settings.gradle.kts" \
+              -o -name "gradle.properties" \
+            \) \
             -print
 
-      - name: Build Android Debug APK
-        run: bun run build:android:debug
-        env:
-          CI: "true"
+      # ============================================================
+      # 14. MAKE GRADLE WRAPPER EXECUTABLE
+      # ============================================================
 
-      - name: Locate APK
-        id: apk
+      - name: Prepare Gradle wrapper
         shell: bash
         run: |
-          echo "Searching for generated APK..."
+          if [ -f "src-tauri/gen/android/gradlew" ]; then
+            chmod +x src-tauri/gen/android/gradlew
+            echo "Gradle wrapper prepared."
+          else
+            echo "WARNING: gradlew not found."
+          fi
 
-          APK=$(find src-tauri/gen/android \
-            -type f \
-            -name "*.apk" \
-            -print \
-            | head -n 1)
+      # ============================================================
+      # 15. DETECT ANDROID BUILD METHOD
+      #
+      # We inspect package.json and select the first supported
+      # Android build script.
+      # ============================================================
 
-          if [ -z "$APK" ]; then
-            echo "ERROR: No APK was generated."
+      - name: Detect Android build command
+        id: build-command
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "DETECTING ANDROID BUILD COMMAND"
+          echo "=========================================="
+
+          BUILD_COMMAND=""
+
+          if node -e '
+            const pkg = require("./package.json");
+            process.exit(pkg.scripts && pkg.scripts["build:android:debug"] ? 0 : 1);
+          '
+          then
+            BUILD_COMMAND="bun run build:android:debug"
+
+          elif node -e '
+            const pkg = require("./package.json");
+            process.exit(pkg.scripts && pkg.scripts["android:debug"] ? 0 : 1);
+          '
+          then
+            BUILD_COMMAND="bun run android:debug"
+
+          elif node -e '
+            const pkg = require("./package.json");
+            process.exit(pkg.scripts && pkg.scripts["build:android"] ? 0 : 1);
+          '
+          then
+            BUILD_COMMAND="bun run build:android"
+
+          else
             echo ""
-            echo "Files inside Android build directory:"
-            find src-tauri/gen/android -type f | sort
+            echo "ERROR: No known Android build script was found."
+            echo ""
+            echo "Available scripts:"
+            node -e '
+            const pkg = require("./package.json");
+            console.log(JSON.stringify(pkg.scripts || {}, null, 2));
+            '
+            echo ""
+            echo "The workflow will stop here rather than guessing."
             exit 1
           fi
 
+          echo ""
+          echo "Selected build command:"
+          echo "$BUILD_COMMAND"
+
+          echo "command=$BUILD_COMMAND" >> "$GITHUB_OUTPUT"
+
+      # ============================================================
+      # 16. BUILD ANDROID
+      # ============================================================
+
+      - name: Build Android
+        shell: bash
+        run: |
+          set -e
+
+          BUILD_COMMAND="${{ steps.build-command.outputs.command }}"
+
+          echo "=========================================="
+          echo "ANDROID BUILD"
+          echo "=========================================="
+
+          echo "Running:"
+          echo "$BUILD_COMMAND"
+
+          echo ""
+
+          eval "$BUILD_COMMAND"
+
+        env:
+          CI: "true"
+
+      # ============================================================
+      # 17. SEARCH FOR APK
+      # ============================================================
+
+      - name: Locate generated APK
+        id: apk
+        shell: bash
+        run: |
+          echo "=========================================="
+          echo "SEARCHING FOR APK"
+          echo "=========================================="
+
+          APK=""
+
+          if [ -d "src-tauri/gen/android" ]; then
+            APK=$(find src-tauri/gen/android \
+              -type f \
+              -name "*.apk" \
+              -print \
+              | head -n 1)
+          fi
+
+          if [ -z "$APK" ]; then
+            echo ""
+            echo "ERROR: No APK was generated."
+            echo ""
+            echo "All APK files in repository:"
+            find . \
+              -type f \
+              -name "*.apk" \
+              -not -path "./.git/*" \
+              -print \
+              | sort
+
+            echo ""
+            echo "Android build tree:"
+            find src-tauri/gen/android \
+              -maxdepth 6 \
+              -type f \
+              | sort \
+              | head -n 500
+
+            exit 1
+          fi
+
+          echo ""
           echo "APK found:"
           echo "$APK"
 
           echo "apk_path=$APK" >> "$GITHUB_OUTPUT"
 
-      - name: Prepare APK
+      # ============================================================
+      # 18. APK INFORMATION
+      # ============================================================
+
+      - name: APK information
+        shell: bash
+        run: |
+          APK="${{ steps.apk.outputs.apk_path }}"
+
+          echo "=========================================="
+          echo "APK INFORMATION"
+          echo "=========================================="
+
+          ls -lh "$APK"
+
+          echo ""
+          echo "SHA256:"
+          sha256sum "$APK"
+
+      # ============================================================
+      # 19. PREPARE ARTIFACT
+      # ============================================================
+
+      - name: Prepare APK artifact
         id: artifact
         shell: bash
         run: |
@@ -152,15 +457,27 @@ jobs:
 
           echo "output=$OUTPUT" >> "$GITHUB_OUTPUT"
 
-          echo "Prepared APK:"
+          echo ""
+          echo "Final APK:"
           ls -lh "$OUTPUT"
+
+      # ============================================================
+      # 20. CALCULATE SHA256
+      # ============================================================
 
       - name: Calculate SHA256
         shell: bash
         run: |
-          sha256sum "${{ steps.artifact.outputs.output }}"
+          APK="${{ steps.artifact.outputs.output }}"
 
-      - name: Upload APK artifact
+          echo "SHA256:"
+          sha256sum "$APK"
+
+      # ============================================================
+      # 21. UPLOAD APK
+      # ============================================================
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: OpenGrind-custom-debug-${{ github.sha }}
@@ -168,20 +485,28 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      # ============================================================
+      # 22. BUILD SUMMARY
+      # ============================================================
+
       - name: Build summary
         shell: bash
         run: |
           APK="${{ steps.artifact.outputs.output }}"
           SHA256=$(sha256sum "$APK" | cut -d ' ' -f 1)
 
-          echo "## Android APK build" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "Build completed successfully." >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Branch:** \`${GITHUB_REF_NAME}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**Commit:** \`${GITHUB_SHA}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**APK:** \`${APK}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "" >> "$GITHUB_STEP_SUMMARY"
-          echo "**SHA256:** \`${SHA256}\`" >> "$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Android APK build"
+            echo ""
+            echo "Build completed successfully."
+            echo ""
+            echo "**Repository:** \`${GITHUB_REPOSITORY}\`"
+            echo ""
+            echo "**Branch:** \`${GITHUB_REF_NAME}\`"
+            echo ""
+            echo "**Commit:** \`${GITHUB_SHA}\`"
+            echo ""
+            echo "**APK:** \`${APK}\`"
+            echo ""
+            echo "**SHA256:** \`${SHA256}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
