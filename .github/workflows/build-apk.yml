@@ -14,18 +14,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 1. Configurar Node.js (necesario para el frontend en Svelte/TypeScript)
+      # 1. Configurar Node.js (usando una versión más reciente para evitar warnings)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm' # O cámbialo si usas pnpm/yarn según el gestor del repo
+          node-version: 22
 
-      # 2. Configurar Rust (necesario para el core de Tauri)
+      # 2. Configurar pnpm (Open Grind suele utilizar pnpm para la gestión del monorepo/frontend)
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+          run_install: false
+
+      # 3. Configurar Rust
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
-      # 3. Configurar Java (necesario para compilar aplicaciones Android)
+      # 4. Configurar Java 17 para Android
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -33,29 +39,22 @@ jobs:
           java-version: 17
           cache: 'gradle'
 
-      # 4. Instalar dependencias del proyecto (ajusta 'npm install' por 'pnpm install' o 'yarn' si es necesario)
-      - name: Install frontend dependencies
-        run: npm install
+      # 5. Instalar dependencias usando pnpm (resuelve el error del lock file faltante)
+      - name: Install dependencies
+        run: pnpm install
 
-      # 5. Instalar la CLI de Tauri y compilar la app para Android
-      # Nota: Tauri para Android requiere tener configurado el entorno Android SDK, 
-      # el cual los runners de GitHub Ubuntu ya suelen traer preinstalado parcialmente, 
-      # o puedes invocar el comando de compilación multiplataforma de Tauri.
+      # 6. Compilar Tauri para Android
       - name: Build Tauri Android
         run: |
-          # Asegúrate de instalar la CLI de Tauri globalmente si hace falta
-          npm install -g @tauri-apps/cli
-          # Ejecuta el comando de compilación de Tauri para Android (dependiendo de la versión puede ser tauri android build)
-          npm run tauri android build
+          pnpm tauri android build
         env:
-          # Evita que Tauri pida confirmaciones interactivas
           CI: "true"
 
-      # 6. Guardar el APK resultante como un artefacto descargable en GitHub
+      # 7. Subir el APK resultante
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: open-grind-debug-apk
+          name: open-grind-apk
           path: |
             src-tauri/gen/android/app/build/outputs/apk/debug/*.apk
             src-tauri/target/android/release/apk/*.apk
