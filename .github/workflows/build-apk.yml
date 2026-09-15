@@ -1,0 +1,61 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 1. Configurar Node.js (necesario para el frontend en Svelte/TypeScript)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm' # O cámbialo si usas pnpm/yarn según el gestor del repo
+
+      # 2. Configurar Rust (necesario para el core de Tauri)
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # 3. Configurar Java (necesario para compilar aplicaciones Android)
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          cache: 'gradle'
+
+      # 4. Instalar dependencias del proyecto (ajusta 'npm install' por 'pnpm install' o 'yarn' si es necesario)
+      - name: Install frontend dependencies
+        run: npm install
+
+      # 5. Instalar la CLI de Tauri y compilar la app para Android
+      # Nota: Tauri para Android requiere tener configurado el entorno Android SDK, 
+      # el cual los runners de GitHub Ubuntu ya suelen traer preinstalado parcialmente, 
+      # o puedes invocar el comando de compilación multiplataforma de Tauri.
+      - name: Build Tauri Android
+        run: |
+          # Asegúrate de instalar la CLI de Tauri globalmente si hace falta
+          npm install -g @tauri-apps/cli
+          # Ejecuta el comando de compilación de Tauri para Android (dependiendo de la versión puede ser tauri android build)
+          npm run tauri android build
+        env:
+          # Evita que Tauri pida confirmaciones interactivas
+          CI: "true"
+
+      # 6. Guardar el APK resultante como un artefacto descargable en GitHub
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-grind-debug-apk
+          path: |
+            src-tauri/gen/android/app/build/outputs/apk/debug/*.apk
+            src-tauri/target/android/release/apk/*.apk
