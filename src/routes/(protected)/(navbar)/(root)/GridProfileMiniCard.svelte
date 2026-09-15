@@ -12,6 +12,9 @@
 		isFavorite = false,
 		isVisiting = false,
 		hadRecentChat = false,
+		variant = "standard",
+		showDistance = true,
+		showOnlineStatus = true,
 	}: {
 		id: number;
 		displayName?: string | null;
@@ -23,6 +26,9 @@
 		isFavorite?: boolean;
 		isVisiting?: boolean;
 		hadRecentChat?: boolean;
+		variant?: "standard" | "compact" | "detailed";
+		showDistance?: boolean;
+		showOnlineStatus?: boolean;
 	} = $props();
 </script>
 
@@ -36,5 +42,6 @@
 	{isFavorite}
 	{isVisiting}
 	{hadRecentChat}
+	{variant}
 	href="/profile/{id}"
 />

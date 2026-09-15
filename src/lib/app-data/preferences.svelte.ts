@@ -32,6 +32,30 @@ const preferencesSchema = z.object({
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
 	units: unitSystemSchema.default("metric"),
+	appearance: z
+		.object({
+			theme: z.enum(["system", "dark", "light"]).default("system"),
+			density: z.enum(["comfortable", "compact"]).default("comfortable"),
+			animations: z.boolean().default(true),
+		})
+		.default({}),
+	browse: z
+		.object({
+			viewMode: z
+				.enum(["grid", "compact", "detailed"])
+				.default("grid"),
+			cardDensity: z.enum(["comfortable", "dense"]).default("comfortable"),
+			showDistance: z.boolean().default(true),
+			showAge: z.boolean().default(true),
+			showOnlineStatus: z.boolean().default(true),
+		})
+		.default({}),
+	chat: z
+		.object({
+			density: z.enum(["comfortable", "compact"]).default("comfortable"),
+			mediaPreview: z.boolean().default(true),
+		})
+		.default({}),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;

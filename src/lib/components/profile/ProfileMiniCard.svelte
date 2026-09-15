@@ -22,6 +22,10 @@
 		href = null,
 		class: className,
 		overlay,
+		variant = "standard",
+		showDistance = true,
+		showAge = true,
+		showOnlineStatus = true,
 	}: {
 		mediaHash?: string | null;
 		displayName?: string | null;
@@ -36,6 +40,10 @@
 		href?: string | null;
 		class?: import("svelte/elements").ClassValue;
 		overlay?: Snippet;
+		variant?: "standard" | "compact" | "detailed";
+		showDistance?: boolean;
+		showAge?: boolean;
+		showOnlineStatus?: boolean;
 	} = $props();
 </script>
 
@@ -43,7 +51,7 @@
 	<div class="absolute size-full bg-stone-700">
 		<UserAvatar {mediaHash} class="size-full" size="xl" />
 	</div>
-	{#if distance !== null}
+	{#if showDistance && distance !== null}
 		<span class="profile-card-distance absolute top-1 right-1.5">
 			<DistanceFormatted {distance} />
 		</span>
@@ -78,11 +86,13 @@
 				variant="outline"
 				class="max-w-full min-w-0 shrink gap-0 bg-popover/20 scrim backdrop-filter-(--bd-chip)"
 			>
-				<ProfileStatusIndicator
-					{onlineUntil}
-					{isVisiting}
-					class="me-1"
-				/>
+				{#if showOnlineStatus}
+					<ProfileStatusIndicator
+						{onlineUntil}
+						{isVisiting}
+						class="me-1"
+					/>
+				{/if}
 
 				<span
 					class={[
@@ -92,7 +102,7 @@
 				>
 					<DisplayName name={displayName} />
 				</span>
-				{#if age !== null}
+				{#if showAge && age !== null}
 					,&nbsp;<span
 						class="line-clamp-1 block max-w-full shrink-0 truncate"
 					>
@@ -114,6 +124,18 @@
 			{/if}
 		</div>
 	{/if}
+	{#if variant === "detailed" && !anonymous}
+		<div class="pointer-events-none absolute inset-x-2 bottom-2 z-0 flex items-end justify-between gap-2 opacity-90 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+			{#if showDistance && distance !== null}
+				<span class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur">
+					<DistanceFormatted {distance} />
+				</span>
+			{/if}
+			{#if isVisiting}
+				<span class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur">Visiting</span>
+			{/if}
+		</div>
+	{/if}
 	{@render overlay?.()}
 {/snippet}
 
@@ -122,7 +144,8 @@
 		{href}
 		aria-label={anonymous ? "Profile" : undefined}
 		class={[
-			"relative flex aspect-square items-end overflow-hidden",
+			"group profile-card relative flex aspect-square items-end overflow-hidden",
+			`profile-card-${variant}`,
 			className,
 		]}
 	>
@@ -131,7 +154,8 @@
 {:else}
 	<div
 		class={[
-			"relative flex aspect-square items-end overflow-hidden",
+			"group profile-card relative flex aspect-square items-end overflow-hidden",
+			`profile-card-${variant}`,
 			className,
 		]}
 	>
@@ -144,5 +168,30 @@
 
 	.badge {
 		@apply flex aspect-square h-auto w-full rounded-full border border-white/10 bg-popover/40 scrim backdrop-filter-(--bd-chip);
+	}
+
+	.profile-card {
+		transition:
+			transform var(--motion-normal) var(--ease-standard),
+			box-shadow var(--motion-normal) var(--ease-standard);
+	}
+
+	.profile-card-compact .badge {
+		@apply border-white/8 bg-popover/30;
+	}
+
+	.profile-card-compact .profile-card-distance {
+		@apply text-[0.65rem];
+	}
+
+	.profile-card-detailed .badge {
+		@apply border-white/15 bg-popover/50;
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.profile-card-detailed:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 10px 30px -18px rgb(0 0 0 / 70%);
+		}
 	}
 </style>

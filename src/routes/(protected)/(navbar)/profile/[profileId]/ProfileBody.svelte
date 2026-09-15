@@ -97,7 +97,49 @@
 		socialNetworks,
 		medias,
 	} = profile}
-	<ImageCarousel {medias} />
+	<div class="relative">
+		<ImageCarousel {medias} />
+		<ProfileTopNavBar
+			ourProfileId={profileState.ourProfileId}
+			{profile}
+			onBlocked={() => profileState.markBlocked()}
+			onHidden={() => profileState.markHidden()}
+			onFavorite={(isFavorite) => profileState.setFavorite(isFavorite)}
+		/>
+		<div
+			class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent px-4 pt-18 pb-4 text-white"
+			data-slot="profile-hero-overlay"
+		>
+			<div class="max-w-3xl pr-16">
+				<div class="flex flex-wrap items-end gap-x-2 gap-y-1">
+					<h1 class="text-3xl leading-none font-semibold tracking-tight wrap-break-word">
+						{#if displayName !== null}
+							{displayName}
+						{:else}
+							<span class="font-normal italic opacity-80">Someone</span>
+						{/if}
+					</h1>
+					{#if age !== null}
+						<span class="pb-0.5 text-xl font-medium">{age}</span>
+					{/if}
+				</div>
+				<div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/85">
+					<OnlineStatus
+						onlineUntil={onlineUntil ?? null}
+						{seen}
+						self={ourProfile}
+					/>
+					{#if distance !== null}
+						<span class="opacity-40">·</span>
+						<Distance {distance} />
+					{/if}
+					{#if isNew}
+						<span class="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">New</span>
+					{/if}
+				</div>
+			</div>
+		</div>
+	</div>
 	{#if !ourProfile && profile.isFavorite && profileState.note}
 		<FavoriteNoteButton
 			profileId={profile.profileId}
@@ -105,48 +147,24 @@
 			onSave={(note) => profileState.setNote(note)}
 		/>
 	{/if}
-	<ProfileTopNavBar
-		ourProfileId={profileState.ourProfileId}
-		{profile}
-		onBlocked={() => profileState.markBlocked()}
-		onHidden={() => profileState.markHidden()}
-		onFavorite={(isFavorite) => profileState.setFavorite(isFavorite)}
-	/>
 	<div
 		class={[
-			"flex flex-col p-4",
+			"flex flex-col px-4 pt-4",
 			{ "pb-24": ourProfile, "pb-40": !ourProfile },
 		]}
 	>
-		<h1 class="text-2xl wrap-break-word">
-			{#if displayName !== null}
-				<span class="font-semibold">
-					{displayName}
-				</span>{:else}<span
-					class="font-normal tracking-tight text-muted-foreground italic"
-				>
-					Someone
-				</span>{/if}{#if age !== null}, {age}
-			{/if}
-		</h1>
-		<div
-			data-slot="profile-status-row"
-			class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
-		>
-			<OnlineStatus
-				onlineUntil={onlineUntil ?? null}
-				{seen}
-				self={ourProfile}
-			/>
-			<Distance {distance} />
-			<NewBadge {isNew} />
-		</div>
 		{#if sexualPosition !== null || height !== null || weight !== null || bodyType !== null}
-			<div class="mt-2 flex items-center gap-3 text-sm">
+			<div class="flex flex-wrap gap-2" data-slot="profile-fact-pills">
 				{#if sexualPosition !== null && sexualPosition !== undefined}
-					<SexualPosition {sexualPosition} />
+					<div class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs">
+						<SexualPosition {sexualPosition} />
+					</div>
 				{/if}
-				<Height {height} {weight} {bodyType} />
+				{#if height !== null || weight !== null || bodyType !== null}
+					<div class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs">
+						<Height {height} {weight} {bodyType} />
+					</div>
+				{/if}
 			</div>
 		{/if}
 		<ProfileTags tags={profileTags} />

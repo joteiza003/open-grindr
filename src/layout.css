@@ -41,6 +41,20 @@
 	--message-bubble-in: oklch(0.7882 0.1455 228.36);
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
 	--list-rail: 117px;
+	/* Experience / design-system tokens. Keep component tokens below backward-compatible. */
+	--surface-0: var(--background);
+	--surface-1: var(--card);
+	--surface-2: var(--popover);
+	--surface-3: color-mix(in oklch, var(--popover) 86%, white 14%);
+	--surface-glass: color-mix(in oklch, var(--background) 72%, transparent);
+	--content-max: 1600px;
+	--nav-height: 72px;
+	--panel-gap: 0.75rem;
+	--control-height: 2.75rem;
+	--motion-fast: 120ms;
+	--motion-normal: 180ms;
+	--motion-slow: 280ms;
+	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
 	--safe-area-top: 0px;
 	--safe-area-bottom: 0px;
 	--safe-area-left: 0px;
@@ -219,6 +233,27 @@ a {
 	}
 	.photo-grid[data-rows-below] {
 		--grid-radius-bottom: 0px;
+	}
+
+	.photo-grid-compact {
+		gap: 2px;
+	}
+
+	.photo-grid-compact .profile-card {
+		border-radius: calc(var(--radius-grid) * 0.8);
+	}
+
+	.photo-grid-detailed {
+		gap: 0.65rem;
+	}
+
+	.photo-grid-detailed .profile-card {
+		border-radius: calc(var(--radius-grid) * 1.15);
+		box-shadow: 0 8px 30px -24px rgb(0 0 0 / 85%);
+	}
+
+	.photo-grid-detailed .profile-card-distance {
+		font-size: 0.7rem;
 	}
 
 	/* Each band repeats its column count four times: grid-cols-N and three N's in the selectors.
@@ -723,4 +758,11 @@ a {
 	:root:root .menu-scrim::backdrop {
 		background-color: rgba(0, 0, 0, 0.62);
 	}
+}
+
+/* Profile experience tokens */
+:root {
+  --profile-content-max: 800px;
+  --profile-overlay-radius: 1.25rem;
+  --profile-action-height: 46px;
 }

@@ -82,7 +82,7 @@
 			bind:this={profileContainer}
 		>
 			<main
-				class="relative mx-auto min-h-overscrollable w-full max-w-200"
+				class="relative mx-auto min-h-overscrollable w-full max-w-(--profile-content-max)"
 			>
 				<ProfileBody {profileState} />
 			</main>

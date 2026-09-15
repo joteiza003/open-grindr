@@ -4,6 +4,7 @@
 	import GridFilters from "../GridFilters.svelte";
 	import LocationChange from "../LocationChange.svelte";
 	import QuickFilters from "./QuickFilters.svelte";
+	import BrowseViewModeToggle from "./BrowseViewModeToggle.svelte";
 
 	let openFilters = $state({ all: false, age: false, position: false });
 </script>
@@ -15,10 +16,11 @@
 	contentClass="flex flex-col pt-fixed-header"
 	direction="topToBottom"
 >
-	<div class="scrollbar-thin flex gap-0.5 overflow-x-auto p-4 pt-0">
+	<div class="scrollbar-thin flex items-center gap-1 overflow-x-auto px-4 pt-0 pb-2">
 		<LocationChange />
 		<QuickFilters bind:openFilters />
 		<CommandCenterTrigger />
+		<BrowseViewModeToggle />
 	</div>
 </ProgressiveBlur>
 <GridFilters bind:open={openFilters.all} />

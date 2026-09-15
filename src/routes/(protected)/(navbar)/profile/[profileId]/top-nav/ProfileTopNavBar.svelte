@@ -22,7 +22,7 @@
 </script>
 
 <nav
-	class="absolute right-2 flex -translate-y-1/2 flex-row-reverse items-center gap-1.5"
+	class="absolute top-[calc(0.75rem+var(--safe-area-top))] right-2 z-20 flex flex-row-reverse items-center gap-1.5"
 >
 	{#if isOurProfile}
 		<EditProfileButton />

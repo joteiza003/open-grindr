@@ -18,14 +18,39 @@
 
 	const filters = $derived(gridState.filters.value ?? defaultFilters);
 	const { ageEnabled, positionEnabled } = $derived(filters);
+
+	const activeCount = $derived([
+		filters.isFavorite,
+		filters.isOnline,
+		filters.isRightNow,
+		filters.isFresh,
+		filters.ageEnabled,
+		filters.genderEnabled,
+		filters.tagsEnabled,
+		filters.positionEnabled,
+		filters.photosEnabled,
+		filters.tribesEnabled,
+		filters.bodyTypesEnabled,
+		filters.heightEnabled,
+		filters.weightEnabled,
+		filters.relationshipStatusesEnabled,
+		filters.acceptNSFWPicsEnabled,
+		filters.lookingForEnabled,
+		filters.meetAtEnabled,
+		filters.haventChattedTodayEnabled,
+		filters.healthPracticesEnabled,
+	].filter(Boolean).length;
 </script>
 
 <Button
 	variant="secondary"
-	aria-label="All filters"
+	aria-label={activeCount ? `All filters, ${activeCount} active` : "All filters"}
 	onclick={() => (openFilters.all = true)}
 >
 	<SlidersHorizontalIcon />
+	{#if activeCount > 0}
+		<span class="-me-1 flex size-5 items-center justify-center rounded-full bg-primary text-3xs font-semibold text-primary-foreground">{activeCount}</span>
+	{/if}
 </Button>
 <QuickFilterButton active={ageEnabled} onclick={() => (openFilters.age = true)}>
 	Age

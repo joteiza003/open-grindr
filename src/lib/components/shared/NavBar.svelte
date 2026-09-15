@@ -33,7 +33,7 @@
 <ProgressiveBlur
 	direction="bottomToTop"
 	tag="nav"
-	class="fixed bottom-0 z-50 w-full pt-2 pb-fixed-nav"
+	class="app-nav fixed bottom-0 z-50 w-full pt-2 pb-fixed-nav"
 	bgClass="bg-linear-to-t from-background to-transparent"
 	contentClass="overflow-auto no-scrollbar left-1/2 -translate-x-1/2 m-auto flex justify-center gap-2 px-1"
 >
@@ -45,6 +45,7 @@
 	>
 		<a
 			href="/"
+			aria-current={page.route.id === "/(protected)/(navbar)/(root)" ? "page" : undefined}
 			data-active={page.route.id === "/(protected)/(navbar)/(root)"}
 			onclick={(e) => {
 				if (page.route.id === "/(protected)/(navbar)/(root)") {
@@ -57,6 +58,7 @@
 		</a>
 		<a
 			href="/right-now"
+			aria-current={page.route.id === "/(protected)/(navbar)/right-now" ? "page" : undefined}
 			data-active={page.route.id === "/(protected)/(navbar)/right-now"}
 		>
 			<DropIcon weight="fill" />
@@ -64,6 +66,7 @@
 		</a>
 		<a
 			href="/interest"
+			aria-current={page.route.id?.startsWith("/(protected)/(navbar)/interest") ? "page" : undefined}
 			data-active={page.route.id?.startsWith(
 				"/(protected)/(navbar)/interest",
 			)}
@@ -76,7 +79,11 @@
 				/>
 			{/if}
 		</a>
-		<a href="/chat" data-active={page.route.id === "/(protected)/chat"}>
+		<a
+			href="/chat"
+			aria-current={page.route.id === "/(protected)/chat" ? "page" : undefined}
+			data-active={page.route.id === "/(protected)/chat"}
+		>
 			<ChatCircleIcon weight="fill" />
 			Inbox
 			{#if hasUnread}
@@ -90,7 +97,7 @@
 		href="/settings"
 		aria-label="Me"
 		class={[
-			"flex size-14 shrink-0 rounded-full border bg-muted p-1",
+			"app-nav-profile flex size-14 shrink-0 rounded-full border bg-muted p-1",
 			{
 				"border-2 border-accent":
 					page.route.id === "/(protected)/(navbar)/settings/(me)",
@@ -116,6 +123,28 @@
 	@reference "$layout";
 
 	.links a {
-		@apply relative inline-flex h-[calc(100%-1px)] flex-1 flex-col items-center justify-center gap-0.5 rounded-full border border-transparent! px-3 py-1 text-xs whitespace-nowrap text-foreground/60 group-data-vertical/tabs:rounded-2xl group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4;
+		@apply relative inline-flex h-[calc(100%-1px)] min-w-16 flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl border border-transparent! px-3 py-1.5 text-xs whitespace-nowrap text-foreground/60 transition-colors duration-200 ease-out group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:font-medium data-active:text-foreground data-active:bg-foreground/7 dark:data-active:border-input dark:data-active:text-accent [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5;
+	}
+
+	.links a[data-active="true"]::after {
+		content: "";
+		position: absolute;
+		bottom: 0.15rem;
+		width: 1.25rem;
+		height: 2px;
+		border-radius: 999px;
+		background: var(--primary);
+	}
+
+	.app-nav-profile {
+		transition:
+			transform var(--motion-normal) var(--ease-standard),
+			border-color var(--motion-normal) var(--ease-standard);
+	}
+
+	@media (hover: hover) and (pointer: fine) {
+		.app-nav-profile:hover {
+			transform: translateY(-1px);
+		}
 	}
 </style>

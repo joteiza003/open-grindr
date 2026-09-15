@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { virtualGrid } from "$lib/util/virtual-grid.svelte";
@@ -28,6 +29,10 @@
 		}
 		return [...byId.values()];
 	});
+
+	const browsePreferences = $derived(preferencesSnapshot().browse);
+
+	const cardVariant = $derived(browsePreferences.viewMode);
 
 	const pendingSkeletons = $derived(
 		gridState.loadingMore ? PAGE_SKELETONS : 0,
@@ -61,7 +66,7 @@
 <div class="relative flex flex-1 flex-col">
 	<div
 		bind:this={gridElement}
-		class="photo-grid"
+		class={["photo-grid", `photo-grid-${cardVariant}`]}
 		style:padding-top="{view.paddingTopPx}px"
 		style:padding-bottom="{view.paddingBottomPx}px"
 		data-rows-above={view.hasRowsAbove || undefined}
@@ -94,6 +99,7 @@
 						isFavorite={item.isFavorite}
 						isVisiting={item.isVisiting}
 						hadRecentChat={item.hasChattedInLast24Hrs}
+						variant={cardVariant}
 						medias={item.profilePhotosHashes?.map((mediaHash) => ({
 							mediaHash,
 						})) ?? []}

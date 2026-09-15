@@ -14,6 +14,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import * as Sheet from "$lib/components/ui/sheet";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { defaultFilters } from "$lib/model/browse/grid/filters";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 
 	let { open = $bindable() }: { open: boolean } = $props();
@@ -27,6 +28,37 @@
 	});
 
 	let contentScroll = $state(0);
+
+	const activeFilterCount = $derived.by(() => {
+		let count = 0;
+		const booleanKeys = [
+			"isFavorite",
+			"isOnline",
+			"isRightNow",
+			"isFresh",
+			"haventChattedTodayEnabled",
+		] as const;
+		count += booleanKeys.filter((key) => filters[key]).length;
+		for (const enabledKey of [
+			"ageEnabled",
+			"genderEnabled",
+			"tagsEnabled",
+			"positionEnabled",
+			"photosEnabled",
+			"tribesEnabled",
+			"bodyTypesEnabled",
+			"heightEnabled",
+			"weightEnabled",
+			"relationshipStatusesEnabled",
+			"acceptNSFWPicsEnabled",
+			"lookingForEnabled",
+			"meetAtEnabled",
+			"healthPracticesEnabled",
+		] as const) {
+			if (filters[enabledKey]) count += 1;
+		}
+		return count;
+	});
 
 	dismissOnBackGesture({
 		active: () => open,
@@ -125,7 +157,12 @@
 				{ "border-muted": contentScroll > 0 },
 			]}
 		>
-			<Sheet.Title>Filters</Sheet.Title>
+			<div class="flex items-center justify-between gap-3">
+				<Sheet.Title>Filters</Sheet.Title>
+				{#if activeFilterCount > 0}
+					<span class="rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-semibold text-primary">{activeFilterCount} active</span>
+				{/if}
+			</div>
 		</Sheet.Header>
 		<div
 			class="flex max-h-full min-h-0 w-full flex-1 shrink gap-4 overflow-auto px-4 py-1 pb-4 *:flex-1 *:flex-col *:gap-4 **:break-inside-avoid max-lg:flex-col lg:gap-12"
@@ -153,15 +190,24 @@
 				{ "border-muted": contentScroll < 1 },
 			]}
 		>
-			<Button
-				type="submit"
-				onclick={() => {
+			<div class="flex w-full items-center gap-2 sm:w-auto">
+				<Button
+					variant="ghost"
+					disabled={activeFilterCount === 0}
+					onclick={() => (filters = structuredClone(defaultFilters))}
+				>
+					Reset
+				</Button>
+				<Button
+					type="submit"
+					onclick={() => {
 					gridState.filters.set(filters);
 					open = false;
 				}}
-			>
-				Apply
-			</Button>
+				>
+					Apply{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+				</Button>
+			</div>
 		</Sheet.Footer>
 	</Sheet.Content>
 </Sheet.Root>
