@@ -41,7 +41,7 @@ jobs:
 
       # 5. Instalar dependencias usando pnpm (resuelve el error del lock file faltante)
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
 
       # 6. Compilar Tauri para Android
       - name: Build Tauri Android
