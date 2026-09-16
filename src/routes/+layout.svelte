@@ -15,6 +15,7 @@
 		preferencesLoaded,
 		preferencesSnapshot,
 	} from "$lib/app-data/preferences.svelte";
+	import { hydrateProfileMetadata } from "$lib/app-data/profile-metadata.svelte";
 	import { abortBackdropBlurTrialGesture } from "$lib/blur/calibration/trial.svelte";
 	import { hydrateBackdropCompositing } from "$lib/blur/compositing.svelte";
 	import { applyBackdropBlurQuality } from "$lib/blur/quality.svelte";
@@ -58,6 +59,9 @@
 		}
 		void hydratePreferences().catch((error: unknown) => {
 			console.error("Failed to hydrate preferences", error);
+		});
+		void hydrateProfileMetadata().catch((error: unknown) => {
+			console.error("Failed to hydrate profile metadata", error);
 		});
 		void hydrateBackdropCompositing().catch((error: unknown) => {
 			console.error("Failed to read backdrop compositing", error);

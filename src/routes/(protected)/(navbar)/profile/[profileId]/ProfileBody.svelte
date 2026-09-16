@@ -31,7 +31,7 @@
 	import Socials from "./fields/Socials.svelte";
 	import Height from "./HeightWeightBodyType.svelte";
 	import ImageCarousel from "./ImageCarousel.svelte";
-	import NewBadge from "./NewBadge.svelte";
+	import MyProfileTags from "./my-tags/MyProfileTags.svelte";
 	import OnlineStatus from "./OnlineStatus.svelte";
 	import type { ProfileState } from "./profile-state.svelte";
 	import ProfileSection from "./ProfileSection.svelte";
@@ -112,18 +112,24 @@
 		>
 			<div class="max-w-3xl pr-16">
 				<div class="flex flex-wrap items-end gap-x-2 gap-y-1">
-					<h1 class="text-3xl leading-none font-semibold tracking-tight wrap-break-word">
+					<h1
+						class="text-3xl leading-none font-semibold tracking-tight wrap-break-word"
+					>
 						{#if displayName !== null}
 							{displayName}
 						{:else}
-							<span class="font-normal italic opacity-80">Someone</span>
+							<span class="font-normal italic opacity-80"
+								>Someone</span
+							>
 						{/if}
 					</h1>
 					{#if age !== null}
 						<span class="pb-0.5 text-xl font-medium">{age}</span>
 					{/if}
 				</div>
-				<div class="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/85">
+				<div
+					class="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/85"
+				>
 					<OnlineStatus
 						onlineUntil={onlineUntil ?? null}
 						{seen}
@@ -134,7 +140,10 @@
 						<Distance {distance} />
 					{/if}
 					{#if isNew}
-						<span class="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">New</span>
+						<span
+							class="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground"
+							>New</span
+						>
 					{/if}
 				</div>
 			</div>
@@ -156,18 +165,25 @@
 		{#if sexualPosition !== null || height !== null || weight !== null || bodyType !== null}
 			<div class="flex flex-wrap gap-2" data-slot="profile-fact-pills">
 				{#if sexualPosition !== null && sexualPosition !== undefined}
-					<div class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs">
+					<div
+						class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs"
+					>
 						<SexualPosition {sexualPosition} />
 					</div>
 				{/if}
 				{#if height !== null || weight !== null || bodyType !== null}
-					<div class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs">
+					<div
+						class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs"
+					>
 						<Height {height} {weight} {bodyType} />
 					</div>
 				{/if}
 			</div>
 		{/if}
 		<ProfileTags tags={profileTags} />
+		{#if !ourProfile}
+			<MyProfileTags profileId={profile.profileId} />
+		{/if}
 		{#if aboutMe !== null}
 			<AboutMe>{aboutMe}</AboutMe>
 		{/if}
