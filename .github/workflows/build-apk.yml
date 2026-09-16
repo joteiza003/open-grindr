@@ -29,13 +29,13 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: "21"
           cache: gradle
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: ''
+          packages: ""
 
       - name: Install Android SDK components
         shell: bash
@@ -54,15 +54,38 @@ jobs:
       - name: Type check
         run: bun run check
 
-      - name: Build Android debug APK
-        run: bun run tauri android build --debug --apk
+      # Decode the signing keystore and write the properties file Gradle reads
+      # (src-tauri/gen/android/build.gradle.kts -> rootProject.file("keystore.properties")).
+      # Without a keystore the release build type produces an UNSIGNED apk that
+      # will not install, so fail early with a clear message if the secret is missing.
+      - name: Configure release signing
         env:
-          CI: 'true'
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        shell: bash
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::Missing secret ANDROID_KEYSTORE_BASE64. Add ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD and ANDROID_KEY_ALIAS in the repo's Actions secrets."
+            exit 1
+          fi
+          keystore_path="$GITHUB_WORKSPACE/src-tauri/gen/android/release.keystore"
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$keystore_path"
+          cat > "$GITHUB_WORKSPACE/src-tauri/gen/android/keystore.properties" <<EOF
+          keyAlias=$ANDROID_KEY_ALIAS
+          password=$ANDROID_KEYSTORE_PASSWORD
+          storeFile=$keystore_path
+          EOF
+
+      - name: Build Android release APK
+        run: bun run tauri android build --apk
+        env:
+          CI: "true"
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
 
-      - name: Upload Android debug APK
+      - name: Upload Android release APK
         uses: actions/upload-artifact@v4
         with:
-          name: open-grind-debug-apk
+          name: grindr-joseba-release-apk
           if-no-files-found: error
-          path: src-tauri/gen/android/app/build/outputs/apk/universal/debug/*.apk
+          path: src-tauri/gen/android/app/build/outputs/apk/universal/release/*.apk

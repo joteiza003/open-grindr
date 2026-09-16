@@ -21,6 +21,10 @@ keystore.properties
 *.jks
 *.keystore
 
+# Local APK builds
+/builds/
+*.apk
+
 .local
 /coverage
 /.updater-dev/
