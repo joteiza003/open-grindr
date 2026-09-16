@@ -5,6 +5,7 @@
 	import AlbumLibraryLink from "./AlbumLibraryLink.svelte";
 	import AppearanceSettingsLink from "./AppearanceSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
+	import MapLink from "./MapLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
@@ -21,6 +22,7 @@
 				<AccountSettingsLink />
 				<AppearanceSettingsLink />
 				<AlbumLibraryLink />
+				<MapLink />
 				<AppSettingsLink />
 				<SignOutButton />
 				<span role="separator"></span>

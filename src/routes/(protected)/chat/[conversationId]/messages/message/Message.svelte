@@ -15,6 +15,7 @@
 	import { type MessageRefs, setMessageContext } from "./context";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
+	import LocationMessage from "./LocationMessage.svelte";
 	import MessageContextMenu from "./MessageContextMenu.svelte";
 	import MessageDateGroup from "./MessageDateGroup.svelte";
 	import MessageTime from "./MessageTime.svelte";
@@ -198,6 +199,16 @@
 			/>
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
 			<AlbumMessage message={message.body} />
+		{:else if message.type === "Location"}
+			<LocationMessage
+				lat={message.body.lat}
+				lon={message.body.lon}
+				senderId={message.senderId}
+				conversationId={message.conversationId}
+				messageId={message.messageId}
+				timestamp={message.timestamp}
+				{isOut}
+			/>
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
 		{:else}
