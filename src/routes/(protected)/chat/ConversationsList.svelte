@@ -4,6 +4,7 @@
 	import { tick } from "svelte";
 
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
@@ -40,6 +41,7 @@
 	let selecting = $state(false);
 	let deleteDialogOpen = $state(false);
 	let deleteIds: string[] = $state([]);
+	let tab = $state<"chats" | "albums">("chats");
 
 	async function compensateScroll() {
 		if (!container) return;
@@ -161,84 +163,124 @@
 />
 
 <div class="flex h-full w-full min-w-list-rail flex-col">
-	<div class="relative flex min-h-0 flex-1 flex-col">
-		<div
-			bind:this={container}
-			data-slot="conversations-scroller"
+	<div
+		class="flex shrink-0 items-center gap-1 px-4 pt-3 pb-2"
+		data-fixed-header
+	>
+		<button
+			type="button"
 			class={[
-				"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain px-4",
+				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
 				{
-					"pt-header-clear-15": !selecting,
-					"pt-[calc(var(--selection-bar-height)+var(--bar-content-gap))]":
-						selecting,
+					"bg-primary text-primary-foreground": tab === "chats",
+					"bg-muted text-muted-foreground": tab !== "chats",
 				},
-				className,
 			]}
-			onscroll={() => (conversations.scrollY = container?.scrollTop ?? 0)}
+			aria-pressed={tab === "chats"}
+			onclick={() => (tab = "chats")}
 		>
-			{#if conversations.loading}
-				{#each Array(8)}
-					<Skeleton class="h-24.5 w-full shrink-0" />
-				{/each}
-			{:else if conversations.error && conversations.entries.length === 0}
-				<div class="flex flex-1">
-					<ApiErrorDisplay
-						error={conversations.error}
-						onRetry={() => conversations.retry()}
-						class="m-auto"
-					/>
-				</div>
-			{:else}
-				<div
-					class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
-				>
-					{#each conversations.entries as conversation, i (conversation.data.conversationId)}
-						{@const conversationId =
-							conversation.data.conversationId}
-						{#if i < EAGER_COUNT}
-							<Conversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{:else}
-							<LazyConversation
-								{conversation}
-								selection={selecting ? selection : null}
-								onEnterSelection={mobile.current
-									? () => enterSelection(conversationId)
-									: undefined}
-								onRequestDelete={() =>
-									requestDelete([conversationId])}
-							/>
-						{/if}
+			Chats
+		</button>
+		<button
+			type="button"
+			class={[
+				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+				{
+					"bg-primary text-primary-foreground": tab === "albums",
+					"bg-muted text-muted-foreground": tab !== "albums",
+				},
+			]}
+			aria-pressed={tab === "albums"}
+			onclick={() => (tab = "albums")}
+		>
+			Albums
+		</button>
+	</div>
+	<div class="relative flex min-h-0 flex-1 flex-col">
+		{#if tab === "albums"}
+			<div class="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-nav-clear">
+				<AlbumLibrary />
+			</div>
+		{:else}
+			<div
+				bind:this={container}
+				data-slot="conversations-scroller"
+				class={[
+					"flex min-h-0 flex-1 flex-col gap-1 overflow-auto overscroll-contain px-4",
+					{
+						"pt-header-clear-15": !selecting,
+						"pt-[calc(var(--selection-bar-height)+var(--bar-content-gap))]":
+							selecting,
+					},
+					className,
+				]}
+				onscroll={() =>
+					(conversations.scrollY = container?.scrollTop ?? 0)}
+			>
+				{#if conversations.loading}
+					{#each Array(8)}
+						<Skeleton class="h-24.5 w-full shrink-0" />
 					{/each}
-					<ConversationsPagingTail
-						paging={conversations.paging}
-						hasMore={conversations.nextPage !== null}
-						listEmpty={conversations.entries.length === 0}
-						filtered={conversations.filters.filtered}
-					/>
-				</div>
+				{:else if conversations.error && conversations.entries.length === 0}
+					<div class="flex flex-1">
+						<ApiErrorDisplay
+							error={conversations.error}
+							onRetry={() => conversations.retry()}
+							class="m-auto"
+						/>
+					</div>
+				{:else}
+					<div
+						class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
+					>
+						{#each conversations.entries as conversation, i (conversation.data.conversationId)}
+							{@const conversationId =
+								conversation.data.conversationId}
+							{#if i < EAGER_COUNT}
+								<Conversation
+									{conversation}
+									selection={selecting ? selection : null}
+									onEnterSelection={mobile.current
+										? () => enterSelection(conversationId)
+										: undefined}
+									onRequestDelete={() =>
+										requestDelete([conversationId])}
+								/>
+							{:else}
+								<LazyConversation
+									{conversation}
+									selection={selecting ? selection : null}
+									onEnterSelection={mobile.current
+										? () => enterSelection(conversationId)
+										: undefined}
+									onRequestDelete={() =>
+										requestDelete([conversationId])}
+								/>
+							{/if}
+						{/each}
+						<ConversationsPagingTail
+							paging={conversations.paging}
+							hasMore={conversations.nextPage !== null}
+							listEmpty={conversations.entries.length === 0}
+							filtered={conversations.filters.filtered}
+						/>
+					</div>
+				{/if}
+			</div>
+			{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
+				<DataRefreshControl
+					{container}
+					updating={conversations.refreshing}
+					position="top"
+					onrefresh={() => void conversations.refresh()}
+				/>
 			{/if}
-		</div>
-		{#if !conversations.loading && (conversations.entries.length > 0 || !conversations.error)}
-			<DataRefreshControl
-				{container}
-				updating={conversations.refreshing}
-				position="top"
-				onrefresh={() => void conversations.refresh()}
+			<ScrollToTopButton {container} class="bottom-(--nav-clear)" />
+			<ConversationsFilters
+				filters={conversations.filters}
+				onchange={(values) => conversations.setFilters(values)}
+				inert={selecting}
 			/>
 		{/if}
-		<ScrollToTopButton {container} class="bottom-(--nav-clear)" />
-		<ConversationsFilters
-			filters={conversations.filters}
-			onchange={(values) => conversations.setFilters(values)}
-			inert={selecting}
-		/>
 	</div>
 </div>

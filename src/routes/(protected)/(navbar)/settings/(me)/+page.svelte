@@ -2,7 +2,6 @@
 	import { version } from "$app/environment";
 
 	import AccountSettingsLink from "./AccountSettingsLink.svelte";
-	import AlbumLibraryLink from "./AlbumLibraryLink.svelte";
 	import AppearanceSettingsLink from "./AppearanceSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
 	import MapLink from "./MapLink.svelte";
@@ -21,7 +20,6 @@
 				<span role="separator"></span>
 				<AccountSettingsLink />
 				<AppearanceSettingsLink />
-				<AlbumLibraryLink />
 				<MapLink />
 				<AppSettingsLink />
 				<SignOutButton />

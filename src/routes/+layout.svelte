@@ -79,7 +79,7 @@
 	import GoogleHandbackConfirmAlert from "$lib/components/feedback/GoogleHandbackConfirmAlert.svelte";
 	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
-	import faviconSvg from "../../contrib/logo/open-grind.svg";
+	import faviconSvg from "../../contrib/logo/app-icon.svg";
 
 	let { children }: { children?: import("svelte").Snippet } = $props();
 

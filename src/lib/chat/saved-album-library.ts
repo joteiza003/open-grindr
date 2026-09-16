@@ -16,7 +16,9 @@ import {
  * needs no extra mkdir), named by the album's filename-safe `storageId`.
  */
 
-const INDEX_PATH = "album-library/index.json";
+// A flat filename: writeAppDataFileAtomic only ensures the AppLocalData base
+// dir exists, not nested subdirectories, so the index must not live in a subdir.
+const INDEX_PATH = "album-library-index.json";
 
 const EXTENSIONS: Record<string, string> = {
 	"image/jpeg": "jpg",

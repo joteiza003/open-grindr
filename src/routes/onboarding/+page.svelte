@@ -13,7 +13,7 @@
 	} from "$lib/platform/desktop-entry.svelte";
 	import { setAutomaticUpdateChecks } from "$lib/updates";
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
-	import icon from "../../../contrib/logo/open-grind.svg";
+	import icon from "../../../contrib/logo/app-icon.svg";
 
 	let checkAutomatically = $state(true);
 	let addToAppsMenu = $state(true);

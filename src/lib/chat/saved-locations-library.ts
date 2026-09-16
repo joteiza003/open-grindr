@@ -10,7 +10,8 @@ import {
 
 /** Local persistence for locations other users shared with us. */
 
-const INDEX_PATH = "location-map/index.json";
+// Flat filename: the atomic writer does not create nested subdirectories.
+const INDEX_PATH = "location-map-index.json";
 
 async function loadIndex(): Promise<SavedLocation[]> {
 	if (!(await existsAppDataFile(INDEX_PATH))) return [];
