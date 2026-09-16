@@ -1,5 +1,7 @@
 <script lang="ts">
 	import AccentSetting from "./AccentSetting.svelte";
+	import BubbleColorsSetting from "./BubbleColorsSetting.svelte";
+	import ChatBackgroundSetting from "./ChatBackgroundSetting.svelte";
 	import DensitySetting from "./DensitySetting.svelte";
 	import MotionSetting from "./MotionSetting.svelte";
 </script>
@@ -8,6 +10,10 @@
 <AccentSetting />
 <DensitySetting />
 <MotionSetting />
+
+<h2>Chat</h2>
+<BubbleColorsSetting />
+<ChatBackgroundSetting />
 
 <style lang="postcss">
 	@reference "$layout";

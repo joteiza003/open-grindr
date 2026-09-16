@@ -40,6 +40,8 @@
 	--sidebar-ring: oklch(0.556 0 0);
 	--message-bubble-in: oklch(0.7882 0.1455 228.36);
 	--message-bubble-out: oklch(0.8618 0.1973 89.76);
+	--message-bubble-in-foreground: oklch(0 0 0);
+	--message-bubble-out-foreground: oklch(0 0 0);
 	--list-rail: 117px;
 	/* Experience / design-system tokens. Keep component tokens below backward-compatible. */
 	--surface-0: var(--background);
@@ -97,6 +99,8 @@
 	--color-background: var(--background);
 	--color-message-bubble-in: var(--message-bubble-in);
 	--color-message-bubble-out: var(--message-bubble-out);
+	--color-message-bubble-in-foreground: var(--message-bubble-in-foreground);
+	--color-message-bubble-out-foreground: var(--message-bubble-out-foreground);
 	--radius-sm: calc(var(--radius) * 0.6);
 	--radius-md: calc(var(--radius) * 0.8);
 	--radius-lg: var(--radius);

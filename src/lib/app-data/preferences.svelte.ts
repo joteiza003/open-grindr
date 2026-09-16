@@ -3,6 +3,12 @@ import { toast } from "svelte-sonner";
 import z from "zod";
 
 import { accentSchema, DEFAULT_ACCENT } from "$lib/appearance/accents";
+import {
+	bubbleColorSchema,
+	DEFAULT_BUBBLE_IN,
+	DEFAULT_BUBBLE_OUT,
+	DEFAULT_CHAT_BACKGROUND_COLOR,
+} from "$lib/appearance/chat-colors";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
@@ -67,8 +73,37 @@ const preferencesSchema = z.object({
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
+			bubbleOut: bubbleColorSchema.default(DEFAULT_BUBBLE_OUT),
+			bubbleIn: bubbleColorSchema.default(DEFAULT_BUBBLE_IN),
+			background: z
+				.object({
+					kind: z.enum(["none", "color", "photo"]).default("none"),
+					color: z.string().default(DEFAULT_CHAT_BACKGROUND_COLOR),
+					blur: z.number().min(0).max(30).default(8),
+					dim: z.number().min(0).max(0.85).default(0.35),
+					photoUpdatedAt: z.number().default(0),
+				})
+				.default({
+					kind: "none",
+					color: DEFAULT_CHAT_BACKGROUND_COLOR,
+					blur: 8,
+					dim: 0.35,
+					photoUpdatedAt: 0,
+				}),
 		})
-		.default({ density: "comfortable", mediaPreview: true }),
+		.default({
+			density: "comfortable",
+			mediaPreview: true,
+			bubbleOut: DEFAULT_BUBBLE_OUT,
+			bubbleIn: DEFAULT_BUBBLE_IN,
+			background: {
+				kind: "none",
+				color: DEFAULT_CHAT_BACKGROUND_COLOR,
+				blur: 8,
+				dim: 0.35,
+				photoUpdatedAt: 0,
+			},
+		}),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;

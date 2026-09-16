@@ -5,6 +5,7 @@
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import type { MessageDraft } from "$lib/model/messaging/messages";
+	import ChatBackground from "./ChatBackground.svelte";
 	import ChatNavBar from "./conversation-nav-bar/ConversationNavBar.svelte";
 	import {
 		ConversationState,
@@ -62,14 +63,18 @@
 </script>
 
 <ChatNavBar />
-<Card.Content class="relative flex min-h-0 flex-1 flex-col p-0">
-	<ConversationMessages {composerHeight} />
-	<MessageComposer
-		conversationId={conversationState.conversationId}
-		onSend={(drafts: MessageDraft[]) => conversationState.send(drafts)}
-		disabled={conversationState.loading || conversationState.error !== null}
-		replyTo={conversationState.replyTo}
-		onCancelReply={() => conversationState.clearReplyTo()}
-		bind:height={composerHeight}
-	/>
+<Card.Content class="relative flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+	<ChatBackground />
+	<div class="relative z-10 flex min-h-0 flex-1 flex-col">
+		<ConversationMessages {composerHeight} />
+		<MessageComposer
+			conversationId={conversationState.conversationId}
+			onSend={(drafts: MessageDraft[]) => conversationState.send(drafts)}
+			disabled={conversationState.loading ||
+				conversationState.error !== null}
+			replyTo={conversationState.replyTo}
+			onCancelReply={() => conversationState.clearReplyTo()}
+			bind:height={composerHeight}
+		/>
+	</div>
 </Card.Content>

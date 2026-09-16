@@ -29,9 +29,10 @@
 			"me-3": isOut && !clone,
 			"rounded-es-none": lastInStack && !isOut,
 			"rounded-ee-none": lastInStack && isOut,
-			"text-black": sent,
-			"bg-message-bubble-in": sent && !isOut,
-			"bg-message-bubble-out": sent && isOut,
+			"bg-message-bubble-in text-message-bubble-in-foreground":
+				sent && !isOut,
+			"bg-message-bubble-out text-message-bubble-out-foreground":
+				sent && isOut,
 			"bg-muted text-muted-foreground italic": !sent,
 		},
 	]}
