@@ -15,6 +15,18 @@
 
 	let gridElement: HTMLElement | null = $state(null);
 
+	// Grindr's cascade can return profiles shuffled (especially once filters are
+	// applied), interleaving near and far. Sort by distance in the presentation
+	// layer for a stable, closest-first order without touching gridState, the
+	// API, or virtualization. Unresolved "lazy" profiles carry no distance yet,
+	// so they sort to the end until they resolve; the sort is stable, so equal
+	// distances keep the server's original order.
+	function gridDistance(profile: GridProfile): number {
+		return profile.type === "rendered" && profile.distance !== null
+			? profile.distance
+			: Number.POSITIVE_INFINITY;
+	}
+
 	const gridProfiles = $derived.by(() => {
 		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and spread inside this $derived, never mutated afterwards
 		const byId = new Map<number, GridProfile>();
@@ -27,7 +39,9 @@
 				byId.set(item.id, item);
 			}
 		}
-		return [...byId.values()];
+		return [...byId.values()].sort(
+			(a, b) => gridDistance(a) - gridDistance(b),
+		);
 	});
 
 	const browsePreferences = $derived(preferencesSnapshot().browse);
