@@ -1,6 +1,6 @@
 <script lang="ts">
-	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
+	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { virtualGrid } from "$lib/util/virtual-grid.svelte";
@@ -33,7 +33,22 @@
 	const browsePreferences = $derived(preferencesSnapshot().browse);
 
 	const cardVariant = $derived(
-		browsePreferences.viewMode === "grid" ? "standard" : browsePreferences.viewMode,
+		browsePreferences.viewMode === "grid"
+			? "standard"
+			: browsePreferences.viewMode,
+	);
+
+	// Optional per-user overrides applied inline so the default grid (and its
+	// e2e corner test) stays untouched unless the user opts in.
+	const cardRadiusVar = $derived(
+		browsePreferences.cardRadius !== null
+			? `${browsePreferences.cardRadius}px`
+			: undefined,
+	);
+	const cardGapVar = $derived(
+		browsePreferences.cardGap !== null
+			? `${browsePreferences.cardGap}px`
+			: undefined,
 	);
 
 	const pendingSkeletons = $derived(
@@ -71,6 +86,8 @@
 		class={["photo-grid", `photo-grid-${cardVariant}`]}
 		style:padding-top="{view.paddingTopPx}px"
 		style:padding-bottom="{view.paddingBottomPx}px"
+		style:--radius-grid={cardRadiusVar}
+		style:gap={cardGapVar}
 		data-rows-above={view.hasRowsAbove || undefined}
 		data-rows-below={view.hasRowsBelow || undefined}
 	>

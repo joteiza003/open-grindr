@@ -23,9 +23,11 @@
 		class: className,
 		overlay,
 		variant = "standard",
+		showName = true,
 		showDistance = true,
 		showAge = true,
 		showOnlineStatus = true,
+		nameStyle = "solid",
 	}: {
 		mediaHash?: string | null;
 		displayName?: string | null;
@@ -41,10 +43,14 @@
 		class?: import("svelte/elements").ClassValue;
 		overlay?: Snippet;
 		variant?: "standard" | "compact" | "detailed";
+		showName?: boolean;
 		showDistance?: boolean;
 		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
+
+	const nameVisible = $derived(showName && nameStyle !== "none");
 </script>
 
 {#snippet content()}
@@ -81,35 +87,66 @@
 		</div>
 	{/if}
 	{#if !anonymous}
+		{#if nameVisible && nameStyle === "gradient"}
+			<div
+				class="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-2/5 bg-gradient-to-t from-black/70 via-black/25 to-transparent"
+			></div>
+		{/if}
 		<div class="z-1 flex w-full items-center gap-0.5 p-0.5">
-			<Badge
-				variant="outline"
-				class="max-w-full min-w-0 shrink gap-0 bg-popover/20 scrim backdrop-filter-(--bd-chip)"
-			>
-				{#if showOnlineStatus}
-					<ProfileStatusIndicator
-						{onlineUntil}
-						{isVisiting}
-						class="me-1"
-					/>
-				{/if}
-
+			{#if nameVisible && nameStyle === "gradient"}
 				<span
-					class={[
-						"block shrink truncate font-semibold",
-						{ "text-foreground/50": !displayName },
-					]}
+					class="flex min-w-0 shrink items-center gap-0 px-1 text-white [text-shadow:0_1px_2px_rgb(0_0_0/0.7)]"
 				>
-					<DisplayName name={displayName} />
-				</span>
-				{#if showAge && age !== null}
-					,&nbsp;<span
-						class="line-clamp-1 block max-w-full shrink-0 truncate"
+					{#if showOnlineStatus}
+						<ProfileStatusIndicator
+							{onlineUntil}
+							{isVisiting}
+							class="me-1"
+						/>
+					{/if}
+					<span
+						class={[
+							"block shrink truncate font-semibold",
+							{ "text-white/60": !displayName },
+						]}
 					>
-						{age}
+						<DisplayName name={displayName} />
 					</span>
-				{/if}
-			</Badge>
+					{#if showAge && age !== null}
+						,&nbsp;<span class="block shrink-0 truncate">{age}</span
+						>
+					{/if}
+				</span>
+			{:else if nameVisible}
+				<Badge
+					variant="outline"
+					class="max-w-full min-w-0 shrink gap-0 bg-popover/20 scrim backdrop-filter-(--bd-chip)"
+				>
+					{#if showOnlineStatus}
+						<ProfileStatusIndicator
+							{onlineUntil}
+							{isVisiting}
+							class="me-1"
+						/>
+					{/if}
+
+					<span
+						class={[
+							"block shrink truncate font-semibold",
+							{ "text-foreground/50": !displayName },
+						]}
+					>
+						<DisplayName name={displayName} />
+					</span>
+					{#if showAge && age !== null}
+						,&nbsp;<span
+							class="line-clamp-1 block max-w-full shrink-0 truncate"
+						>
+							{age}
+						</span>
+					{/if}
+				</Badge>
+			{/if}
 			{#if unread !== null && unread > 0}
 				<span
 					class="flex size-5 shrink-0 items-center justify-center rounded-full border border-black/20 bg-primary text-2xs font-semibold text-primary-foreground"
@@ -125,14 +162,21 @@
 		</div>
 	{/if}
 	{#if variant === "detailed" && !anonymous}
-		<div class="pointer-events-none absolute inset-x-2 bottom-2 z-0 flex items-end justify-between gap-2 opacity-90 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+		<div
+			class="pointer-events-none absolute inset-x-2 bottom-2 z-0 flex items-end justify-between gap-2 opacity-90 transition-opacity duration-200 group-hover:opacity-100 group-focus-visible:opacity-100"
+		>
 			{#if showDistance && distance !== null}
-				<span class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur">
+				<span
+					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur"
+				>
 					<DistanceFormatted {distance} />
 				</span>
 			{/if}
 			{#if isVisiting}
-				<span class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur">Visiting</span>
+				<span
+					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur"
+					>Visiting</span
+				>
 			{/if}
 		</div>
 	{/if}

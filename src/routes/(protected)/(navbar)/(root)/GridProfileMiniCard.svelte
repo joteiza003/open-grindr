@@ -13,8 +13,11 @@
 		isVisiting = false,
 		hadRecentChat = false,
 		variant = "standard",
+		showName = true,
 		showDistance = true,
+		showAge = true,
 		showOnlineStatus = true,
+		nameStyle = "solid",
 	}: {
 		id: number;
 		displayName?: string | null;
@@ -27,8 +30,11 @@
 		isVisiting?: boolean;
 		hadRecentChat?: boolean;
 		variant?: "standard" | "compact" | "detailed";
+		showName?: boolean;
 		showDistance?: boolean;
+		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
 </script>
 
@@ -43,5 +49,10 @@
 	{isVisiting}
 	{hadRecentChat}
 	{variant}
+	{showName}
+	{showDistance}
+	{showAge}
+	{showOnlineStatus}
+	{nameStyle}
 	href="/profile/{id}"
 />

@@ -58,16 +58,26 @@ const preferencesSchema = z.object({
 			cardDensity: z
 				.enum(["comfortable", "dense"])
 				.default("comfortable"),
+			showName: z.boolean().default(true),
 			showDistance: z.boolean().default(true),
 			showAge: z.boolean().default(true),
 			showOnlineStatus: z.boolean().default(true),
+			nameStyle: z.enum(["solid", "gradient", "none"]).default("solid"),
+			// null = use the design default (keeps the tuned grid + its e2e
+			// corner test untouched); a number overrides it in pixels.
+			cardRadius: z.number().min(0).max(40).nullable().default(null),
+			cardGap: z.number().min(0).max(24).nullable().default(null),
 		})
 		.default({
 			viewMode: "grid",
 			cardDensity: "comfortable",
+			showName: true,
 			showDistance: true,
 			showAge: true,
 			showOnlineStatus: true,
+			nameStyle: "solid",
+			cardRadius: null,
+			cardGap: null,
 		}),
 	chat: z
 		.object({
