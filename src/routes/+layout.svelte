@@ -16,6 +16,7 @@
 		preferencesSnapshot,
 	} from "$lib/app-data/preferences.svelte";
 	import { hydrateProfileMetadata } from "$lib/app-data/profile-metadata.svelte";
+	import { applyAppearance } from "$lib/appearance/appearance";
 	import { abortBackdropBlurTrialGesture } from "$lib/blur/calibration/trial.svelte";
 	import { hydrateBackdropCompositing } from "$lib/blur/compositing.svelte";
 	import { applyBackdropBlurQuality } from "$lib/blur/quality.svelte";
@@ -90,6 +91,10 @@
 
 	$effect(() => {
 		applyBackdropBlurQuality();
+	});
+
+	$effect(() => {
+		applyAppearance();
 	});
 
 	$effect(() => {

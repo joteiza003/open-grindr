@@ -2,6 +2,7 @@ import { decode, encode } from "@msgpack/msgpack";
 import { toast } from "svelte-sonner";
 import z from "zod";
 
+import { accentSchema, DEFAULT_ACCENT } from "$lib/appearance/accents";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
@@ -35,40 +36,39 @@ const preferencesSchema = z.object({
 	appearance: z
 		.object({
 			theme: z.enum(["system", "dark", "light"]).default("system"),
+			accent: accentSchema.default(DEFAULT_ACCENT),
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			animations: z.boolean().default(true),
 		})
 		.default({
-		theme: "system",
-		density: "comfortable",
-		animations: true,
-	}),
+			theme: "system",
+			accent: DEFAULT_ACCENT,
+			density: "comfortable",
+			animations: true,
+		}),
 	browse: z
 		.object({
-			viewMode: z
-				.enum(["grid", "compact", "detailed"])
-				.default("grid"),
-			cardDensity: z.enum(["comfortable", "dense"]).default("comfortable"),
+			viewMode: z.enum(["grid", "compact", "detailed"]).default("grid"),
+			cardDensity: z
+				.enum(["comfortable", "dense"])
+				.default("comfortable"),
 			showDistance: z.boolean().default(true),
 			showAge: z.boolean().default(true),
 			showOnlineStatus: z.boolean().default(true),
 		})
 		.default({
-		viewMode: "grid",
-		cardDensity: "comfortable",
-		showDistance: true,
-		showAge: true,
-		showOnlineStatus: true,
-	}),
+			viewMode: "grid",
+			cardDensity: "comfortable",
+			showDistance: true,
+			showAge: true,
+			showOnlineStatus: true,
+		}),
 	chat: z
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
 		})
-		.default({
-		density: "comfortable",
-		mediaPreview: true,
-	}),
+		.default({ density: "comfortable", mediaPreview: true }),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;

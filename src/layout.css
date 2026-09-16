@@ -762,7 +762,86 @@ a {
 
 /* Profile experience tokens */
 :root {
-  --profile-content-max: 800px;
-  --profile-overlay-radius: 1.25rem;
-  --profile-action-height: 46px;
+	--profile-content-max: 800px;
+	--profile-overlay-radius: 1.25rem;
+	--profile-action-height: 46px;
+}
+
+/* ── Appearance personalization ──────────────────────────────────────────
+   Accent presets keyed by data-accent on <html>; keep keys in sync with
+   src/lib/appearance/accents.ts. "amber" is the default and matches the base
+   :root tokens above, so it needs no block here. Each preset recolors the
+   accent/primary token family; foregrounds are a dark neutral that reads on
+   every preset. Chat bubble colors are intentionally left untouched. */
+:root[data-accent="blue"] {
+	--primary: oklch(0.72 0.15 250);
+	--accent: oklch(0.72 0.15 250);
+	--sidebar-primary: oklch(0.72 0.15 250);
+	--primary-foreground: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.22 0 0);
+	--sidebar-primary-foreground: oklch(0.22 0 0);
+}
+:root[data-accent="teal"] {
+	--primary: oklch(0.8 0.13 190);
+	--accent: oklch(0.8 0.13 190);
+	--sidebar-primary: oklch(0.8 0.13 190);
+	--primary-foreground: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.22 0 0);
+	--sidebar-primary-foreground: oklch(0.22 0 0);
+}
+:root[data-accent="green"] {
+	--primary: oklch(0.8 0.17 145);
+	--accent: oklch(0.8 0.17 145);
+	--sidebar-primary: oklch(0.8 0.17 145);
+	--primary-foreground: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.22 0 0);
+	--sidebar-primary-foreground: oklch(0.22 0 0);
+}
+:root[data-accent="violet"] {
+	--primary: oklch(0.72 0.16 300);
+	--accent: oklch(0.72 0.16 300);
+	--sidebar-primary: oklch(0.72 0.16 300);
+	--primary-foreground: oklch(0.98 0 0);
+	--accent-foreground: oklch(0.98 0 0);
+	--sidebar-primary-foreground: oklch(0.98 0 0);
+}
+:root[data-accent="pink"] {
+	--primary: oklch(0.78 0.16 350);
+	--accent: oklch(0.78 0.16 350);
+	--sidebar-primary: oklch(0.78 0.16 350);
+	--primary-foreground: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.22 0 0);
+	--sidebar-primary-foreground: oklch(0.22 0 0);
+}
+:root[data-accent="orange"] {
+	--primary: oklch(0.78 0.17 55);
+	--accent: oklch(0.78 0.17 55);
+	--sidebar-primary: oklch(0.78 0.17 55);
+	--primary-foreground: oklch(0.22 0 0);
+	--accent-foreground: oklch(0.22 0 0);
+	--sidebar-primary-foreground: oklch(0.22 0 0);
+}
+:root[data-accent="red"] {
+	--primary: oklch(0.7 0.19 25);
+	--accent: oklch(0.7 0.19 25);
+	--sidebar-primary: oklch(0.7 0.19 25);
+	--primary-foreground: oklch(0.98 0 0);
+	--accent-foreground: oklch(0.98 0 0);
+	--sidebar-primary-foreground: oklch(0.98 0 0);
+}
+
+/* Compact density: tighten the global spacing unit so paddings/gaps scale
+   down proportionally across the app. Reversible via a single variable. */
+:root[data-density="compact"] {
+	--spacing: 0.22rem;
+}
+
+/* Reduced motion: neutralize animations and transitions app-wide. */
+:root[data-reduce-motion] *,
+:root[data-reduce-motion] *::before,
+:root[data-reduce-motion] *::after {
+	animation-duration: 0.001ms !important;
+	animation-iteration-count: 1 !important;
+	transition-duration: 0.001ms !important;
+	scroll-behavior: auto !important;
 }
