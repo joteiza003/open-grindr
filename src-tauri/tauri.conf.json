@@ -27,7 +27,7 @@
 			}
 		],
 		"security": {
-			"csp": "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'self' 'unsafe-inline'; img-src 'self' data: blob: ogmedia: http://ogmedia.localhost https://tile.openstreetmap.org; media-src 'self' ogmedia: http://ogmedia.localhost; connect-src 'self' ipc: http://ipc.localhost; object-src 'none'; base-uri 'self'; form-action 'self'"
+			"csp": "default-src 'self'; script-src 'self'; style-src 'self'; style-src-attr 'self' 'unsafe-inline'; img-src 'self' data: blob: ogmedia: http://ogmedia.localhost https://tile.openstreetmap.org; media-src 'self' blob: ogmedia: http://ogmedia.localhost; connect-src 'self' ipc: http://ipc.localhost ogmedia: http://ogmedia.localhost; object-src 'none'; base-uri 'self'; form-action 'self'"
 		}
 	},
 	"bundle": {

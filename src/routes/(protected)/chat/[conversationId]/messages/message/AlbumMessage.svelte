@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "photoswipe/style.css";
 	import { ImagesIcon, VideoIcon } from "phosphor-svelte";
+	import { toast } from "svelte-sonner";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import { showErrorToast } from "$lib/api/error-toast";
@@ -9,6 +10,7 @@
 		getAlbumContent,
 	} from "$lib/api/messaging/albums";
 	import { albumShares } from "$lib/chat/album-shares.svelte";
+	import { saveAlbumToLibrary } from "$lib/chat/archive-album";
 	import MediaImage from "$lib/components/shared/MediaImage.svelte";
 	import { now } from "$lib/util/clock";
 	import { proxyMediaUrl } from "$lib/util/media";
@@ -73,6 +75,32 @@
 	let albumState = $state<AlbumState>({ status: "idle" });
 	let cachedAlbum: LoadedAlbum | null = null;
 	let cachedAt = 0;
+	let savingAlbum = false;
+
+	async function handleSaveAlbum() {
+		if (savingAlbum) return;
+		savingAlbum = true;
+		const profile = conversationState.profile;
+		try {
+			await saveAlbumToLibrary({
+				body: message,
+				conversationId: conversationState.conversationId,
+				profileSnapshot: {
+					profileId:
+						profile?.profileId ?? message.ownerProfileId ?? null,
+					displayName: profile?.name ?? null,
+					age: null,
+					distance: profile?.distance ?? null,
+				},
+			});
+			toast.success("Saved to your album library");
+		} catch (error) {
+			console.error(error);
+			showErrorToast({ label: "Failed to save album", error });
+		} finally {
+			savingAlbum = false;
+		}
+	}
 
 	function openAlbum() {
 		const fresh = now() - cachedAt < ALBUM_MEMO_TTL_MS;
@@ -150,6 +178,18 @@
 					const slide = album.content[index];
 					if (!slide?.contentType.startsWith("video/")) return null;
 					return { src: slide.url, poster: slide.coverUrl };
+				});
+				lightbox.on("uiRegister", () => {
+					lightbox?.pswp?.ui?.registerElement({
+						name: "save-to-library",
+						ariaLabel: "Save album to your library",
+						order: 9,
+						isButton: true,
+						html: '<svg aria-hidden="true" class="pswp__icn" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 16l-5-5h3V4h4v7h3l-5 5zM5 18h14v2H5z"/></svg>',
+						onClick: () => {
+							void handleSaveAlbum();
+						},
+					});
 				});
 				lightbox.on("closingAnimationEnd", () => {
 					albumState = { status: "idle" };
