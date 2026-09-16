@@ -2,10 +2,10 @@
 	import { page } from "$app/state";
 	import { untrack } from "svelte";
 
+	import ChatBackground from "$lib/appearance/ChatBackground.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import type { MessageDraft } from "$lib/model/messaging/messages";
-	import ChatBackground from "./ChatBackground.svelte";
 	import ChatNavBar from "./conversation-nav-bar/ConversationNavBar.svelte";
 	import {
 		ConversationState,

@@ -5,7 +5,9 @@
 	import BrowseViewSetting from "./BrowseViewSetting.svelte";
 	import BubbleColorsSetting from "./BubbleColorsSetting.svelte";
 	import ChatBackgroundSetting from "./ChatBackgroundSetting.svelte";
+	import ChatPreview from "./ChatPreview.svelte";
 	import DensitySetting from "./DensitySetting.svelte";
+	import GridPreview from "./GridPreview.svelte";
 	import MotionSetting from "./MotionSetting.svelte";
 </script>
 
@@ -15,11 +17,13 @@
 <MotionSetting />
 
 <h2>Browse grid</h2>
+<GridPreview />
 <BrowseViewSetting />
 <BrowseInfoSetting />
 <BrowseCardSetting />
 
 <h2>Chat</h2>
+<ChatPreview />
 <BubbleColorsSetting />
 <ChatBackgroundSetting />
 

@@ -21,28 +21,23 @@ const OUTPUT_TYPE = "image/webp";
 const OUTPUT_QUALITY = 0.85;
 
 async function downscale(file: File): Promise<Uint8Array> {
-	const sourceUrl = URL.createObjectURL(file);
+	// Decode straight from the File. createImageBitmap avoids an <img> + object
+	// URL, which the app's Content-Security-Policy would otherwise gate.
+	const bitmap = await createImageBitmap(file);
 	try {
-		const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-			const element = new Image();
-			element.onload = () => resolve(element);
-			element.onerror = () => reject(new Error("Could not read image"));
-			element.src = sourceUrl;
-		});
-
 		const scale = Math.min(
 			1,
-			MAX_DIMENSION / Math.max(image.width, image.height),
+			MAX_DIMENSION / Math.max(bitmap.width, bitmap.height),
 		);
-		const width = Math.max(1, Math.round(image.width * scale));
-		const height = Math.max(1, Math.round(image.height * scale));
+		const width = Math.max(1, Math.round(bitmap.width * scale));
+		const height = Math.max(1, Math.round(bitmap.height * scale));
 
 		const canvas = document.createElement("canvas");
 		canvas.width = width;
 		canvas.height = height;
 		const context = canvas.getContext("2d");
 		if (!context) throw new Error("Canvas is unavailable");
-		context.drawImage(image, 0, 0, width, height);
+		context.drawImage(bitmap, 0, 0, width, height);
 
 		const blob = await new Promise<Blob | null>((resolve) => {
 			canvas.toBlob(resolve, OUTPUT_TYPE, OUTPUT_QUALITY);
@@ -50,7 +45,7 @@ async function downscale(file: File): Promise<Uint8Array> {
 		if (!blob) throw new Error("Could not encode image");
 		return new Uint8Array(await blob.arrayBuffer());
 	} finally {
-		URL.revokeObjectURL(sourceUrl);
+		bitmap.close();
 	}
 }
 
