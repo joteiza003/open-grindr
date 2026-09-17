@@ -9,6 +9,7 @@
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import { t } from "$lib/i18n";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
@@ -166,6 +167,7 @@
 	<div
 		class="flex shrink-0 items-center gap-1 px-4 pt-3 pb-2"
 		data-fixed-header
+		data-slot="conversations-header"
 	>
 		<button
 			type="button"
@@ -179,7 +181,7 @@
 			aria-pressed={tab === "chats"}
 			onclick={() => (tab = "chats")}
 		>
-			Chats
+			{t("chat.chats")}
 		</button>
 		<button
 			type="button"
@@ -193,7 +195,7 @@
 			aria-pressed={tab === "albums"}
 			onclick={() => (tab = "albums")}
 		>
-			Albums
+			{t("chat.albums")}
 		</button>
 	</div>
 	<div class="relative flex min-h-0 flex-1 flex-col">
@@ -219,7 +221,7 @@
 			>
 				{#if conversations.loading}
 					{#each Array(8)}
-						<Skeleton class="h-24.5 w-full shrink-0" />
+						<Skeleton class="h-18 w-full shrink-0 rounded-none" />
 					{/each}
 				{:else if conversations.error && conversations.entries.length === 0}
 					<div class="flex flex-1">
@@ -231,7 +233,7 @@
 					</div>
 				{:else}
 					<div
-						class="flex min-h-overscrollable shrink-0 flex-col gap-1 pb-nav-clear"
+						class="flex min-h-overscrollable shrink-0 flex-col gap-0 pb-nav-clear"
 					>
 						{#each conversations.entries as conversation, i (conversation.data.conversationId)}
 							{@const conversationId =

@@ -8,7 +8,7 @@ export type ReconcileHandler = () => void | Promise<void>;
 
 class Reconciler {
 	#handlers = new Set<ReconcileHandler>();
-	#lastReconcileAt = 0;
+	#lastReconcileAt: number | null = null;
 	#resyncTimer: ReturnType<typeof setTimeout> | null = null;
 	#wasHidden = false;
 	#firstConnect = true;
@@ -54,8 +54,13 @@ class Reconciler {
 
 	#scheduleResync(): void {
 		if (this.#resyncTimer !== null) return;
-		const elapsed = Date.now() - this.#lastReconcileAt;
-		const wait = Math.max(THROTTLE_MS - elapsed, 0);
+		const wait =
+			this.#lastReconcileAt === null
+				? 0
+				: Math.max(
+						THROTTLE_MS - (Date.now() - this.#lastReconcileAt),
+						0,
+					);
 		this.#resyncTimer = setTimeout(() => {
 			this.#resyncTimer = null;
 			void this.#trigger();
@@ -64,7 +69,11 @@ class Reconciler {
 
 	async #trigger(): Promise<void> {
 		const now = Date.now();
-		if (now - this.#lastReconcileAt < THROTTLE_MS) return;
+		if (
+			this.#lastReconcileAt !== null &&
+			now - this.#lastReconcileAt < THROTTLE_MS
+		)
+			return;
 		this.#lastReconcileAt = now;
 
 		const profileId = await callMethod("auth_state").catch(() => null);

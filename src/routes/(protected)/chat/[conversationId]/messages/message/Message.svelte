@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { ArrowBendUpLeftIcon } from "phosphor-svelte";
+	import { ArrowBendUpLeftIcon, CheckIcon } from "phosphor-svelte";
 	import { tick, untrack } from "svelte";
 	import { expoOut } from "svelte/easing";
 	import { scale } from "svelte/transition";
 
+	import { t } from "$lib/i18n";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import {
 		MAX_DRAG_PX,
@@ -152,6 +153,24 @@
 </script>
 
 {#snippet adornments()}
+	{#if lastInStack && status !== "pending" && status !== "error"}
+		<span
+			data-slot="bubble-meta"
+			class={[
+				"mt-1 flex items-center justify-end gap-1",
+				{ "text-message-bubble-out-foreground": isOut },
+			]}
+		>
+			{#if isRead !== null}
+				{#if isRead}
+					<CheckIcon class="size-3.5 opacity-90" weight="bold" />
+				{:else}
+					<CheckIcon class="size-3.5 opacity-60" weight="bold" />
+				{/if}
+			{/if}
+			<MessageTime />
+		</span>
+	{/if}
 	<div
 		class={[
 			"absolute top-0 z-5 -translate-y-1/2",
@@ -314,7 +333,7 @@
 			{/if}
 		</div>
 	</div>
-	{#if lastInStack}
+	{#if lastInStack && (status === "pending" || status === "error")}
 		<span
 			class={[
 				"mx-3 mt-0.5 text-xs text-muted-foreground",
@@ -322,18 +341,9 @@
 			]}
 		>
 			{#if status === "pending"}
-				Sending...
-			{:else if status === "error"}
-				<span class="text-destructive"> Failed to send </span>
+				{t("chat.sending")}
 			{:else}
-				{#if isRead !== null}
-					{#if isRead}
-						Read
-					{:else}
-						Sent
-					{/if}
-				{/if}
-				<MessageTime />
+				<span class="text-destructive">{t("chat.failedToSend")}</span>
 			{/if}
 		</span>
 	{/if}

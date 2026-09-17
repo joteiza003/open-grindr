@@ -715,55 +715,6 @@ a {
 	}
 }
 
-@supports not (
-	(-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
-) {
-	:root:root {
-		--bd-lens: none;
-		--bd-veil: none;
-		--bd-rail: none;
-		--bd-panel: none;
-		--bd-chip: none;
-		--glass-controls-bg: rgba(0, 0, 0, 0.62);
-		--glass-controls-subdued-bg: rgba(0, 0, 0, 0.42);
-		--scrim: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
-	}
-	:root:root .pblur-layer {
-		display: none;
-	}
-	:root:root .pblur-bg {
-		mask-image: linear-gradient(
-			var(--pblur-dir),
-			rgba(0, 0, 0, 0) 0%,
-			rgba(0, 0, 0, 0.061) 7%,
-			rgba(0, 0, 0, 0.216) 14%,
-			rgba(0, 0, 0, 0.425) 20%,
-			rgba(0, 0, 0, 0.648) 27%,
-			rgba(0, 0, 0, 0.844) 34%,
-			rgba(0, 0, 0, 0.972) 40%,
-			rgba(0, 0, 0, 1) 45%,
-			rgba(0, 0, 0, 1) 100%
-		);
-	}
-	:root:root .pblur-scrim {
-		display: block;
-		background-image: linear-gradient(
-			var(--pblur-dir),
-			rgba(0, 0, 0, 0) 0%,
-			rgba(0, 0, 0, 0.041) 15%,
-			rgba(0, 0, 0, 0.147) 30%,
-			rgba(0, 0, 0, 0.289) 45%,
-			rgba(0, 0, 0, 0.441) 60%,
-			rgba(0, 0, 0, 0.574) 75%,
-			rgba(0, 0, 0, 0.661) 90%,
-			rgba(0, 0, 0, 0.68) 100%
-		);
-	}
-	:root:root .menu-scrim::backdrop {
-		background-color: rgba(0, 0, 0, 0.62);
-	}
-}
-
 /* Profile experience tokens */
 :root {
 	--profile-content-max: 800px;
@@ -848,4 +799,282 @@ a {
 	animation-iteration-count: 1 !important;
 	transition-duration: 0.001ms !important;
 	scroll-behavior: auto !important;
+}
+
+/* WhatsApp chat skin: inbox list + conversation chrome. */
+:root[data-chat-style="whatsapp"] {
+	--wa-green: #00a884;
+	--wa-surface: #111b21;
+	--wa-chat: #0b141a;
+}
+
+:root[data-chat-style="whatsapp"] [data-slot="conversations-header"] {
+	background: var(--wa-surface);
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversations-header"]
+	button[aria-pressed="true"] {
+	background: var(--wa-green);
+	color: #111b21;
+}
+
+:root[data-chat-style="whatsapp"] [data-slot="conversations-scroller"] {
+	gap: 0;
+	padding-inline: 0;
+	background: var(--wa-surface);
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversations-scroller"]
+	[data-slot="item"],
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversation-row"]
+	[data-slot="item"] {
+	border-radius: 0;
+	border-color: transparent;
+	border-bottom: 1px solid color-mix(in srgb, white 8%, transparent);
+	background: transparent;
+}
+
+:root[data-chat-style="whatsapp"] [data-slot="conversations-scroller"] .size-20,
+:root[data-chat-style="whatsapp"] [data-slot="conversation-row"] .size-20 {
+	width: 3.25rem !important;
+	height: 3.25rem !important;
+	border-radius: 999px !important;
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversations-scroller"]
+	.after\:rounded-xl::after,
+:root[data-chat-style="whatsapp"] [data-slot="conversation-row"] .*:rounded-xl,
+:root[data-chat-style="whatsapp"] [data-slot="conversation-row"] .rounded-xl {
+	border-radius: 999px !important;
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversations-scroller"]
+	[data-slot="badge"],
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversation-row"]
+	[data-slot="badge"] {
+	background: var(--wa-green);
+	color: #111b21;
+	border-radius: 999px;
+}
+
+:root[data-chat-style="whatsapp"] [data-slot="message-bubble"] {
+	border-radius: 0.75rem;
+	box-shadow: 0 1px 0.5px rgb(0 0 0 / 18%);
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="message-composer"]
+	.rounded-composer {
+	border-radius: 1.5rem;
+	background: #202c33;
+}
+
+:root[data-chat-style="whatsapp"]
+	[data-slot="message-composer"]
+	button[type="submit"],
+:root[data-chat-style="whatsapp"]
+	[data-slot="message-composer"]
+	[data-slot="composer-submit"] {
+	color: var(--wa-green);
+}
+
+/* —— Open Grind Midnight — default premium material —— */
+:root[data-look="midnight"] {
+	--background: oklch(0.16 0.01 85);
+	--card: oklch(0.21 0.012 80);
+	--popover: oklch(0.23 0.014 80);
+	--surface-glass: color-mix(in oklch, var(--background) 68%, transparent);
+	--font-heading: "IBM Plex Sans Variable", sans-serif;
+}
+
+:root[data-theme="light"] {
+	--background: oklch(0.96 0.015 85);
+	--foreground: oklch(0.22 0.02 70);
+	--card: oklch(0.99 0.01 85);
+	--card-foreground: oklch(0.22 0.02 70);
+	--popover: oklch(0.99 0.01 85);
+	--popover-foreground: oklch(0.22 0.02 70);
+	--muted: oklch(0.93 0.015 85);
+	--muted-foreground: oklch(0.45 0.02 70);
+	--border: oklch(0.3 0.02 70 / 14%);
+	--input: oklch(0.3 0.02 70 / 12%);
+	color-scheme: light;
+}
+
+body.og-grain::before {
+	content: "";
+	pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 80;
+	opacity: 0.04;
+	mix-blend-mode: overlay;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+
+.app-nav-island {
+	border-radius: 999px;
+	border: 1px solid rgb(255 255 255 / 8%);
+	background: color-mix(in oklch, var(--background) 72%, transparent);
+	box-shadow:
+		0 1px 0 rgb(255 255 255 / 6%) inset,
+		0 12px 32px rgb(0 0 0 / 28%);
+	backdrop-filter: var(--bd-rail);
+}
+
+.app-nav-island a[data-active="true"] {
+	background: color-mix(in oklch, var(--accent) 18%, transparent);
+}
+
+.app-nav-badge-live {
+	animation: og-pulse 1.8s var(--ease-standard) infinite;
+}
+
+@keyframes og-pulse {
+	50% {
+		transform: scale(1.15);
+		opacity: 0.7;
+	}
+}
+
+:root[data-reduce-motion] .app-nav-badge-live {
+	animation: none;
+}
+
+[data-slot="conversations-scroller"] {
+	scrollbar-width: thin;
+}
+
+[data-slot="conversation-row"] [data-slot="item"] {
+	transition:
+		background-color var(--motion-fast) var(--ease-standard),
+		transform var(--motion-fast) var(--ease-standard);
+}
+
+[data-slot="message-bubble"] {
+	box-shadow: 0 1px 0 rgb(255 255 255 / 6%) inset;
+}
+
+[data-slot="bubble-meta"] {
+	font-variant-numeric: tabular-nums;
+	font-size: 0.6875rem;
+	line-height: 1;
+	opacity: 0.58;
+}
+
+[data-slot="message-composer"] .rounded-composer {
+	box-shadow:
+		0 1px 0 rgb(255 255 255 / 6%) inset,
+		0 8px 24px rgb(0 0 0 / 18%);
+}
+
+.profile-card img,
+.profile-card [data-slot="avatar"] {
+	transition: transform var(--motion-slow) var(--ease-standard);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	.profile-card:hover {
+		transform: scale(1.03);
+		z-index: 2;
+	}
+
+	.profile-card:hover img,
+	.profile-card:hover [data-slot="avatar"] {
+		transform: scale(1.06);
+	}
+}
+
+:root[data-reduce-motion] .profile-card:hover {
+	transform: none;
+}
+
+.og-settings-group {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	overflow: hidden;
+	border: 1px solid var(--border);
+	border-radius: 1.25rem;
+	background: color-mix(in oklch, var(--card) 88%, transparent);
+	box-shadow: 0 1px 0 rgb(255 255 255 / 6%) inset;
+}
+
+.og-settings-group > * {
+	border: 0 !important;
+	border-radius: 0 !important;
+}
+
+.leaflet-container {
+	background: #0b141a;
+}
+
+.og-wa-wallpaper {
+	background-color: #0b141a;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='%23ffffff' fill-opacity='0.035'%3E%3Ccircle cx='8' cy='8' r='1'/%3E%3Ccircle cx='28' cy='22' r='1'/%3E%3Ccircle cx='48' cy='12' r='1'/%3E%3Ccircle cx='18' cy='42' r='1'/%3E%3Ccircle cx='40' cy='48' r='1'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+.og-midnight-wash {
+	background:
+		radial-gradient(
+			120% 80% at 50% 0%,
+			color-mix(in oklch, var(--accent) 12%, transparent),
+			transparent 55%
+		),
+		var(--background);
+}
+
+@supports not (
+	(-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
+) {
+	:root:root {
+		--bd-lens: none;
+		--bd-veil: none;
+		--bd-rail: none;
+		--bd-panel: none;
+		--bd-chip: none;
+		--glass-controls-bg: rgba(0, 0, 0, 0.62);
+		--glass-controls-subdued-bg: rgba(0, 0, 0, 0.42);
+		--scrim: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.45));
+	}
+	:root:root .pblur-layer {
+		display: none;
+	}
+	:root:root .pblur-bg {
+		mask-image: linear-gradient(
+			var(--pblur-dir),
+			rgba(0, 0, 0, 0) 0%,
+			rgba(0, 0, 0, 0.061) 7%,
+			rgba(0, 0, 0, 0.216) 14%,
+			rgba(0, 0, 0, 0.425) 20%,
+			rgba(0, 0, 0, 0.648) 27%,
+			rgba(0, 0, 0, 0.844) 34%,
+			rgba(0, 0, 0, 0.972) 40%,
+			rgba(0, 0, 0, 1) 45%,
+			rgba(0, 0, 0, 1) 100%
+		);
+	}
+	:root:root .pblur-scrim {
+		display: block;
+		background-image: linear-gradient(
+			var(--pblur-dir),
+			rgba(0, 0, 0, 0) 0%,
+			rgba(0, 0, 0, 0.041) 15%,
+			rgba(0, 0, 0, 0.147) 30%,
+			rgba(0, 0, 0, 0.289) 45%,
+			rgba(0, 0, 0, 0.441) 60%,
+			rgba(0, 0, 0, 0.574) 75%,
+			rgba(0, 0, 0, 0.661) 90%,
+			rgba(0, 0, 0, 0.68) 100%
+		);
+	}
+	:root:root .menu-scrim::backdrop {
+		background-color: rgba(0, 0, 0, 0.62);
+	}
 }

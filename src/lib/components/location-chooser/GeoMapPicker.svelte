@@ -157,7 +157,7 @@
 		bind:instance={map}
 	>
 		<TileLayer
-			url={"https://tile.openstreetmap.org/{z}/{x}/{y}.png"}
+			url={"https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"}
 			options={{
 				maxZoom: 19,
 				attribution:

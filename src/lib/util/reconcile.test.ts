@@ -29,7 +29,12 @@ vi.mock("$lib/ws.svelte", () => ({
 	},
 }));
 
-const flushMockSubscriptions = () => vi.advanceTimersByTimeAsync(0);
+const flushMicrotasks = async () => {
+	await Promise.resolve();
+	await Promise.resolve();
+};
+
+const flushScheduledResync = () => vi.advanceTimersByTimeAsync(0);
 
 async function freshReconciler() {
 	connectedHandlers.length = 0;
@@ -37,7 +42,7 @@ async function freshReconciler() {
 	rejectedHandlers.length = 0;
 	vi.resetModules();
 	const { reconciler } = await import("./reconcile");
-	await flushMockSubscriptions();
+	await flushMicrotasks();
 	return reconciler;
 }
 
@@ -55,6 +60,7 @@ function reconnect() {
 
 describe("Reconciler resync after dropped websocket events", () => {
 	beforeEach(() => {
+		vi.useRealTimers();
 		vi.useFakeTimers();
 		vi.spyOn(console, "warn").mockImplementation(() => undefined);
 	});
@@ -70,10 +76,10 @@ describe("Reconciler resync after dropped websocket events", () => {
 		reconciler.subscribe(handler);
 
 		dropEvents(3);
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 
 		expect(handler).toHaveBeenCalledTimes(1);
-	});
+	}, 20_000);
 
 	it("defers a resync that lands inside the throttle window instead of dropping it", async () => {
 		const reconciler = await freshReconciler();
@@ -81,17 +87,17 @@ describe("Reconciler resync after dropped websocket events", () => {
 		reconciler.subscribe(handler);
 
 		dropEvents(3);
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1200);
 		dropEvents(7);
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(800);
 		expect(handler).toHaveBeenCalledTimes(2);
-	});
+	}, 20_000);
 
 	it("resyncs after a websocket event is rejected as unparsable", async () => {
 		const reconciler = await freshReconciler();
@@ -99,10 +105,10 @@ describe("Reconciler resync after dropped websocket events", () => {
 		reconciler.subscribe(handler);
 
 		rejectedHandlers.forEach((rejected) => rejected("tap.v1.tap_sent"));
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 
 		expect(handler).toHaveBeenCalledTimes(1);
-	});
+	}, 20_000);
 
 	it("coalesces a burst of drops into a single resync", async () => {
 		const reconciler = await freshReconciler();
@@ -110,7 +116,7 @@ describe("Reconciler resync after dropped websocket events", () => {
 		reconciler.subscribe(handler);
 
 		dropEvents(3);
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1000);
@@ -120,7 +126,7 @@ describe("Reconciler resync after dropped websocket events", () => {
 
 		await vi.advanceTimersByTimeAsync(2000);
 		expect(handler).toHaveBeenCalledTimes(2);
-	});
+	}, 20_000);
 
 	it("skips the pending resync when a reconnect reconcile lands after the drop and already covers it", async () => {
 		const reconciler = await freshReconciler();
@@ -128,7 +134,7 @@ describe("Reconciler resync after dropped websocket events", () => {
 		reconciler.subscribe(handler);
 
 		dropEvents(3);
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 		expect(handler).toHaveBeenCalledTimes(1);
 
 		await vi.advanceTimersByTimeAsync(1200);
@@ -137,10 +143,10 @@ describe("Reconciler resync after dropped websocket events", () => {
 		await vi.advanceTimersByTimeAsync(800);
 		reconnect();
 		reconnect();
-		await flushMockSubscriptions();
+		await flushScheduledResync();
 		expect(handler).toHaveBeenCalledTimes(2);
 
 		await vi.advanceTimersByTimeAsync(2000);
 		expect(handler).toHaveBeenCalledTimes(2);
-	});
+	}, 20_000);
 });

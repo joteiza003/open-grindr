@@ -16,6 +16,7 @@
 	import { Badge } from "$lib/components/ui/badge";
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
+	import { t } from "$lib/i18n";
 	import { previewLabel } from "$lib/model/messaging/message-preview";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
@@ -84,6 +85,7 @@
 
 {#snippet row()}
 	<ProfileItem
+		compact
 		{active}
 		avatar={{
 			mediaHash: participant?.primaryMediaHash ?? null,
@@ -112,7 +114,8 @@
 				{#if draft !== ""}
 					<span
 						data-slot="conversation-draft-prefix"
-						class="font-bold text-primary">Draft:&nbsp;</span
+						class="font-bold text-primary"
+						>{t("chat.draft")}&nbsp;</span
 					>{draft}
 				{:else if previewText !== null}
 					{previewText}
@@ -120,7 +123,7 @@
 					<span
 						class="font-normal tracking-tight text-muted-foreground italic"
 					>
-						Preview not available
+						{t("chat.previewUnavailable")}
 					</span>
 				{/if}
 			</Item.Description>
@@ -162,7 +165,7 @@
 			if (open) contextMenuUsed = true;
 		}}
 	>
-		<ContextMenu.Trigger class="rounded-2xl">
+		<ContextMenu.Trigger class="rounded-2xl" data-slot="conversation-row">
 			{@render row()}
 		</ContextMenu.Trigger>
 		{#if contextMenuUsed}
@@ -170,19 +173,19 @@
 				<ContextMenu.Item onSelect={togglePinned}>
 					{#if conversation.data.pinned}
 						<PushPinSlashIcon weight="fill" class="size-5" />
-						Unpin
+						{t("chat.unpin")}
 					{:else}
 						<PushPinIcon weight="fill" class="size-5" />
-						Pin
+						{t("chat.pin")}
 					{/if}
 				</ContextMenu.Item>
 				<ContextMenu.Item onSelect={toggleMuted}>
 					{#if conversation.data.muted}
 						<BellIcon weight="fill" class="size-5" />
-						Unmute
+						{t("chat.unmute")}
 					{:else}
 						<BellSimpleSlashIcon weight="fill" class="size-5" />
-						Mute
+						{t("chat.mute")}
 					{/if}
 				</ContextMenu.Item>
 				<ContextMenu.Separator />
@@ -191,7 +194,7 @@
 					onSelect={onRequestDelete}
 				>
 					<TrashIcon class="size-5" />
-					Delete
+					{t("chat.delete")}
 				</ContextMenu.Item>
 			</ContextMenu.Content>
 		{/if}

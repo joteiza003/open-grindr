@@ -11,6 +11,7 @@ import {
 } from "$lib/appearance/chat-colors";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
+import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
 import { geohashSchema } from "$lib/model/geohash";
 import { unitSystemSchema } from "$lib/util/units";
@@ -39,6 +40,7 @@ const preferencesSchema = z.object({
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
 	units: unitSystemSchema.default("metric"),
+	locale: localeSchema.default(DEFAULT_LOCALE),
 	appearance: z
 		.object({
 			theme: z.enum(["system", "dark", "light"]).default("system"),
@@ -83,6 +85,7 @@ const preferencesSchema = z.object({
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
+			style: z.enum(["default", "whatsapp"]).default("default"),
 			bubbleOut: bubbleColorSchema.default(DEFAULT_BUBBLE_OUT),
 			bubbleIn: bubbleColorSchema.default(DEFAULT_BUBBLE_IN),
 			background: z
@@ -104,6 +107,7 @@ const preferencesSchema = z.object({
 		.default({
 			density: "comfortable",
 			mediaPreview: true,
+			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,
 			background: {

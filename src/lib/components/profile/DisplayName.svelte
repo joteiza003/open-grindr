@@ -11,7 +11,7 @@
 </script>
 
 {#if name}
-	<span class={className}>{name}</span>
+	<span class={["font-heading tracking-tight", className]}>{name}</span>
 {:else}
 	<span class={["font-normal tracking-tight italic", className]}
 		>{fallback}</span

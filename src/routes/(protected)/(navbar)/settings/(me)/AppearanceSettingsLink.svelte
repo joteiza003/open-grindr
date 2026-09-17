@@ -2,6 +2,7 @@
 	import { CaretRightIcon, PaletteIcon } from "phosphor-svelte";
 
 	import * as Item from "$lib/components/ui/item";
+	import { t } from "$lib/i18n";
 </script>
 
 <Item.Root variant="outline">
@@ -14,7 +15,7 @@
 				<Item.Title
 					class="inline-block w-full min-w-0 truncate text-left"
 				>
-					Appearance
+					{t("settings.appearance")}
 				</Item.Title>
 			</Item.Content>
 			<Item.Actions>

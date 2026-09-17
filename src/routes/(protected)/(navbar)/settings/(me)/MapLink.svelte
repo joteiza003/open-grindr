@@ -14,7 +14,7 @@
 				<Item.Title
 					class="inline-block w-full min-w-0 truncate text-left"
 				>
-					Shared locations
+					Map
 				</Item.Title>
 			</Item.Content>
 			<Item.Actions>

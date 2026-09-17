@@ -7,6 +7,7 @@
 	import * as Empty from "$lib/components/ui/empty";
 	import { sentFilterKeys } from "$lib/grid/grid-query";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { t } from "$lib/i18n";
 	import { defaultFilters } from "$lib/model/browse/grid/filters";
 
 	const sentFilters = $derived(
@@ -28,10 +29,10 @@
 			<Icon weight={favorites ? "fill" : "regular"} />
 		</Empty.Media>
 		{#if !favorites}
-			<Empty.Title>No Profiles Found</Empty.Title>
-			<Empty.Description>
-				Try adjusting your filters or reset them to defaults.
-			</Empty.Description>
+			<Empty.Title class="font-heading"
+				>{t("empty.gridTitle")}</Empty.Title
+			>
+			<Empty.Description>{t("empty.gridBody")}</Empty.Description>
 		{:else if otherFilters}
 			<Empty.Title>No Results</Empty.Title>
 			<Empty.Description>

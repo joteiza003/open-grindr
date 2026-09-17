@@ -9,6 +9,7 @@
 	} from "$lib/app-data/preferences.svelte";
 	import { type AccentKey, accents } from "$lib/appearance/accents";
 	import * as Item from "$lib/components/ui/item";
+	import { t } from "$lib/i18n";
 
 	let pending = $state<AccentKey | null>(null);
 	const current = $derived(
@@ -28,9 +29,9 @@
 
 <Item.Root variant="outline" class="gap-3 p-4">
 	<Item.Content class="gap-1">
-		<Item.Title>Accent color</Item.Title>
+		<Item.Title>{t("appearance.accent")}</Item.Title>
 		<Item.Description>
-			Used across buttons, highlights, and the active tab.
+			{t("appearance.accentHint")}
 		</Item.Description>
 	</Item.Content>
 	<div

@@ -18,6 +18,7 @@
 		control,
 		onToggleSelected,
 		onLongPress,
+		compact = false,
 	}: {
 		avatar: {
 			mediaHash: string | null;
@@ -38,6 +39,7 @@
 		control?: import("svelte").Snippet;
 		onToggleSelected?: () => void;
 		onLongPress?: () => void;
+		compact?: boolean;
 	} = $props();
 
 	const longPress = $derived(
@@ -48,11 +50,27 @@
 </script>
 
 {#snippet avatarNode()}
-	<Item.Media class="relative translate-y-0! rounded-2xl p-2">
-		<Avatar.Root class="size-20 after:rounded-xl">
+	<Item.Media
+		class={[
+			"relative translate-y-0! p-2",
+			{ "rounded-full": compact, "rounded-2xl": !compact },
+		]}
+	>
+		<Avatar.Root
+			class={{
+				"size-[3.25rem] after:rounded-full": compact,
+				"size-20 after:rounded-xl": !compact,
+			}}
+		>
 			<UserAvatar
 				mediaHash={avatar.mediaHash}
-				class="size-20 rounded-xl bg-neutral-700 *:rounded-xl"
+				class={[
+					"bg-neutral-700",
+					{
+						"size-[3.25rem] rounded-full *:rounded-full": compact,
+						"size-20 rounded-xl *:rounded-xl": !compact,
+					},
+				]}
 			/>
 		</Avatar.Root>
 		{@render avatar.overlay?.()}
@@ -79,10 +97,12 @@
 	{@render actions?.()}
 {/snippet}
 <Item.Root
-	variant={active ? "muted" : "outline"}
+	variant={active || compact ? "muted" : "outline"}
 	class={[
 		"@container relative flex min-w-24 flex-nowrap items-stretch gap-0 p-0",
 		{
+			"rounded-none border-x-0 shadow-none": compact,
+			"border-transparent bg-accent/10": compact && active,
 			"border-primary outline-2 -outline-offset-2 outline-primary outline-solid":
 				selected,
 			"[-webkit-touch-callout:none] **:[-webkit-touch-callout:none]":

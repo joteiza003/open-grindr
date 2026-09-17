@@ -2,18 +2,19 @@
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { loadChatBackgroundUrl } from "$lib/appearance/chat-background";
 
-	const background = $derived(preferencesSnapshot().chat.background);
+	const chat = $derived(preferencesSnapshot().chat);
+	const background = $derived(chat.background);
+	const whatsappWallpaper = $derived(
+		chat.style === "whatsapp" && background.kind === "none",
+	);
 
 	let photoUrl = $state<string | null>(null);
 
-	// Load (and reload on replacement) the stored photo as an object URL, and
-	// revoke it on cleanup so we never leak blob URLs.
 	$effect(() => {
 		if (background.kind !== "photo") {
 			photoUrl = null;
 			return;
 		}
-		// Re-run when the stored photo changes.
 		void background.photoUpdatedAt;
 
 		let url: string | null = null;
@@ -37,7 +38,13 @@
 	});
 </script>
 
-{#if background.kind === "color"}
+{#if whatsappWallpaper}
+	<div class="og-wa-wallpaper pointer-events-none absolute inset-0 z-0"></div>
+{:else if background.kind === "none"}
+	<div
+		class="og-midnight-wash pointer-events-none absolute inset-0 z-0"
+	></div>
+{:else if background.kind === "color"}
 	<div
 		class="pointer-events-none absolute inset-0 z-0"
 		style:background-color={background.color}

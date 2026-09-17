@@ -14,6 +14,7 @@
 	import ComposerSubmitButton from "./ComposerSubmitButton.svelte";
 	import { setMessageComposerContext } from "./message-composer-context.svelte";
 	import MessageTextInput from "./MessageTextInput.svelte";
+	import ComposerQuickActions from "./quick-actions/ComposerQuickActions.svelte";
 	import ComposerVoiceMessage from "./voice-message/ComposerVoiceMessage.svelte";
 
 	let {
@@ -90,7 +91,8 @@
 
 <form
 	bind:this={form}
-	class="absolute bottom-0 z-20 flex min-h-9.5 w-full min-w-0 shrink-0 flex-col gap-1 px-2 pb-2"
+	data-slot="message-composer"
+	class="absolute bottom-0 z-20 flex min-h-9.5 w-full min-w-0 shrink-0 flex-col gap-1 px-3 pb-2"
 	bind:clientHeight={height}
 	oninput={remeasureBeforeResizeObserverCatchesUp}
 	onsubmit={(event) => {
@@ -101,19 +103,22 @@
 	{#if replyTo}
 		<ComposerReplyPreview message={replyTo} onCancel={onCancelReply} />
 	{/if}
-	<div class="relative h-full w-full rounded-composer bg-popover">
-		<MessageTextInput
-			bind:value={textContent}
-			bind:ref={textInput}
-			onEscape={onCancelReply}
-		/>
-		{#if textContent === ""}
-			{#key conversationId}
-				<ComposerAttachments />
-			{/key}
-			<ComposerVoiceMessage />
-		{:else}
-			<ComposerSubmitButton />
-		{/if}
+	<div class="flex w-full min-w-0 items-end gap-1">
+		<ComposerQuickActions {conversationId} {disabled} />
+		<div class="relative h-full min-w-0 flex-1 rounded-composer bg-popover">
+			<MessageTextInput
+				bind:value={textContent}
+				bind:ref={textInput}
+				onEscape={onCancelReply}
+			/>
+			{#if textContent === ""}
+				{#key conversationId}
+					<ComposerAttachments />
+				{/key}
+				<ComposerVoiceMessage />
+			{:else}
+				<ComposerSubmitButton />
+			{/if}
+		</div>
 	</div>
 </form>

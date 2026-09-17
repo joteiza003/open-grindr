@@ -17,13 +17,13 @@
 		<div class="flex w-full p-4 pb-nav-clear">
 			<div class="m-auto flex w-full max-w-120 flex-col gap-3 pb-16">
 				<ProfileLink id={data.ourProfileId} />
-				<span role="separator"></span>
-				<AccountSettingsLink />
-				<AppearanceSettingsLink />
-				<MapLink />
-				<AppSettingsLink />
+				<div class="og-settings-group">
+					<AccountSettingsLink />
+					<AppearanceSettingsLink />
+					<MapLink />
+					<AppSettingsLink />
+				</div>
 				<SignOutButton />
-				<span role="separator"></span>
 				<Socials />
 				<span
 					class="px-4 py-2 font-mono text-xs break-all whitespace-pre-wrap text-muted-foreground select-text"

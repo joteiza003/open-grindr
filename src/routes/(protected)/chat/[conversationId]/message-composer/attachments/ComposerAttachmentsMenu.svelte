@@ -13,7 +13,7 @@
 	import { Toggle } from "$lib/components/ui/toggle";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import ComposerAlbumsTab from "./albums/ComposerAlbumsTab.svelte";
-	import ComposerUnimplementedTab from "./ComposerUnimplementedTab.svelte";
+	import ComposerLocationTab from "./location/ComposerLocationTab.svelte";
 	import ComposerMediaTab from "./media/ComposerMediaTab.svelte";
 	import type { SelectionTab, Tab, TabSelection } from "./tabs";
 
@@ -142,10 +142,7 @@
 						/>
 					</Tabs.Content>
 					<Tabs.Content value="location">
-						<ComposerUnimplementedTab
-							label="Sharing location"
-							issue={35}
-						/>
+						<ComposerLocationTab onClose={() => (open = false)} />
 					</Tabs.Content>
 				</div>
 			</div>
