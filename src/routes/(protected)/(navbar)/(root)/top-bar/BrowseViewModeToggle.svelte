@@ -24,20 +24,17 @@
 	async function selectMode(mode: ViewMode): Promise<void> {
 		if (mode === value) return;
 		await setPreferences({
-			browse: {
-				...preferencesSnapshot().browse,
-				viewMode: mode,
-			},
+			browse: { ...preferencesSnapshot().browse, viewMode: mode },
 		});
 	}
 </script>
 
 <div
-	class="flex shrink-0 items-center gap-0.5 rounded-full border border-border/70 bg-background/70 p-0.5 backdrop-blur"
+	class="flex shrink-0 items-center gap-0.5 rounded-full border border-border/70 bg-background/70 p-0.5 backdrop-filter-(--bd-chip)"
 	role="group"
 	aria-label="Browse view"
 >
-	{#each modes as mode}
+	{#each modes as mode (mode.value)}
 		{@const Icon = mode.Icon}
 		<Button
 			variant="ghost"

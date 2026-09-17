@@ -6,7 +6,11 @@
 		type Map as LeafletMap,
 		type LeafletMouseEvent,
 	} from "leaflet";
-	import { CaretLeftIcon, CircleIcon, MapPinPlusIcon } from "phosphor-svelte";
+	import {
+		CaretLeftIcon,
+		CircleIcon,
+		MapPinPlusIcon,
+	} from "phosphor-svelte";
 	import {
 		Circle,
 		ControlAttribution,
@@ -21,10 +25,8 @@
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import {
-		clusterMarkers,
-		type MarkerCluster,
-	} from "$lib/map/cluster-markers";
+	import { t } from "$lib/i18n";
+	import { clusterMarkers, type MarkerCluster } from "$lib/map/cluster-markers";
 	import {
 		CIRCLE_FILL_OPACITY,
 		CIRCLE_SELECTED_WEIGHT,
@@ -61,10 +63,20 @@
 		}
 	});
 
+	let centered = $state(false);
 	$effect(() => {
+		if (!map) return;
+		map.invalidateSize();
+		if (centered) return;
+		if (customLocation) {
+			map.setView([customLocation.lat, customLocation.lon], 12);
+			centered = true;
+			return;
+		}
 		const first = library.locations[0];
-		if (!map || first === undefined) return;
+		if (first === undefined) return;
 		map.setView([first.lat, first.lon], 11);
+		centered = true;
 	});
 
 	const picking =
@@ -149,14 +161,12 @@
 	}
 
 	const selectedCircle = $derived(
-		overlays.circles.find(
-			(circle) => circle.id === overlays.selectedCircleId,
-		) ?? null,
+		overlays.circles.find((circle) => circle.id === overlays.selectedCircleId) ??
+			null,
 	);
 	const selectedMarker = $derived(
-		overlays.markers.find(
-			(marker) => marker.id === overlays.selectedMarkerId,
-		) ?? null,
+		overlays.markers.find((marker) => marker.id === overlays.selectedMarkerId) ??
+			null,
 	);
 
 	const empty =
@@ -169,9 +179,9 @@
 
 	const modeHint =
 		overlays.mode === "ADD_CIRCLE"
-			? "Tap the map to place the circumference center."
+			? t("map.tapCircle")
 			: overlays.mode === "ADD_MARKER"
-				? "Tap the map to place the marker."
+				? t("map.tapMarker")
 				: null;
 
 	async function confirmDelete(): Promise<void> {
@@ -185,19 +195,14 @@
 		confirmOpen = false;
 	}
 
-	function onClusterClick(
-		cluster: Extract<MarkerCluster, { type: "group" }>,
-	) {
+	function onClusterClick(cluster: Extract<MarkerCluster, { type: "group" }>) {
 		if (!map) return;
 		if (zoom >= 15) {
 			openCluster = cluster;
 			return;
 		}
 		openCluster = null;
-		map.setView(
-			[cluster.latitude, cluster.longitude],
-			Math.min(zoom + 2, 17),
-		);
+		map.setView([cluster.latitude, cluster.longitude], Math.min(zoom + 2, 17));
 	}
 
 	function pickClusteredMarker(marker: MapMarker) {
@@ -218,15 +223,15 @@
 		>
 			<CaretLeftIcon class="size-5" />
 		</a>
-		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">Map</h1>
+		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">{t("map.title")}</h1>
 		<Button
 			variant={overlays.mode === "ADD_CIRCLE" ||
 			overlays.mode === "CIRCLE_CONFIGURATION"
 				? "default"
 				: "secondary"}
 			size="icon"
-			aria-label="Add circumference"
-			title="Add circumference"
+			aria-label={t("map.addCircle")}
+			title={t("map.addCircle")}
 			onclick={() => overlays.beginAddCircle()}
 		>
 			<CircleIcon class="size-5" />
@@ -237,8 +242,8 @@
 				? "default"
 				: "secondary"}
 			size="icon"
-			aria-label="Add marker"
-			title="Add marker"
+			aria-label={t("map.addMarker")}
+			title={t("map.addMarker")}
 			onclick={() => overlays.beginAddMarker()}
 		>
 			<MapPinPlusIcon class="size-5" />
@@ -256,12 +261,11 @@
 				bind:instance={map}
 			>
 				<TileLayer
-					url={"https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"}
+					url={"https://tile.openstreetmap.org/{z}/{x}/{y}.png"}
 					options={{
 						maxZoom: 19,
-						subdomains: "abcd",
 						attribution:
-							'&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer nofollow noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/" target="_blank" rel="noreferrer">CARTO</a>',
+							'&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer nofollow noopener">OpenStreetMap</a> &nbsp;',
 					}}
 				/>
 				<ControlAttribution options={{ prefix: undefined }} />
@@ -400,8 +404,8 @@
 						}}
 					>
 						<Popup>
-							<strong>Your location</strong><br />
-							Custom position — independent from saved overlays.
+							<strong>{t("map.yourLocation")}</strong><br />
+							{t("map.customPosition")}
 						</Popup>
 					</Marker>
 				{/if}

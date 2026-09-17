@@ -167,14 +167,14 @@
 		>
 			{#if showDistance && distance !== null}
 				<span
-					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur"
+					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-filter-(--bd-chip)"
 				>
 					<DistanceFormatted {distance} />
 				</span>
 			{/if}
 			{#if isVisiting}
 				<span
-					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-blur"
+					class="rounded-full bg-black/45 px-2 py-0.5 text-3xs font-medium text-white backdrop-filter-(--bd-chip)"
 					>Visiting</span
 				>
 			{/if}

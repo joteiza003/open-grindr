@@ -1,5 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, sep } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const layout = readFileSync("src/layout.css", "utf8");
@@ -345,6 +345,7 @@ describe("backdrop token map", () => {
 	it("keeps blur declarations out of every other source file", () => {
 		const root = "src";
 		const offenders: string[] = [];
+		const posix = (value: string) => value.split(sep).join("/");
 		const walk = (directory: string) => {
 			for (const entry of readdirSync(directory, {
 				withFileTypes: true,
@@ -355,13 +356,14 @@ describe("backdrop token map", () => {
 					continue;
 				}
 				if (!/\.(svelte|ts)$/.test(entry.name)) continue;
-				if (full.startsWith("src/lib/blur/")) continue;
+				const rel = posix(relative(root, full));
+				if (rel.startsWith("lib/blur/")) continue;
 				if (
 					/backdrop-blur|backdrop-filter:/.test(
 						readFileSync(full, "utf8"),
 					)
 				) {
-					offenders.push(full);
+					offenders.push(rel);
 				}
 			}
 		};

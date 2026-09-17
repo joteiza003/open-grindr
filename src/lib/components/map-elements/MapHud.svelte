@@ -5,6 +5,7 @@
 	import MarkerEditor from "$lib/components/map-elements/MarkerEditor.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
+	import { t } from "$lib/i18n";
 	import type { MarkerCluster } from "$lib/map/cluster-markers";
 	import type { MapElementsState } from "$lib/map/map-elements-state.svelte";
 	import type { MapMarker } from "$lib/model/map-elements";
@@ -52,15 +53,12 @@
 
 {#if empty}
 	<div
-		class="pointer-events-none absolute inset-0 z-1000 grid place-items-center p-8 text-center"
+		class="pointer-events-none absolute inset-x-0 top-3 z-1000 flex justify-center px-4"
 	>
-		<div class="rounded-2xl bg-background/85 p-6">
-			<h2 class="text-lg font-semibold">Map</h2>
-			<p class="mt-1 text-sm text-muted-foreground">
-				Add a circumference or a marker. Shared chat locations also
-				appear here. Changing your custom location will not move saved
-				overlays.
-			</p>
+		<div
+			class="max-w-xl rounded-2xl border border-border bg-card/95 px-3 py-2 text-center shadow-xl"
+		>
+			<p class="text-sm text-muted-foreground">{t("map.empty")}</p>
 		</div>
 	</div>
 {/if}
@@ -73,9 +71,9 @@
 			onchange={(patch) => overlays.updateCircleDraft(patch)}
 			oncancel={() => overlays.cancelCreation()}
 			onsave={() => void overlays.saveCircleDraft()}
-			ondelete={overlays.circleDraft.id
-				? () => (confirmOpen = true)
-				: undefined}
+			ondelete={
+				overlays.circleDraft.id ? () => (confirmOpen = true) : undefined
+			}
 		/>
 	{:else if openCluster}
 		<section
@@ -83,7 +81,7 @@
 		>
 			<div class="mb-2 flex items-center justify-between">
 				<h2 class="text-sm font-semibold">
-					{openCluster.markers.length} markers
+					{openCluster.markers.length} {t("map.markers")}
 				</h2>
 				<Button
 					variant="ghost"
@@ -135,7 +133,7 @@
 				size="sm"
 				onclick={() => overlays.clearSelection()}
 			>
-				Close
+				{t("common.close")}
 			</Button>
 			<Button
 				variant="destructive"
@@ -152,20 +150,19 @@
 <AlertDialog.Root bind:open={confirmOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Delete this item?</AlertDialog.Title>
+			<AlertDialog.Title>{t("map.deleteTitle")}</AlertDialog.Title>
 			<AlertDialog.Description>
-				It will be removed from the map and from local storage. This
-				cannot be undone.
+				{t("map.deleteBody")}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel size="lg">Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel size="lg">{t("common.cancel")}</AlertDialog.Cancel>
 			<AlertDialog.Action
 				variant="destructive"
 				size="lg"
 				onclick={() => void onConfirmDelete()}
 			>
-				Delete
+				{t("common.delete")}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

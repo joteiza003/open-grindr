@@ -115,7 +115,7 @@
 	<div class="absolute end-1 top-1 flex items-center gap-1">
 		<button
 			type="button"
-			class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur transition-colors can-hover:hover:bg-black/60"
+			class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-filter-(--bd-panel) transition-colors can-hover:hover:bg-black/60"
 			aria-label={album.favorite ? "Remove favorite" : "Mark favorite"}
 			aria-pressed={album.favorite}
 			onclick={onToggleFavorite}
@@ -127,7 +127,7 @@
 		</button>
 		<DropdownMenu>
 			<DropdownMenuTrigger
-				class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur transition-colors can-hover:hover:bg-black/60"
+				class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-filter-(--bd-panel) transition-colors can-hover:hover:bg-black/60"
 				aria-label="Album actions"
 			>
 				<DotsThreeVerticalIcon class="size-4" weight="bold" />
