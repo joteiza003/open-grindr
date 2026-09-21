@@ -19,6 +19,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import * as Drawer from "$lib/components/ui/drawer";
 	import * as Empty from "$lib/components/ui/empty";
+	import { t } from "$lib/i18n";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import type { PhotoAlbum } from "$lib/model/messaging/photo-albums";
 	import { mediaMessageDraft } from "../attachments/media/media-messages";
@@ -158,8 +159,8 @@
 	variant="ghost"
 	size="icon"
 	class="size-9 shrink-0 rounded-full"
-	aria-label="Fotos"
-	title="Fotos"
+	aria-label={t("chat.photos")}
+	title={t("chat.photos")}
 	disabled={disabled || sending}
 	onclick={() => (open = true)}
 >
@@ -177,7 +178,7 @@
 				data-slot="drawer-handle"
 				class="mx-auto my-3 h-1.5 w-25 rounded-full bg-muted"
 			></div>
-			<h2 class="mb-3 text-base font-semibold">Fotos</h2>
+			<h2 class="mb-3 text-base font-semibold">{t("chat.photos")}</h2>
 			{#if loading}
 				<p class="text-sm text-muted-foreground">Loading albums…</p>
 			{:else if albums.length === 0}

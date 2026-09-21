@@ -229,7 +229,7 @@ describe("flows sharing one device", () => {
 		[
 			"google-oauth",
 			"app",
-			"Wait for the Open Grind update to finish downloading",
+			"Wait for the Grindr + update to finish downloading",
 		],
 		[
 			"app",

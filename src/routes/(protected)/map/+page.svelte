@@ -6,11 +6,7 @@
 		type Map as LeafletMap,
 		type LeafletMouseEvent,
 	} from "leaflet";
-	import {
-		CaretLeftIcon,
-		CircleIcon,
-		MapPinPlusIcon,
-	} from "phosphor-svelte";
+	import { CaretLeftIcon, CircleIcon, MapPinPlusIcon } from "phosphor-svelte";
 	import {
 		Circle,
 		ControlAttribution,
@@ -26,7 +22,10 @@
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
-	import { clusterMarkers, type MarkerCluster } from "$lib/map/cluster-markers";
+	import {
+		clusterMarkers,
+		type MarkerCluster,
+	} from "$lib/map/cluster-markers";
 	import {
 		CIRCLE_FILL_OPACITY,
 		CIRCLE_SELECTED_WEIGHT,
@@ -152,7 +151,7 @@
 			location.displayName ??
 			(location.senderId !== null
 				? `#${location.senderId}`
-				: "Shared location")
+				: t("chat.sharedLocation"))
 		);
 	}
 
@@ -161,12 +160,14 @@
 	}
 
 	const selectedCircle = $derived(
-		overlays.circles.find((circle) => circle.id === overlays.selectedCircleId) ??
-			null,
+		overlays.circles.find(
+			(circle) => circle.id === overlays.selectedCircleId,
+		) ?? null,
 	);
 	const selectedMarker = $derived(
-		overlays.markers.find((marker) => marker.id === overlays.selectedMarkerId) ??
-			null,
+		overlays.markers.find(
+			(marker) => marker.id === overlays.selectedMarkerId,
+		) ?? null,
 	);
 
 	const empty =
@@ -195,14 +196,19 @@
 		confirmOpen = false;
 	}
 
-	function onClusterClick(cluster: Extract<MarkerCluster, { type: "group" }>) {
+	function onClusterClick(
+		cluster: Extract<MarkerCluster, { type: "group" }>,
+	) {
 		if (!map) return;
 		if (zoom >= 15) {
 			openCluster = cluster;
 			return;
 		}
 		openCluster = null;
-		map.setView([cluster.latitude, cluster.longitude], Math.min(zoom + 2, 17));
+		map.setView(
+			[cluster.latitude, cluster.longitude],
+			Math.min(zoom + 2, 17),
+		);
 	}
 
 	function pickClusteredMarker(marker: MapMarker) {
@@ -223,7 +229,9 @@
 		>
 			<CaretLeftIcon class="size-5" />
 		</a>
-		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">{t("map.title")}</h1>
+		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">
+			{t("map.title")}
+		</h1>
 		<Button
 			variant={overlays.mode === "ADD_CIRCLE" ||
 			overlays.mode === "CIRCLE_CONFIGURATION"

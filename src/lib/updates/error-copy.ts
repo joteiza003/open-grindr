@@ -16,12 +16,12 @@ import {
 const unsupportedCopy: Record<Unsupported["reason"], string> = {
 	externallyManaged:
 		"Updates are managed by the store that installed the app",
-	foreignSigner: "This build was not signed by Open Grind",
-	foreignTarget: "The installed app isn't signed by Open Grind",
-	undetermined: "Open Grind can't tell whether it may update itself",
+	foreignSigner: "This build was not signed by Grindr +",
+	foreignTarget: "The installed app isn't signed by Grindr +",
+	undetermined: "Grindr + can't tell whether it may update itself",
 	noReleaseArtifacts: "No release is published for this platform",
 	sandboxed: "The sandbox this app runs in manages its own updates",
-	locationNotWritable: "Open Grind can't install the update in its directory",
+	locationNotWritable: "Grindr + can't install the update in its directory",
 };
 
 const userCanFix: Record<Unsupported["reason"], boolean> = {
@@ -53,12 +53,12 @@ const copy: Record<KnownKind, string> = {
 	assetReplaced: "The release changed during the download. Try again.",
 	canceled: "Update canceled",
 	nothingStaged: "No update is ready to install",
-	needsUnknownSources: "Open Grind needs permission to install updates",
-	needsManualInstall: "Quit Open Grind, then drag it onto Applications",
+	needsUnknownSources: "Grindr + needs permission to install updates",
+	needsManualInstall: "Quit Grindr +, then drag it onto Applications",
 	install: "Couldn't install the update",
 	checkTooSoon: "Already checked for updates recently",
 	autoChecksDisabled: "Automatic update checks are turned off",
-	unknownComponent: "Open Grind doesn't know that component",
+	unknownComponent: "Grindr + doesn't know that component",
 	busy: "Another download is already running",
 };
 
@@ -66,12 +66,12 @@ const addonUnsupportedCopy: Partial<Record<Unsupported["reason"], string>> = {
 	externallyManaged:
 		"The store that installed the Google OAuth app manages its updates",
 	foreignSigner:
-		"This copy of Open Grind isn't signed by Open Grind, so it can't install the Google OAuth app",
+		"This copy of Grindr + isn't signed by Grindr +, so it can't install the Google OAuth app",
 	foreignTarget:
-		"The installed Google OAuth app isn't signed by Open Grind. Uninstall it to install the official one.",
+		"The installed Google OAuth app isn't signed by Grindr +. Uninstall it to install the official one.",
 	noReleaseArtifacts: "The Google OAuth app isn't published for this device",
 	undetermined:
-		"Open Grind can't tell whether it may install the Google OAuth app",
+		"Grindr + can't tell whether it may install the Google OAuth app",
 };
 
 const addonCopy: Partial<Record<KnownKind, string>> = {
@@ -86,7 +86,7 @@ const addonUpdateCopy: Partial<Record<KnownKind, string>> = {
 };
 
 const busyCopy: Record<ComponentKey, string> = {
-	[APP_COMPONENT]: "Wait for the Open Grind update to finish downloading",
+	[APP_COMPONENT]: "Wait for the Grindr + update to finish downloading",
 	[GOOGLE_OAUTH_COMPONENT]:
 		"Wait for the Google OAuth app to finish downloading",
 	[RECAPTCHA_COMPONENT]:
@@ -126,7 +126,7 @@ export function noReleaseText({
 	component: ComponentKey;
 }): string {
 	return component === APP_COMPONENT
-		? "No Open Grind release is published yet"
+		? "No Grindr + release is published yet"
 		: "No Google OAuth app release is published yet";
 }
 

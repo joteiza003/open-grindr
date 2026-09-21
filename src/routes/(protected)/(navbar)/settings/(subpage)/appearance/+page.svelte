@@ -1,4 +1,5 @@
 <script lang="ts">
+	import * as Tabs from "$lib/components/ui/tabs";
 	import { t } from "$lib/i18n";
 	import AccentSetting from "./AccentSetting.svelte";
 	import BrowseCardSetting from "./BrowseCardSetting.svelte";
@@ -13,31 +14,40 @@
 	import LanguageSetting from "./LanguageSetting.svelte";
 	import MotionSetting from "./MotionSetting.svelte";
 	import ThemeSetting from "./ThemeSetting.svelte";
+
+	let section = $state<"general" | "browse" | "chat">("general");
 </script>
 
-<h2>{t("appearance.title")}</h2>
-<LanguageSetting />
-<ThemeSetting />
-<AccentSetting />
-<DensitySetting />
-<MotionSetting />
+<h1 class="truncate ps-4 text-xl font-semibold tracking-tight">
+	{t("appearance.title")}
+</h1>
 
-<h2>{t("appearance.browseGrid")}</h2>
-<GridPreview />
-<BrowseViewSetting />
-<BrowseInfoSetting />
-<BrowseCardSetting />
+<Tabs.Root bind:value={section} class="gap-3">
+	<Tabs.List class="w-full">
+		<Tabs.Trigger value="general">{t("appearance.general")}</Tabs.Trigger>
+		<Tabs.Trigger value="browse">{t("appearance.browseGrid")}</Tabs.Trigger>
+		<Tabs.Trigger value="chat">{t("appearance.chat")}</Tabs.Trigger>
+	</Tabs.List>
 
-<h2>{t("appearance.chat")}</h2>
-<ChatPreview />
-<ChatStyleSetting />
-<BubbleColorsSetting />
-<ChatBackgroundSetting />
+	<Tabs.Content value="general" class="flex flex-col gap-3">
+		<LanguageSetting />
+		<ThemeSetting />
+		<AccentSetting />
+		<DensitySetting />
+		<MotionSetting />
+	</Tabs.Content>
 
-<style lang="postcss">
-	@reference "$layout";
+	<Tabs.Content value="browse" class="flex flex-col gap-3">
+		<GridPreview />
+		<BrowseViewSetting />
+		<BrowseInfoSetting />
+		<BrowseCardSetting />
+	</Tabs.Content>
 
-	h2 {
-		@apply mt-2 truncate ps-4 text-xl font-semibold tracking-tight;
-	}
-</style>
+	<Tabs.Content value="chat" class="flex flex-col gap-3">
+		<ChatPreview />
+		<ChatStyleSetting />
+		<BubbleColorsSetting />
+		<ChatBackgroundSetting />
+	</Tabs.Content>
+</Tabs.Root>

@@ -5,6 +5,7 @@
 	import { loadFrequentPhrases } from "$lib/chat/frequent-phrases-library";
 	import { Button } from "$lib/components/ui/button";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { t } from "$lib/i18n";
 	import {
 		DEFAULT_FREQUENT_PHRASES,
 		type FrequentPhrase,
@@ -52,8 +53,8 @@
 				variant="ghost"
 				size="icon"
 				class={[className, "size-9 shrink-0 rounded-full"]}
-				aria-label="Frases frecuentes"
-				title="Frases frecuentes"
+				aria-label={t("chat.phrases")}
+				title={t("chat.phrases")}
 				{disabled}
 				{...props}
 			>
@@ -68,7 +69,7 @@
 	<DropdownMenu.Content class="max-h-80 w-64 overflow-auto" align="start">
 		<DropdownMenu.Group>
 			<DropdownMenu.GroupHeading
-				>Frases frecuentes</DropdownMenu.GroupHeading
+				>{t("chat.phrases")}</DropdownMenu.GroupHeading
 			>
 			{#each phrases as phrase (phrase.id)}
 				<DropdownMenu.Item onSelect={() => void sendPhrase(phrase)}>

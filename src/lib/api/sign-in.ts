@@ -25,7 +25,7 @@ export const companionDisabled = "companion-disabled";
 export const untrustedCompanionMessage =
 	"The installed Open Grind Google OAuth app isn't signed by Open Grind, so its token was refused. Uninstall it, or paste the OAuth token manually.";
 export const foreignBuildCompanionMessage =
-	"This copy of Open Grind isn't signed by Open Grind, so the Open Grind Google OAuth app can't sign it in. Paste the OAuth token manually.";
+	"This copy of Grindr + isn't signed by Open Grind, so the Open Grind Google OAuth app can't sign it in. Paste the OAuth token manually.";
 export const disabledCompanionMessage =
 	"The Open Grind Google OAuth app is turned off. Turn it on in Android settings, then try again.";
 

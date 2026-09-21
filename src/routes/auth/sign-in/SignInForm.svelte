@@ -55,7 +55,7 @@
 					),
 				"facebook-handoff-refused": () =>
 					toast.error(
-						"Facebook tried to open its own app, which Open Grind can't use. Sign in with your email and password instead.",
+						"Facebook tried to open its own app, which Grindr + can't use. Sign in with your email and password instead.",
 					),
 			},
 		},

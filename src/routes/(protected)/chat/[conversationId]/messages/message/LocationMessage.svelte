@@ -2,6 +2,7 @@
 	import { CaretRightIcon, MapPinIcon } from "phosphor-svelte";
 
 	import { captureLocationMessage } from "$lib/chat/capture-location";
+	import { t } from "$lib/i18n";
 	import { getConversationState } from "../../conversation-state.svelte";
 
 	let {
@@ -45,9 +46,11 @@
 		<MapPinIcon class="size-5" weight="fill" />
 	</span>
 	<span class="flex min-w-0 flex-col">
-		<span class="font-medium text-foreground">Shared location</span>
+		<span class="font-medium text-foreground"
+			>{t("chat.sharedLocation")}</span
+		>
 		<span class="text-xs">
-			{lat.toFixed(4)}, {lon.toFixed(4)} · View on map
+			{lat.toFixed(4)}, {lon.toFixed(4)} · {t("chat.viewOnMap")}
 		</span>
 	</span>
 	<CaretRightIcon class="size-4 shrink-0" />

@@ -27,8 +27,43 @@ export const es: Record<MessageKey, string> = {
 	"chat.photos": "Fotos",
 	"chat.location": "Ubicación",
 	"chat.sendLocation": "Enviar ubicación",
+	"chat.sharedLocation": "Ubicación compartida",
+	"chat.viewOnMap": "Ver en el mapa",
+	"chat.sendLocationTitle": "Enviar ubicación actual",
+	"chat.sendLocationBody":
+		"Se compartirá tu ubicación actual con este contacto. No se obtiene la posición hasta que confirmes.",
+	"chat.sendLocationFailed": "No se pudo enviar la ubicación",
+
+	"album.saved": "Guardado en tu biblioteca de álbumes",
+	"album.saveFailed": "No se pudo guardar el álbum",
+	"album.loadFailed": "No se pudo cargar el contenido del álbum",
+	"album.openFailed": "No se pudo abrir el álbum",
+	"album.open": "Abrir álbum",
+	"album.openFrom": "Abrir álbum de {name}",
+	"album.saveToLibrary": "Guardar álbum en tu biblioteca",
+	"album.searchPlaceholder": "Buscar por nombre o etiqueta…",
+	"album.searchLabel": "Buscar álbumes guardados",
+	"album.favoritesOnly": "Mostrar solo favoritos",
+	"album.emptyTitle": "No hay álbumes guardados",
+	"album.emptyBody":
+		"Abre un álbum en un chat y toca guardar para conservarlo aquí.",
+	"album.deleteTitle": "¿Eliminar este álbum guardado?",
+	"album.deleteBody":
+		"La copia local y sus archivos se eliminarán de tu biblioteca. Esto no se puede deshacer.",
+	"album.editTags": "Editar etiquetas",
+	"album.tagsDescription":
+		"Etiquetas privadas separadas por comas para este álbum.",
+	"album.tagsPlaceholder": "p. ej. gym, viajes",
+	"album.tagsLabel": "Etiquetas, separadas por comas",
+	"album.markFavorite": "Marcar como favorito",
+	"album.removeFavorite": "Quitar de favoritos",
+	"album.actions": "Acciones del álbum",
+	"album.itemOne": "{count} elemento",
+	"album.itemMany": "{count} elementos",
+	"album.temporary": "temporal",
 
 	"appearance.title": "Apariencia",
+	"appearance.general": "General",
 	"appearance.accent": "Color de acento",
 	"appearance.accentHint":
 		"Se usa en botones, destacados y la pestaña activa.",
@@ -38,7 +73,7 @@ export const es: Record<MessageKey, string> = {
 	"appearance.chatStyle": "Estilo del chat",
 	"appearance.chatStyleHint":
 		"Cambia la bandeja y la conversación para parecerse a otro mensajero.",
-	"appearance.styleDefault": "Open Grind",
+	"appearance.styleDefault": "Grindr +",
 	"appearance.styleWhatsapp": "WhatsApp",
 	"appearance.whatsappNote":
 		"El estilo WhatsApp cambia colores, densidad, colas y el fondo. Tus colores vuelven al salir.",
@@ -73,8 +108,7 @@ export const es: Record<MessageKey, string> = {
 	"settings.about": "Acerca de",
 	"settings.credits": "Créditos y licencias",
 	"settings.units": "Unidades",
-	"settings.unitsHint":
-		"Elige cómo se muestran distancia, altura y peso.",
+	"settings.unitsHint": "Elige cómo se muestran distancia, altura y peso.",
 	"settings.blur": "Desenfoque de fondo",
 	"settings.haptics": "Respuesta háptica",
 	"settings.hapticsHint":
@@ -257,32 +291,43 @@ export const es: Record<MessageKey, string> = {
 	"credits.web": "Paquetes web",
 	"credits.rust": "Crates de Rust",
 	"credits.android": "Bibliotecas Android",
-	"update.unsupported.externallyManaged": "Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Open Grind",
-	"update.unsupported.foreignTarget": "The installed app isn't signed by Open Grind",
-	"update.unsupported.undetermined": "Open Grind can't tell whether it may update itself",
-	"update.unsupported.noReleaseArtifacts": "No release is published for this platform",
-	"update.unsupported.sandboxed": "The sandbox this app runs in manages its own updates",
-	"update.unsupported.locationNotWritable": "Open Grind can't install the update in its directory",
+	"update.unsupported.externallyManaged":
+		"Updates are managed by the store that installed the app",
+	"update.unsupported.foreignSigner": "This build was not signed by Grindr +",
+	"update.unsupported.foreignTarget":
+		"The installed app isn't signed by Grindr +",
+	"update.unsupported.undetermined":
+		"Grindr + can't tell whether it may update itself",
+	"update.unsupported.noReleaseArtifacts":
+		"No release is published for this platform",
+	"update.unsupported.sandboxed":
+		"The sandbox this app runs in manages its own updates",
+	"update.unsupported.locationNotWritable":
+		"Grindr + can't install the update in its directory",
 	"update.error.network": "Couldn't reach the release server",
 	"update.error.server": "The release server refused the request",
-	"update.error.malformedIndex": "The release server sent something unreadable",
+	"update.error.malformedIndex":
+		"The release server sent something unreadable",
 	"update.error.noArtifact": "The release has no download for this platform",
 	"update.error.unsigned": "Failed to verify the update",
-	"update.error.foreignUrl": "The release points somewhere outside the release server",
+	"update.error.foreignUrl":
+		"The release points somewhere outside the release server",
 	"update.error.signature": "Failed to verify the update",
 	"update.error.storage": "Couldn't write the update to storage",
 	"update.error.oversize": "The download was larger than the release said",
-	"update.error.assetReplaced": "The release changed during the download. Try again.",
+	"update.error.assetReplaced":
+		"The release changed during the download. Try again.",
 	"update.error.canceled": "Update canceled",
 	"update.error.nothingStaged": "No update is ready to install",
-	"update.error.needsUnknownSources": "Open Grind needs permission to install updates",
-	"update.error.needsManualInstall": "Quit Open Grind, then drag it onto Applications",
+	"update.error.needsUnknownSources":
+		"Grindr + needs permission to install updates",
+	"update.error.needsManualInstall":
+		"Quit Grindr +, then drag it onto Applications",
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Open Grind doesn't know that component",
+	"update.error.unknownComponent": "Grindr + doesn't know that component",
 	"update.error.busy": "Another download is already running",
-	"update.noRelease.app": "No Open Grind release is published yet",
+	"update.noRelease.app": "No Grindr + release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 };

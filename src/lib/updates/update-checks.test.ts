@@ -52,12 +52,12 @@ describe("the automatic update checks switch", () => {
 		).toEqual({
 			title: "Check updates automatically",
 			description:
-				"Periodically request updates for Open Grind and its add-ons from git.opengrind.org. No personally identifiable information is sent, no requests are stored or analyzed.",
+				"Periodically request updates for Grindr + and its add-ons from git.opengrind.org. No personally identifiable information is sent, no requests are stored or analyzed.",
 			blocked: false,
 		});
 	});
 
-	it("names only Open Grind where no add-on installs", () => {
+	it("names only Grindr + where no add-on installs", () => {
 		expect(
 			automaticChecksSetting({
 				selfManaged: true,
@@ -65,7 +65,7 @@ describe("the automatic update checks switch", () => {
 				addonAvailable: false,
 			}).description,
 		).toBe(
-			"Periodically request updates for Open Grind from git.opengrind.org. No personally identifiable information is sent, no requests are stored or analyzed.",
+			"Periodically request updates for Grindr + from git.opengrind.org. No personally identifiable information is sent, no requests are stored or analyzed.",
 		);
 	});
 
@@ -73,7 +73,7 @@ describe("the automatic update checks switch", () => {
 		expect(automaticChecksSetting(storeBuild)).toEqual({
 			title: "Check add-on updates automatically",
 			description:
-				"Periodically ask git.opengrind.org whether newer versions of your installed add-ons are published. Open Grind itself isn't updated from here. No personally identifiable information is sent, no requests are stored or analyzed.",
+				"Periodically ask git.opengrind.org whether newer versions of your installed add-ons are published. Grindr + itself isn't updated from here. No personally identifiable information is sent, no requests are stored or analyzed.",
 			blocked: false,
 		});
 	});
@@ -82,13 +82,13 @@ describe("the automatic update checks switch", () => {
 		const setting = automaticChecksSetting({
 			...storeBuild,
 			unsupportedReason:
-				"Open Grind can't tell whether it may update itself",
+				"Grindr + can't tell whether it may update itself",
 		});
 
 		expect(setting.blocked).toBe(false);
 		expect(setting.title).toBe("Check add-on updates automatically");
 		expect(setting.description).toMatch(
-			/^Open Grind can't tell whether it may update itself\. Periodically ask git\.opengrind\.org whether newer versions of your installed add-ons/,
+			/^Grindr \+ can't tell whether it may update itself\. Periodically ask git\.opengrind\.org whether newer versions of your installed add-ons/,
 		);
 	});
 
@@ -97,12 +97,12 @@ describe("the automatic update checks switch", () => {
 			automaticChecksSetting({
 				selfManaged: false,
 				unsupportedReason:
-					"Open Grind can't install the update in its directory",
+					"Grindr + can't install the update in its directory",
 				addonAvailable: false,
 			}),
 		).toEqual({
 			title: "Check updates automatically",
-			description: "Open Grind can't install the update in its directory",
+			description: "Grindr + can't install the update in its directory",
 			blocked: true,
 		});
 	});
@@ -265,7 +265,7 @@ describe("the Check for updates action", () => {
 		await checkForUpdatesNow(storeBuild);
 
 		expect(toasts.showProblem).toHaveBeenCalledExactlyOnceWith({
-			title: "The installed Google OAuth app isn't signed by Open Grind. Uninstall it to install the official one.",
+			title: "The installed Google OAuth app isn't signed by Grindr +. Uninstall it to install the official one.",
 			body: undefined,
 		});
 	});

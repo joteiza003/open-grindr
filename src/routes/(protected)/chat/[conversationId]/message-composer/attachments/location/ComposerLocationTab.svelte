@@ -7,6 +7,7 @@
 		resolveChatLocation,
 	} from "$lib/chat/send-chat-location";
 	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
 	import { getMessageComposerContext } from "../../message-composer-context.svelte";
 
 	let { onClose }: { onClose: () => void } = $props();
@@ -32,7 +33,7 @@
 			await composer().sendMessages([locationMessageDraft(outcome.fix)]);
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Failed to send location", error });
+			showErrorToast({ label: t("chat.sendLocationFailed"), error });
 		} finally {
 			sending = false;
 		}
@@ -44,18 +45,17 @@
 		<MapPinIcon class="size-6" weight="fill" />
 	</span>
 	<div>
-		<p class="font-medium">Enviar ubicación actual</p>
+		<p class="font-medium">{t("chat.sendLocationTitle")}</p>
 		<p class="mt-1 max-w-70 text-sm text-muted-foreground">
-			Se compartirá tu ubicación actual con este contacto. No se obtiene
-			la posición hasta que confirmes.
+			{t("chat.sendLocationBody")}
 		</p>
 	</div>
 	<div class="flex gap-2">
 		<Button variant="outline" onclick={onClose} disabled={sending}>
-			Cancelar
+			{t("common.cancel")}
 		</Button>
 		<Button onclick={() => void confirmSend()} disabled={sending}>
-			Enviar ubicación
+			{t("chat.sendLocation")}
 		</Button>
 	</div>
 </div>

@@ -25,8 +25,41 @@ export const en = {
 	"chat.photos": "Photos",
 	"chat.location": "Location",
 	"chat.sendLocation": "Send location",
+	"chat.sharedLocation": "Shared location",
+	"chat.viewOnMap": "View on map",
+	"chat.sendLocationTitle": "Send current location",
+	"chat.sendLocationBody":
+		"Your current location will be shared with this contact. Nothing is fetched until you confirm.",
+	"chat.sendLocationFailed": "Couldn't send location",
+
+	"album.saved": "Saved to your album library",
+	"album.saveFailed": "Couldn't save album",
+	"album.loadFailed": "Couldn't load album content",
+	"album.openFailed": "Couldn't open album",
+	"album.open": "Open album",
+	"album.openFrom": "Open album from {name}",
+	"album.saveToLibrary": "Save album to your library",
+	"album.searchPlaceholder": "Search by name or tag…",
+	"album.searchLabel": "Search saved albums",
+	"album.favoritesOnly": "Show favorites only",
+	"album.emptyTitle": "No saved albums",
+	"album.emptyBody": "Open an album in a chat and tap save to keep it here.",
+	"album.deleteTitle": "Delete this saved album?",
+	"album.deleteBody":
+		"The local copy and its media will be removed from your library. This cannot be undone.",
+	"album.editTags": "Edit tags",
+	"album.tagsDescription": "Comma-separated private tags for this album.",
+	"album.tagsPlaceholder": "e.g. gym, travel",
+	"album.tagsLabel": "Tags, comma separated",
+	"album.markFavorite": "Mark favorite",
+	"album.removeFavorite": "Remove favorite",
+	"album.actions": "Album actions",
+	"album.itemOne": "{count} item",
+	"album.itemMany": "{count} items",
+	"album.temporary": "temporary",
 
 	"appearance.title": "Appearance",
+	"appearance.general": "General",
 	"appearance.accent": "Accent color",
 	"appearance.accentHint":
 		"Used across buttons, highlights, and the active tab.",
@@ -36,7 +69,7 @@ export const en = {
 	"appearance.chatStyle": "Chat style",
 	"appearance.chatStyleHint":
 		"Restyle the inbox and the conversation to match another messenger.",
-	"appearance.styleDefault": "Open Grind",
+	"appearance.styleDefault": "Grindr +",
 	"appearance.styleWhatsapp": "WhatsApp",
 	"appearance.whatsappNote":
 		"WhatsApp style sets bubble colors, list density, tails and the empty wallpaper. Your saved colors return when you switch back.",
@@ -71,7 +104,8 @@ export const en = {
 	"settings.about": "About",
 	"settings.credits": "Credits & Licenses",
 	"settings.units": "Units",
-	"settings.unitsHint": "Choose how distance, height, and weight are displayed.",
+	"settings.unitsHint":
+		"Choose how distance, height, and weight are displayed.",
 	"settings.blur": "Background blur",
 	"settings.haptics": "Haptic feedback",
 	"settings.hapticsHint":
@@ -252,33 +286,44 @@ export const en = {
 	"credits.web": "Web packages",
 	"credits.rust": "Rust crates",
 	"credits.android": "Android libraries",
-	"update.unsupported.externallyManaged": "Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Open Grind",
-	"update.unsupported.foreignTarget": "The installed app isn't signed by Open Grind",
-	"update.unsupported.undetermined": "Open Grind can't tell whether it may update itself",
-	"update.unsupported.noReleaseArtifacts": "No release is published for this platform",
-	"update.unsupported.sandboxed": "The sandbox this app runs in manages its own updates",
-	"update.unsupported.locationNotWritable": "Open Grind can't install the update in its directory",
+	"update.unsupported.externallyManaged":
+		"Updates are managed by the store that installed the app",
+	"update.unsupported.foreignSigner": "This build was not signed by Grindr +",
+	"update.unsupported.foreignTarget":
+		"The installed app isn't signed by Grindr +",
+	"update.unsupported.undetermined":
+		"Grindr + can't tell whether it may update itself",
+	"update.unsupported.noReleaseArtifacts":
+		"No release is published for this platform",
+	"update.unsupported.sandboxed":
+		"The sandbox this app runs in manages its own updates",
+	"update.unsupported.locationNotWritable":
+		"Grindr + can't install the update in its directory",
 	"update.error.network": "Couldn't reach the release server",
 	"update.error.server": "The release server refused the request",
-	"update.error.malformedIndex": "The release server sent something unreadable",
+	"update.error.malformedIndex":
+		"The release server sent something unreadable",
 	"update.error.noArtifact": "The release has no download for this platform",
 	"update.error.unsigned": "Failed to verify the update",
-	"update.error.foreignUrl": "The release points somewhere outside the release server",
+	"update.error.foreignUrl":
+		"The release points somewhere outside the release server",
 	"update.error.signature": "Failed to verify the update",
 	"update.error.storage": "Couldn't write the update to storage",
 	"update.error.oversize": "The download was larger than the release said",
-	"update.error.assetReplaced": "The release changed during the download. Try again.",
+	"update.error.assetReplaced":
+		"The release changed during the download. Try again.",
 	"update.error.canceled": "Update canceled",
 	"update.error.nothingStaged": "No update is ready to install",
-	"update.error.needsUnknownSources": "Open Grind needs permission to install updates",
-	"update.error.needsManualInstall": "Quit Open Grind, then drag it onto Applications",
+	"update.error.needsUnknownSources":
+		"Grindr + needs permission to install updates",
+	"update.error.needsManualInstall":
+		"Quit Grindr +, then drag it onto Applications",
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Open Grind doesn't know that component",
+	"update.error.unknownComponent": "Grindr + doesn't know that component",
 	"update.error.busy": "Another download is already running",
-	"update.noRelease.app": "No Open Grind release is published yet",
+	"update.noRelease.app": "No Grindr + release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 } as const;
 

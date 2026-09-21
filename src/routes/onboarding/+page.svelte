@@ -31,7 +31,7 @@
 			if (addToAppsMenu && offerAppsMenu()) {
 				await setDesktopEntryInstalled(true).catch((error: unknown) =>
 					showErrorToast({
-						label: "Couldn't add Open Grind to your apps",
+						label: "Couldn't add Grindr + to your apps",
 						error,
 					}),
 				);
@@ -56,7 +56,7 @@
 		<img src={icon} alt="" class="size-28" />
 		<div class="flex flex-col gap-1">
 			<h1 class="font-heading text-3xl font-semibold tracking-tight">
-				Open Grind
+				Grindr +
 			</h1>
 			<p class="text-xl text-muted-foreground">
 				Unofficial Grindr client
@@ -80,7 +80,7 @@
 		{#if offerAppsMenu()}
 			<Label class="flex items-center rounded-xl p-2 pb-3">
 				<Checkbox bind:checked={addToAppsMenu} />
-				Add Open Grind to your apps menu
+				Add Grindr + to your apps menu
 			</Label>
 		{/if}
 		<Button

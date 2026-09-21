@@ -12,6 +12,7 @@
 	import { albumShares } from "$lib/chat/album-shares.svelte";
 	import { saveAlbumToLibrary } from "$lib/chat/archive-album";
 	import MediaImage from "$lib/components/shared/MediaImage.svelte";
+	import { t } from "$lib/i18n";
 	import { now } from "$lib/util/clock";
 	import { proxyMediaUrl } from "$lib/util/media";
 	import {
@@ -98,10 +99,10 @@
 					distance: profile?.distance ?? null,
 				},
 			});
-			toast.success("Saved to your album library");
+			toast.success(t("album.saved"));
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Failed to save album", error });
+			showErrorToast({ label: t("album.saveFailed"), error });
 		} finally {
 			savingAlbum = false;
 		}
@@ -148,7 +149,7 @@
 			albumState = { status: "open", album: loaded };
 		})().catch((error) => {
 			console.error(error);
-			showErrorToast({ label: "Failed to load album content", error });
+			showErrorToast({ label: t("album.loadFailed"), error });
 			albumState = { status: "idle" };
 		});
 	});
@@ -187,7 +188,7 @@
 				lightbox.on("uiRegister", () => {
 					lightbox?.pswp?.ui?.registerElement({
 						name: "save-to-library",
-						ariaLabel: "Save album to your library",
+						ariaLabel: t("album.saveToLibrary"),
 						order: 9,
 						isButton: true,
 						html: '<svg aria-hidden="true" class="pswp__icn" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 16l-5-5h3V4h4v7h3l-5 5zM5 18h14v2H5z"/></svg>',
@@ -204,7 +205,7 @@
 			})
 			.catch((error) => {
 				console.error(error);
-				showErrorToast({ label: "Failed to open album", error });
+				showErrorToast({ label: t("album.openFailed"), error });
 				albumState = { status: "idle" };
 			});
 		return () => {
@@ -225,7 +226,7 @@
 				"opacity-50": albumState.status === "loading",
 			},
 		]}
-		aria-label="Open album"
+		aria-label={t("album.open")}
 		onclick={openAlbum}
 		disabled={albumState.status !== "idle"}
 		{@attach media.attach}

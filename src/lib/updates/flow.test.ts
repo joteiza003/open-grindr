@@ -734,7 +734,7 @@ describe("installing on request", () => {
 		await flow.installNow();
 
 		expect(view.events).toEqual([
-			"problem:No Open Grind release is published yet",
+			"problem:No Grindr + release is published yet",
 		]);
 	});
 });

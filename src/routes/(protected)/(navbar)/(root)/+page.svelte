@@ -20,7 +20,7 @@
 </script>
 
 <svelte:head>
-	<title>Open Grind</title>
+	<title>Grindr +</title>
 </svelte:head>
 {#await preferencesHydrated then}
 	{#if geohash === null}

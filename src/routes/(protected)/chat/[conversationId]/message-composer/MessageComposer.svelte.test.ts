@@ -261,8 +261,8 @@ describe("MessageComposer reply bar", () => {
 
 	it("shows circular quick-action buttons next to the composer", () => {
 		const { getByLabelText } = renderComposer();
-		expect(getByLabelText("Frases frecuentes")).toBeTruthy();
-		expect(getByLabelText("Fotos")).toBeTruthy();
-		expect(getByLabelText("Ubicación")).toBeTruthy();
+		expect(getByLabelText("Frequent phrases")).toBeTruthy();
+		expect(getByLabelText("Photos")).toBeTruthy();
+		expect(getByLabelText("Location")).toBeTruthy();
 	});
 });

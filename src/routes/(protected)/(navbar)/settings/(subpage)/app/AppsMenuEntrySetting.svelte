@@ -12,7 +12,7 @@
 
 <SwitchField
 	title="Show in apps menu"
-	description="Add Open Grind to your applications list so it appears in your launcher and gets its icon."
+	description="Add Grindr + to your applications list so it appears in your launcher and gets its icon."
 	bind:checked={
 		() => value,
 		(newValue: boolean) => {
@@ -21,8 +21,8 @@
 				.catch((error: unknown) => {
 					showErrorToast({
 						label: newValue
-							? "Couldn't add Open Grind to your apps"
-							: "Couldn't remove Open Grind from your apps",
+							? "Couldn't add Grindr + to your apps"
+							: "Couldn't remove Grindr + from your apps",
 						error,
 					});
 				})

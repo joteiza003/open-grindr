@@ -8,6 +8,7 @@
 	} from "$lib/chat/send-chat-location";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
 
 	let {
@@ -36,7 +37,7 @@
 			await composer().sendMessages([locationMessageDraft(outcome.fix)]);
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Failed to send location", error });
+			showErrorToast({ label: t("chat.sendLocationFailed"), error });
 		} finally {
 			sending = false;
 		}
@@ -48,8 +49,8 @@
 	variant="ghost"
 	size="icon"
 	class="size-9 shrink-0 rounded-full"
-	aria-label="Ubicación"
-	title="Ubicación"
+	aria-label={t("chat.location")}
+	title={t("chat.location")}
 	{disabled}
 	onclick={() => (open = true)}
 >
@@ -63,10 +64,9 @@
 <AlertDialog.Root bind:open>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Enviar ubicación actual</AlertDialog.Title>
+			<AlertDialog.Title>{t("chat.sendLocationTitle")}</AlertDialog.Title>
 			<AlertDialog.Description>
-				Se compartirá tu ubicación actual con este contacto. No se
-				obtiene la posición hasta que confirmes.
+				{t("chat.sendLocationBody")}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
@@ -75,14 +75,14 @@
 				disabled={sending}
 				onclick={() => (open = false)}
 			>
-				Cancelar
+				{t("common.cancel")}
 			</AlertDialog.Cancel>
 			<AlertDialog.Action
 				size="lg"
 				disabled={sending}
 				onclick={() => void confirmSend()}
 			>
-				Enviar ubicación
+				{t("chat.sendLocation")}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>

@@ -14,6 +14,7 @@
 		DropdownMenuItem,
 		DropdownMenuTrigger,
 	} from "$lib/components/ui/dropdown-menu";
+	import { t } from "$lib/i18n";
 	import type { SavedAlbum } from "$lib/model/messaging/saved-albums";
 
 	let {
@@ -74,7 +75,7 @@
 	<button
 		type="button"
 		class="absolute inset-0 text-start"
-		aria-label="Open album from {label}"
+		aria-label={t("album.openFrom", { name: label })}
 		onclick={onOpen}
 	>
 		{#if coverUrl}
@@ -94,9 +95,10 @@
 		>
 			<p class="truncate text-sm font-medium">{label}</p>
 			<p class="text-xs opacity-80">
-				{album.items.length}
-				{album.items.length === 1 ? "item" : "items"}
-				{#if album.sourceTemporary}· temporary{/if}
+				{album.items.length === 1
+					? t("album.itemOne", { count: album.items.length })
+					: t("album.itemMany", { count: album.items.length })}
+				{#if album.sourceTemporary}· {t("album.temporary")}{/if}
 			</p>
 			{#if album.tags.length > 0}
 				<div class="mt-1 flex flex-wrap gap-1">
@@ -116,7 +118,9 @@
 		<button
 			type="button"
 			class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-filter-(--bd-panel) transition-colors can-hover:hover:bg-black/60"
-			aria-label={album.favorite ? "Remove favorite" : "Mark favorite"}
+			aria-label={album.favorite
+				? t("album.removeFavorite")
+				: t("album.markFavorite")}
 			aria-pressed={album.favorite}
 			onclick={onToggleFavorite}
 		>
@@ -128,18 +132,18 @@
 		<DropdownMenu>
 			<DropdownMenuTrigger
 				class="grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-filter-(--bd-panel) transition-colors can-hover:hover:bg-black/60"
-				aria-label="Album actions"
+				aria-label={t("album.actions")}
 			>
 				<DotsThreeVerticalIcon class="size-4" weight="bold" />
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end">
 				<DropdownMenuItem onSelect={onEditTags}>
 					<TagIcon class="size-4" />
-					Edit tags
+					{t("album.editTags")}
 				</DropdownMenuItem>
 				<DropdownMenuItem variant="destructive" onSelect={onDelete}>
 					<TrashIcon class="size-4" />
-					Delete
+					{t("common.delete")}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

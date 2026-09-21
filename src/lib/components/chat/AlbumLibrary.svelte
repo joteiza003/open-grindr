@@ -11,6 +11,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
 	import * as ResponsiveDialog from "$lib/components/ui/responsive-dialog";
+	import { t } from "$lib/i18n";
 	import type { SavedAlbum } from "$lib/model/messaging/saved-albums";
 
 	let { class: className }: { class?: import("svelte/elements").ClassValue } =
@@ -28,7 +29,7 @@
 
 	function open(album: SavedAlbum): void {
 		openSavedAlbum(album).catch((error: unknown) => {
-			showErrorToast({ label: "Failed to open album", error });
+			showErrorToast({ label: t("album.openFailed"), error });
 		});
 	}
 
@@ -53,8 +54,8 @@
 			/>
 			<Input
 				bind:value={library.query}
-				placeholder="Search by name or tag…"
-				aria-label="Search saved albums"
+				placeholder={t("album.searchPlaceholder")}
+				aria-label={t("album.searchLabel")}
 				class="ps-9"
 			/>
 		</div>
@@ -62,7 +63,7 @@
 			variant={library.favoritesOnly ? "default" : "outline"}
 			size="icon"
 			class="size-9 shrink-0"
-			aria-label="Show favorites only"
+			aria-label={t("album.favoritesOnly")}
 			aria-pressed={library.favoritesOnly}
 			onclick={() => (library.favoritesOnly = !library.favoritesOnly)}
 		>
@@ -108,9 +109,9 @@
 	{:else if library.filtered.length === 0}
 		<div class="grid place-items-center p-8 text-center">
 			<div>
-				<h2 class="text-lg font-semibold">No saved albums</h2>
+				<h2 class="text-lg font-semibold">{t("album.emptyTitle")}</h2>
 				<p class="mt-1 text-sm text-muted-foreground">
-					Open an album in a chat and tap save to keep it here.
+					{t("album.emptyBody")}
 				</p>
 			</div>
 		</div>
@@ -138,14 +139,15 @@
 >
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>Delete this saved album?</AlertDialog.Title>
+			<AlertDialog.Title>{t("album.deleteTitle")}</AlertDialog.Title>
 			<AlertDialog.Description>
-				The local copy and its media will be removed from your library.
-				This cannot be undone.
+				{t("album.deleteBody")}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel size="lg">Cancel</AlertDialog.Cancel>
+			<AlertDialog.Cancel size="lg"
+				>{t("common.cancel")}</AlertDialog.Cancel
+			>
 			<AlertDialog.Action
 				variant="destructive"
 				size="lg"
@@ -155,7 +157,7 @@
 					if (target) void library.remove(target.localId);
 				}}
 			>
-				Delete
+				{t("common.delete")}
 			</AlertDialog.Action>
 		</AlertDialog.Footer>
 	</AlertDialog.Content>
@@ -172,20 +174,22 @@
 		dialogProps={{ showCloseButton: true }}
 	>
 		<ResponsiveDialog.Header>
-			<ResponsiveDialog.Title>Edit tags</ResponsiveDialog.Title>
+			<ResponsiveDialog.Title
+				>{t("album.editTags")}</ResponsiveDialog.Title
+			>
 			<ResponsiveDialog.Description class="sr-only">
-				Comma-separated private tags for this album.
+				{t("album.tagsDescription")}
 			</ResponsiveDialog.Description>
 		</ResponsiveDialog.Header>
 		<ResponsiveDialog.Body>
 			<Input
 				bind:value={tagDraft}
-				placeholder="e.g. gym, travel"
-				aria-label="Tags, comma separated"
+				placeholder={t("album.tagsPlaceholder")}
+				aria-label={t("album.tagsLabel")}
 			/>
 		</ResponsiveDialog.Body>
 		<ResponsiveDialog.Footer>
-			<Button onclick={saveTags}>Save</Button>
+			<Button onclick={saveTags}>{t("common.save")}</Button>
 		</ResponsiveDialog.Footer>
 	</ResponsiveDialog.Content>
 </ResponsiveDialog.Root>

@@ -26,8 +26,8 @@ function describeChecks({
 }: UpdatesScope): string {
 	if (selfManaged || !addonAvailable) {
 		const subject = addonAvailable
-			? "Open Grind and its add-ons"
-			: "Open Grind";
+			? "Grindr + and its add-ons"
+			: "Grindr +";
 		return (
 			unsupportedReason ??
 			`Periodically request updates for ${subject} from git.opengrind.org. ${privacyNote}`
@@ -36,7 +36,7 @@ function describeChecks({
 	if (unsupportedReason !== null) {
 		return `${unsupportedReason}. ${addonCheck} ${privacyNote}`;
 	}
-	return `${addonCheck} Open Grind itself isn't updated from here. ${privacyNote}`;
+	return `${addonCheck} Grindr + itself isn't updated from here. ${privacyNote}`;
 }
 
 export function automaticChecksSetting(scope: UpdatesScope): {
