@@ -4,6 +4,7 @@ import {
 	removeAppDataFile,
 	writeAppDataFileAtomic,
 } from "$lib/app-data";
+import { createWriteSerializer } from "$lib/app-data/serialize";
 import {
 	type SavedAlbum,
 	savedAlbumsFileSchema,
@@ -19,6 +20,9 @@ import {
 // A flat filename: writeAppDataFileAtomic only ensures the AppLocalData base
 // dir exists, not nested subdirectories, so the index must not live in a subdir.
 const INDEX_PATH = "album-library-index.json";
+
+// Serialize index mutations so overlapping saves/edits can't clobber each other.
+const serialize = createWriteSerializer();
 
 const EXTENSIONS: Record<string, string> = {
 	"image/jpeg": "jpg",
@@ -62,44 +66,53 @@ export async function loadSavedAlbums(): Promise<SavedAlbum[]> {
 }
 
 export async function upsertSavedAlbum(album: SavedAlbum): Promise<void> {
-	const albums = await loadIndex();
-	const index = albums.findIndex((a) => a.localId === album.localId);
-	if (index === -1) albums.unshift(album);
-	else albums[index] = album;
-	await writeIndex(albums);
+	await serialize(async () => {
+		const albums = await loadIndex();
+		const index = albums.findIndex((a) => a.localId === album.localId);
+		if (index === -1) albums.unshift(album);
+		else albums[index] = album;
+		await writeIndex(albums);
+	});
 }
 
 export async function updateSavedAlbum(
 	localId: string,
 	patch: Partial<Pick<SavedAlbum, "tags" | "favorite" | "hidden">>,
 ): Promise<SavedAlbum | null> {
-	const albums = await loadIndex();
-	const index = albums.findIndex((a) => a.localId === localId);
-	if (index === -1) return null;
-	const updated = { ...albums[index], ...patch } as SavedAlbum;
-	albums[index] = updated;
-	await writeIndex(albums);
-	return updated;
+	return serialize(async () => {
+		const albums = await loadIndex();
+		const index = albums.findIndex((a) => a.localId === localId);
+		if (index === -1) return null;
+		const updated = { ...albums[index], ...patch } as SavedAlbum;
+		albums[index] = updated;
+		await writeIndex(albums);
+		return updated;
+	});
 }
 
 export async function deleteSavedAlbum(localId: string): Promise<void> {
-	const albums = await loadIndex();
-	const album = albums.find((a) => a.localId === localId);
-	if (album) {
-		const paths = [
-			album.coverPath,
-			...album.items.map((item) => item.localPath),
-			...album.items.map((item) => item.thumbnailPath),
-		].filter((path): path is string => path !== null);
-		for (const path of paths) {
-			try {
-				await removeAppDataFile(path);
-			} catch (error) {
-				console.error("[album-library] Failed to remove media", error);
+	await serialize(async () => {
+		const albums = await loadIndex();
+		const album = albums.find((a) => a.localId === localId);
+		if (album) {
+			const paths = [
+				album.coverPath,
+				...album.items.map((item) => item.localPath),
+				...album.items.map((item) => item.thumbnailPath),
+			].filter((path): path is string => path !== null);
+			for (const path of paths) {
+				try {
+					await removeAppDataFile(path);
+				} catch (error) {
+					console.error(
+						"[album-library] Failed to remove media",
+						error,
+					);
+				}
 			}
 		}
-	}
-	await writeIndex(albums.filter((a) => a.localId !== localId));
+		await writeIndex(albums.filter((a) => a.localId !== localId));
+	});
 }
 
 export async function writeMediaFile(

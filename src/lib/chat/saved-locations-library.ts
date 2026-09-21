@@ -3,6 +3,7 @@ import {
 	readAppDataFile,
 	writeAppDataFileAtomic,
 } from "$lib/app-data";
+import { createWriteSerializer } from "$lib/app-data/serialize";
 import {
 	type SavedLocation,
 	savedLocationsFileSchema,
@@ -12,6 +13,10 @@ import {
 
 // Flat filename: the atomic writer does not create nested subdirectories.
 const INDEX_PATH = "location-map-index.json";
+
+// Serialize every read-modify-write cycle: received locations auto-capture on
+// render, so several can land at once and would otherwise clobber each other.
+const serialize = createWriteSerializer();
 
 async function loadIndex(): Promise<SavedLocation[]> {
 	if (!(await existsAppDataFile(INDEX_PATH))) return [];
@@ -34,14 +39,20 @@ export async function loadSavedLocations(): Promise<SavedLocation[]> {
 export async function upsertSavedLocation(
 	location: SavedLocation,
 ): Promise<void> {
-	const locations = await loadIndex();
-	const index = locations.findIndex((l) => l.localId === location.localId);
-	if (index === -1) locations.unshift(location);
-	else locations[index] = location;
-	await writeIndex(locations);
+	await serialize(async () => {
+		const locations = await loadIndex();
+		const index = locations.findIndex(
+			(l) => l.localId === location.localId,
+		);
+		if (index === -1) locations.unshift(location);
+		else locations[index] = location;
+		await writeIndex(locations);
+	});
 }
 
 export async function deleteSavedLocation(localId: string): Promise<void> {
-	const locations = await loadIndex();
-	await writeIndex(locations.filter((l) => l.localId !== localId));
+	await serialize(async () => {
+		const locations = await loadIndex();
+		await writeIndex(locations.filter((l) => l.localId !== localId));
+	});
 }

@@ -81,10 +81,15 @@
 		if (savingAlbum) return;
 		savingAlbum = true;
 		const profile = conversationState.profile;
+		// Reuse the content the viewer already loaded so we never re-fetch a
+		// single-view album (which can come back empty after being opened).
+		const loaded =
+			albumState.status === "open" ? albumState.album.content : undefined;
 		try {
 			await saveAlbumToLibrary({
 				body: message,
 				conversationId: conversationState.conversationId,
+				content: loaded,
 				profileSnapshot: {
 					profileId:
 						profile?.profileId ?? message.ownerProfileId ?? null,

@@ -16,38 +16,64 @@ import {
 type AlbumBody = AlbumMessage["body"];
 
 /**
+ * A media slide we can persist. `url`/`thumbUrl` may already be proxied
+ * (`ogmedia://…`) — `proxyMediaUrl` is a no-op on a non-https URL, so passing
+ * either the raw or the proxied form is safe.
+ */
+export type SavableAlbumSlide = {
+	contentId: number;
+	contentType: string;
+	url: string;
+	thumbUrl: string;
+};
+
+/**
  * Save an album the user is viewing into the local library. This is only ever
  * called from an explicit user action (e.g. a "Save" button in the viewer),
- * never automatically. It fetches the album while it is still accessible,
- * downloads each media file's bytes through the native media proxy, and stores
- * them alongside a snapshot of the sender so the album stays usable and
- * filterable even after the original expires.
+ * never automatically. It downloads each media file's bytes through the native
+ * media proxy and stores them alongside a snapshot of the sender so the album
+ * stays usable and filterable even after the original expires.
+ *
+ * Prefer passing `content` from the already-open viewer: re-fetching a
+ * single-view (ONCE) album after it has been opened can come back empty, which
+ * would make the save fail. Falls back to fetching when no content is supplied.
  */
 export async function saveAlbumToLibrary({
 	body,
 	conversationId,
 	profileSnapshot,
+	content,
 }: {
 	body: AlbumBody;
 	conversationId: string;
 	profileSnapshot: SavedAlbumProfileSnapshot;
+	content?: SavableAlbumSlide[];
 }): Promise<SavedAlbum> {
-	const album = await getAlbumContent(body.albumId);
+	const slides = content ?? (await getAlbumContent(body.albumId)).content;
 	const storageId = crypto.randomUUID();
 
 	const items: SavedAlbum["items"] = [];
-	for (const slide of album.content) {
+	for (const slide of slides) {
 		if (!slide.url) continue;
 		const kind = slide.contentType.startsWith("video/") ? "video" : "image";
-		const bytes = await downloadMediaBytes(
-			proxyMediaUrl(slide.url, { as: kind }),
-		);
-		const localPath = mediaFileName(
-			storageId,
-			String(slide.contentId),
-			slide.contentType,
-		);
-		await writeMediaFile(localPath, bytes);
+
+		// One slide that fails to download must not lose the whole album; save
+		// the rest and let the empty-album check below decide if nothing landed.
+		let localPath: string;
+		try {
+			const bytes = await downloadMediaBytes(
+				proxyMediaUrl(slide.url, { as: kind }),
+			);
+			localPath = mediaFileName(
+				storageId,
+				String(slide.contentId),
+				slide.contentType,
+			);
+			await writeMediaFile(localPath, bytes);
+		} catch (error) {
+			console.error("[album-library] media save failed", error);
+			continue;
+		}
 
 		let thumbnailPath: string | null = null;
 		try {
