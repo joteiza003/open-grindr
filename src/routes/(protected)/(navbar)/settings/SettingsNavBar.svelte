@@ -3,9 +3,13 @@
 	import { ArrowLeftIcon } from "phosphor-svelte";
 
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
+	import { t } from "$lib/i18n";
 
 	const base = "/(protected)/(navbar)/settings/(subpage)";
-	const routes: Record<string, { title: string; back: string }> = {
+	const routes: Record<
+		string,
+		{ title: string | (() => string); back: string }
+	> = {
 		[`${base}/account`]: { title: "Account Settings", back: "/settings" },
 		[`${base}/account/privacy`]: {
 			title: "Privacy",
@@ -25,6 +29,10 @@
 			back: "/settings/app",
 		},
 		[`${base}/profile`]: { title: "Edit Profile", back: "/settings" },
+		[`${base}/phrases`]: {
+			title: () => t("phrases.settings"),
+			back: "/settings",
+		},
 	};
 
 	const current = $derived(
@@ -50,6 +58,6 @@
 		<ArrowLeftIcon size={32} />
 	</a>
 	<span class="min-w-0 truncate">
-		{current.title}
+		{typeof current.title === "function" ? current.title() : current.title}
 	</span>
 </ProgressiveBlur>

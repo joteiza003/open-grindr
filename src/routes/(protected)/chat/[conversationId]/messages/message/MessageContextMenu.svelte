@@ -3,6 +3,7 @@
 	import {
 		ArrowBendUpLeftIcon,
 		ArrowUUpLeftIcon,
+		ChatCircleTextIcon,
 		CopyIcon,
 		FlagIcon,
 		TrashIcon,
@@ -12,12 +13,15 @@
 	import type { ComponentProps } from "svelte";
 
 	import fireEmoji from "$lib/assets/emojis/fire/32px.png";
+	import { addMessageToFrequentPhrases } from "$lib/chat/add-phrase-from-message";
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import ContextMenu from "$lib/components/shared/ContextMenu.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
 
 	let {
 		textContent,
+		phraseText,
 		reactionAvailable,
 		onDelete,
 		onUnsend,
@@ -27,6 +31,8 @@
 		...props
 	}: ComponentProps<typeof ContextMenu> & {
 		textContent?: string;
+		/** Text this message can contribute as a frequent phrase. */
+		phraseText?: string;
 		reactionAvailable?: boolean;
 		onDelete?: () => void;
 		onUnsend?: () => void;
@@ -111,6 +117,18 @@
 					}}
 				>
 					<CopyIcon /> Copy message
+				</Button>
+			{/if}
+			{#if phraseText !== undefined}
+				<Button
+					variant="ghost"
+					onclick={() => {
+						void addMessageToFrequentPhrases(phraseText);
+						props.onClose();
+					}}
+				>
+					<ChatCircleTextIcon />
+					{t("phrases.addFromMessage")}
 				</Button>
 			{/if}
 			{#if onCopyError}

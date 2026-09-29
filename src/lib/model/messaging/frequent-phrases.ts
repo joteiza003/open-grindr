@@ -41,10 +41,108 @@ export const DEFAULT_FREQUENT_PHRASES: FrequentPhrase[] = [
 
 export function parseFrequentPhrasesFile(raw: unknown): FrequentPhrase[] {
 	const parsed = frequentPhrasesFileSchema.safeParse(raw);
-	if (!parsed.success || parsed.data.phrases.length === 0) {
+	// An intentionally emptied list is valid; only bad data falls back.
+	if (!parsed.success) {
 		return DEFAULT_FREQUENT_PHRASES.map((phrase) => ({ ...phrase }));
 	}
 	return [...parsed.data.phrases].sort(
 		(a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
 	);
+}
+
+export const MAX_PHRASE_LENGTH = 280;
+export const MAX_PHRASES = 100;
+
+export type PhraseProblem = "empty" | "too-long" | "duplicate" | "limit";
+
+function sameText(a: string, b: string): boolean {
+	return a.trim().toLowerCase() === b.trim().toLowerCase();
+}
+
+/** Why `text` can't be stored as a phrase, or null when it can. */
+export function phraseProblem(
+	phrases: FrequentPhrase[],
+	text: string,
+	{ ignoreId }: { ignoreId?: string } = {},
+): PhraseProblem | null {
+	const trimmed = text.trim();
+	if (trimmed === "") return "empty";
+	if (trimmed.length > MAX_PHRASE_LENGTH) return "too-long";
+	if (
+		phrases.some(
+			(phrase) =>
+				phrase.id !== ignoreId && sameText(phrase.text, trimmed),
+		)
+	) {
+		return "duplicate";
+	}
+	if (ignoreId === undefined && phrases.length >= MAX_PHRASES) return "limit";
+	return null;
+}
+
+/** Re-number `sortOrder` so it always mirrors list order. */
+export function renumberPhrases(phrases: FrequentPhrase[]): FrequentPhrase[] {
+	return phrases.map((phrase, index) => ({ ...phrase, sortOrder: index }));
+}
+
+export function addPhrase(
+	phrases: FrequentPhrase[],
+	text: string,
+	id: string = `phrase-${crypto.randomUUID()}`,
+): FrequentPhrase[] {
+	return renumberPhrases([...phrases, { id, text: text.trim() }]);
+}
+
+export function updatePhrase(
+	phrases: FrequentPhrase[],
+	id: string,
+	text: string,
+): FrequentPhrase[] {
+	return phrases.map((phrase) =>
+		phrase.id === id ? { ...phrase, text: text.trim() } : phrase,
+	);
+}
+
+export function removePhrases(
+	phrases: FrequentPhrase[],
+	ids: Iterable<string>,
+): FrequentPhrase[] {
+	const doomed = new Set(ids);
+	return renumberPhrases(phrases.filter((phrase) => !doomed.has(phrase.id)));
+}
+
+/** Move one phrase by `delta` positions (clamped to the list bounds). */
+export function movePhrase(
+	phrases: FrequentPhrase[],
+	id: string,
+	delta: number,
+): FrequentPhrase[] {
+	const from = phrases.findIndex((phrase) => phrase.id === id);
+	if (from === -1) return phrases;
+	const to = Math.min(phrases.length - 1, Math.max(0, from + delta));
+	if (to === from) return phrases;
+	const next = [...phrases];
+	const [moved] = next.splice(from, 1);
+	next.splice(to, 0, moved as FrequentPhrase);
+	return renumberPhrases(next);
+}
+
+/** Text a message can contribute as a frequent phrase, if it carries any. */
+export function phraseSourceText(message: {
+	type: string;
+	body?: unknown;
+}): string | undefined {
+	const body = message.body as Record<string, unknown> | undefined;
+	if (!body) return undefined;
+	const value =
+		message.type === "Text"
+			? body.text
+			: message.type === "ProfilePhotoReply"
+				? body.photoContentReply
+				: message.type === "AlbumContentReply"
+					? body.albumContentReply
+					: undefined;
+	return typeof value === "string" && value.trim() !== ""
+		? value.trim()
+		: undefined;
 }

@@ -6,6 +6,7 @@
 	import AppearanceSettingsLink from "./AppearanceSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
 	import MapLink from "./MapLink.svelte";
+	import PhrasesLink from "./PhrasesLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
@@ -23,6 +24,7 @@
 					<AppearanceSettingsLink />
 					<MapLink />
 					<AlbumsLink />
+					<PhrasesLink />
 					<AppSettingsLink />
 				</div>
 				<SignOutButton />

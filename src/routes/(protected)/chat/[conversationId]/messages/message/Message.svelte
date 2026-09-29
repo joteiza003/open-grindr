@@ -5,6 +5,7 @@
 	import { scale } from "svelte/transition";
 
 	import { t } from "$lib/i18n";
+	import { phraseSourceText } from "$lib/model/messaging/frequent-phrases";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import {
 		MAX_DRAG_PX,
@@ -358,6 +359,7 @@
 		onClose={() => (contextMenuOpen = false)}
 		style={inheritedStyles}
 		textContent={message.type === "Text" ? message.body.text : undefined}
+		phraseText={message.unsent ? undefined : phraseSourceText(message)}
 		reactionAvailable={message.reactions.length === 0 &&
 			!isOut &&
 			!message.unsent}

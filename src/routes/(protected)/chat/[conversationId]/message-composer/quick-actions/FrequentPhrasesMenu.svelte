@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import ChatCircleIcon from "phosphor-svelte/lib/ChatCircleIcon";
 
 	import { showErrorToast } from "$lib/api/error-toast";
@@ -71,11 +72,20 @@
 			<DropdownMenu.GroupHeading
 				>{t("chat.phrases")}</DropdownMenu.GroupHeading
 			>
+			{#if phrases.length === 0}
+				<DropdownMenu.Item disabled>
+					{t("phrases.menuEmpty")}
+				</DropdownMenu.Item>
+			{/if}
 			{#each phrases as phrase (phrase.id)}
 				<DropdownMenu.Item onSelect={() => void sendPhrase(phrase)}>
 					{phrase.text}
 				</DropdownMenu.Item>
 			{/each}
 		</DropdownMenu.Group>
+		<DropdownMenu.Separator />
+		<DropdownMenu.Item onSelect={() => void goto("/settings/phrases")}>
+			{t("phrases.manage")}
+		</DropdownMenu.Item>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>
