@@ -2,6 +2,7 @@
 	import { CaretLeftIcon } from "phosphor-svelte";
 
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
+	import { t } from "$lib/i18n";
 </script>
 
 <main
@@ -11,11 +12,13 @@
 		<a
 			href="/settings"
 			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
-			aria-label="Back"
+			aria-label={t("common.back")}
 		>
 			<CaretLeftIcon class="size-5" />
 		</a>
-		<h1 class="text-xl font-semibold tracking-tight">Saved albums</h1>
+		<h1 class="text-xl font-semibold tracking-tight">
+			{t("settings.albums")}
+		</h1>
 	</header>
 
 	<div class="min-h-0 flex-1 overflow-y-auto px-3 pb-6">

@@ -67,7 +67,7 @@
 			albums = albumsWithRecents({ stored, drawer: media });
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Couldn't load albums", error });
+			showErrorToast({ label: t("chat.albums.loadError"), error });
 			albums = [];
 		} finally {
 			loading = false;
@@ -90,9 +90,13 @@
 			album,
 			drawer,
 		});
-		if (total === 0) return "0 fotos";
-		if (missingIds.length === 0) return `${available.length} fotos`;
-		return `${available.length} de ${total} fotos disponibles`;
+		if (total === 0) return t("chat.albums.photosCount", { count: 0 });
+		if (missingIds.length === 0)
+			return t("chat.albums.photosCount", { count: available.length });
+		return t("chat.albums.photosPartial", {
+			available: available.length,
+			total,
+		});
 	}
 
 	async function sendAlbum(album: PhotoAlbum) {
@@ -101,8 +105,8 @@
 		if (items.length === 0) {
 			toast.error(
 				total === 0
-					? "This album is empty."
-					: "None of this album's photos are available.",
+					? t("chat.albums.emptyAlbum")
+					: t("chat.albums.noneAvailable"),
 			);
 			return;
 		}
@@ -116,10 +120,16 @@
 		};
 		if (missing > 0) {
 			toast.warning(
-				`Sending ${items.length} of ${total} photos. ${missing} no longer available.`,
+				t("chat.albums.sendingPartial", {
+					sent: items.length,
+					total,
+					missing,
+				}),
 			);
 		} else {
-			toast.message(`Enviando fotos… 0 / ${items.length}`);
+			toast.message(
+				t("chat.albums.sending", { sent: 0, total: items.length }),
+			);
 		}
 		try {
 			for (const item of items) {
@@ -138,13 +148,20 @@
 				}
 				if (progress) {
 					toast.message(
-						`Enviando fotos… ${progress.sent} / ${progress.total}`,
+						t("chat.albums.sending", {
+							sent: progress.sent,
+							total: progress.total,
+						}),
 					);
 				}
 			}
 			if (progress && progress.failed > 0) {
 				toast.error(
-					`${progress.failed} photo${progress.failed === 1 ? "" : "s"} could not be sent.`,
+					progress.failed === 1
+						? t("chat.albums.failedOne")
+						: t("chat.albums.failedMany", {
+								count: progress.failed,
+							}),
 				);
 			}
 		} finally {
@@ -180,14 +197,15 @@
 			></div>
 			<h2 class="mb-3 text-base font-semibold">{t("chat.photos")}</h2>
 			{#if loading}
-				<p class="text-sm text-muted-foreground">Loading albums…</p>
+				<p class="text-sm text-muted-foreground">
+					{t("chat.albums.loading")}
+				</p>
 			{:else if albums.length === 0}
 				<Empty.Root>
 					<Empty.Header>
-						<Empty.Title>No albums yet</Empty.Title>
+						<Empty.Title>{t("chat.albums.emptyTitle")}</Empty.Title>
 						<Empty.Description>
-							Virtual albums group photos already in your chat
-							drawer. They do not copy the files.
+							{t("chat.albums.emptyBody")}
 						</Empty.Description>
 					</Empty.Header>
 				</Empty.Root>

@@ -52,9 +52,7 @@ Se añadieron 29 claves nuevas a en/es/eu (`chat.*` de ubicación + bloque
       `LocationConfirmDialog`) que estaban en español fijo → claves `chat.phrases`/`chat.photos`/`chat.location`
 - [x] Test del composer actualizado a los valores localizados
 
-> Pendiente menor (fuera del alcance de #2, es su propia feature): textos
-> internos de `PhotoAlbumsSheet` («Loading albums…», «No albums yet», descripción)
-> siguen en inglés fijo. Anotado para una pasada futura.
+> `PhotoAlbumsSheet` también localizado (bloque `chat.albums.*` en en/es/eu).
 
 ## #4 — Ajustes de Apariencia: reestructurar ✅
 
@@ -76,7 +74,7 @@ grupo.
 
 ## Pendientes de fases posteriores (propuestas, no acordadas aún)
 
-- #3 Descubribilidad de Mapa/Álbumes
+- ~~#3 Descubribilidad de Mapa/Álbumes~~ ✅ Ajustes (Yo) ahora enlaza a Mapa y a Álbumes guardados (`settings.albums`), ambos localizados; la página `/albums` usa i18n. Falta valorar un acceso desde el Browse/barra inferior.
 - #5 Unificar notas de perfil (favorito vs. metadatos locales)
 - #6 Pulido de guardado/recepción (refresco en vivo del mapa, uso de almacenamiento)
 - #7 Estados vacíos/carga consistentes

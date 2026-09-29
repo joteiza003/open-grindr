@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { CaretRightIcon, MapPinIcon } from "phosphor-svelte";
+	import { CaretRightIcon, ImagesIcon } from "phosphor-svelte";
 
 	import * as Item from "$lib/components/ui/item";
 	import { t } from "$lib/i18n";
@@ -7,15 +7,15 @@
 
 <Item.Root variant="outline">
 	{#snippet child({ props })}
-		<a href="/map" {...props}>
+		<a href="/albums" {...props}>
 			<Item.Media>
-				<MapPinIcon weight="fill" class="size-5" />
+				<ImagesIcon weight="fill" class="size-5" />
 			</Item.Media>
 			<Item.Content class="min-w-0">
 				<Item.Title
 					class="inline-block w-full min-w-0 truncate text-left"
 				>
-					{t("settings.map")}
+					{t("settings.albums")}
 				</Item.Title>
 			</Item.Content>
 			<Item.Actions>
