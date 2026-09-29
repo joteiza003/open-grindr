@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import type { DrawerMedia } from "$lib/api/messaging/drawer";
-import { albumsWithRecents, resolveAlbumMedia } from "./photo-albums-library";
+import {
+	albumsWithRecents,
+	createPhotoAlbum,
+	removePhotoAlbum,
+	resolveAlbumMedia,
+	upsertPhotoAlbum,
+} from "./photo-albums-library";
 import { AlbumSendLock, orderedAlbumMedia } from "./send-photo-album";
 
 function media(id: number, createdTs = id): DrawerMedia {
@@ -65,5 +71,44 @@ describe("virtual photo albums", () => {
 		expect(lock.tryBegin("noche")).toBe(false);
 		lock.end("viaje");
 		expect(lock.tryBegin("noche")).toBe(true);
+	});
+});
+
+describe("photo album editing", () => {
+	it("creates an album with unique ids, first photo as cover", () => {
+		const album = createPhotoAlbum({
+			name: "  Viaje  ",
+			imageIds: ["3", "1", "3"],
+			id: "a1",
+			now: new Date("2026-01-01T00:00:00.000Z"),
+		});
+		expect(album).toEqual({
+			id: "a1",
+			name: "Viaje",
+			coverImageId: "3",
+			imageIds: ["3", "1"],
+			createdAt: "2026-01-01T00:00:00.000Z",
+		});
+	});
+
+	it("upserts in place, appends new ones and ignores the dynamic album", () => {
+		const a = createPhotoAlbum({ name: "A", imageIds: ["1"], id: "a" });
+		const b = createPhotoAlbum({ name: "B", imageIds: ["2"], id: "b" });
+		const list = upsertPhotoAlbum(upsertPhotoAlbum([], a), b);
+		expect(list.map((x) => x.id)).toEqual(["a", "b"]);
+		const renamed = upsertPhotoAlbum(list, { ...a, name: "A2" });
+		expect(renamed.map((x) => x.name)).toEqual(["A2", "B"]);
+		const recents = {
+			...a,
+			id: "album-recents",
+			dynamic: "drawer" as const,
+		};
+		expect(upsertPhotoAlbum(list, recents)).toEqual(list);
+	});
+
+	it("removes by id", () => {
+		const a = createPhotoAlbum({ name: "A", imageIds: [], id: "a" });
+		expect(removePhotoAlbum([a], "a")).toEqual([]);
+		expect(removePhotoAlbum([a], "x")).toEqual([a]);
 	});
 });

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import ImagesIcon from "phosphor-svelte/lib/ImagesIcon";
+	import PencilSimpleIcon from "phosphor-svelte/lib/PencilSimpleIcon";
+	import PlusIcon from "phosphor-svelte/lib/PlusIcon";
 	import { toast } from "svelte-sonner";
 
 	import { showErrorToast } from "$lib/api/error-toast";
@@ -21,9 +23,11 @@
 	import * as Empty from "$lib/components/ui/empty";
 	import { t } from "$lib/i18n";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
+	import { proxyMediaUrl } from "$lib/util/media";
 	import type { PhotoAlbum } from "$lib/model/messaging/photo-albums";
 	import { mediaMessageDraft } from "../attachments/media/media-messages";
 	import { getMessageComposerContext } from "../message-composer-context.svelte";
+	import PhotoAlbumEditor from "./PhotoAlbumEditor.svelte";
 
 	let {
 		conversationId,
@@ -40,6 +44,8 @@
 	let drawer = $state<DrawerMedia[]>([]);
 	let albums = $state<PhotoAlbum[]>([]);
 	let loading = $state(false);
+	// null = album list; otherwise the editor (album null means "new").
+	let editing = $state<{ album: PhotoAlbum | null } | null>(null);
 	let progress = $state<{
 		albumId: string;
 		sent: number;
@@ -75,14 +81,18 @@
 	}
 
 	$effect(() => {
-		if (!open) return;
+		if (!open) {
+			editing = null;
+			return;
+		}
 		void load();
 	});
 
 	function coverUrl(album: PhotoAlbum): string | null {
 		const coverId = album.coverImageId || album.imageIds[0];
 		if (!coverId) return null;
-		return drawer.find((item) => String(item.id) === coverId)?.url ?? null;
+		const url = drawer.find((item) => String(item.id) === coverId)?.url;
+		return url ? proxyMediaUrl(url) : null;
 	}
 
 	function availabilityLabel(album: PhotoAlbum): string {
@@ -195,58 +205,105 @@
 				data-slot="drawer-handle"
 				class="mx-auto my-3 h-1.5 w-25 rounded-full bg-muted"
 			></div>
-			<h2 class="mb-3 text-base font-semibold">{t("chat.photos")}</h2>
-			{#if loading}
-				<p class="text-sm text-muted-foreground">
-					{t("chat.albums.loading")}
-				</p>
-			{:else if albums.length === 0}
-				<Empty.Root>
-					<Empty.Header>
-						<Empty.Title>{t("chat.albums.emptyTitle")}</Empty.Title>
-						<Empty.Description>
-							{t("chat.albums.emptyBody")}
-						</Empty.Description>
-					</Empty.Header>
-				</Empty.Root>
+			{#if editing}
+				<PhotoAlbumEditor
+					album={editing.album}
+					{drawer}
+					onCancel={() => (editing = null)}
+					onDone={() => {
+						editing = null;
+						void load();
+					}}
+				/>
 			{:else}
-				<ul class="flex flex-col gap-2">
-					{#each albums as album (album.id)}
-						{@const cover = coverUrl(album)}
-						{@const available = resolveAlbumMedia({ album, drawer })
-							.available.length}
-						<li>
-							<button
-								type="button"
-								class="flex w-full items-center gap-3 rounded-2xl border border-border bg-card p-2 text-left disabled:opacity-50"
-								disabled={sending || available === 0}
-								onclick={() => void sendAlbum(album)}
+				<div class="mb-3 flex items-center gap-2">
+					<h2 class="flex-1 text-base font-semibold">
+						{t("chat.photos")}
+					</h2>
+					<Button
+						type="button"
+						size="sm"
+						variant="secondary"
+						disabled={loading || sending}
+						onclick={() => (editing = { album: null })}
+					>
+						<PlusIcon class="size-4" />
+						{t("chat.albums.new")}
+					</Button>
+				</div>
+				{#if loading}
+					<p class="text-sm text-muted-foreground">
+						{t("chat.albums.loading")}
+					</p>
+				{:else if albums.length === 0}
+					<Empty.Root>
+						<Empty.Header>
+							<Empty.Title
+								>{t("chat.albums.emptyTitle")}</Empty.Title
 							>
-								<span
-									class="size-14 shrink-0 overflow-hidden rounded-xl bg-muted"
+							<Empty.Description>
+								{t("chat.albums.emptyBody")}
+							</Empty.Description>
+						</Empty.Header>
+					</Empty.Root>
+				{:else}
+					<ul class="flex flex-col gap-2">
+						{#each albums as album (album.id)}
+							{@const cover = coverUrl(album)}
+							{@const available = resolveAlbumMedia({
+								album,
+								drawer,
+							}).available.length}
+							<li class="flex items-center gap-2">
+								<button
+									type="button"
+									class="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-border bg-card p-2 text-left disabled:opacity-50"
+									disabled={sending || available === 0}
+									onclick={() => void sendAlbum(album)}
 								>
-									{#if cover}
-										<img
-											src={cover}
-											alt=""
-											class="size-full object-cover"
-										/>
-									{/if}
-								</span>
-								<span class="min-w-0 flex-1">
-									<span class="block truncate font-medium">
-										{album.name}
-									</span>
 									<span
-										class="block text-xs text-muted-foreground"
+										class="size-14 shrink-0 overflow-hidden rounded-xl bg-muted"
 									>
-										{availabilityLabel(album)}
+										{#if cover}
+											<img
+												src={cover}
+												alt=""
+												class="size-full object-cover"
+											/>
+										{/if}
 									</span>
-								</span>
-							</button>
-						</li>
-					{/each}
-				</ul>
+									<span class="min-w-0 flex-1">
+										<span
+											class="block truncate font-medium"
+										>
+											{album.name}
+										</span>
+										<span
+											class="block text-xs text-muted-foreground"
+										>
+											{availabilityLabel(album)}
+										</span>
+									</span>
+								</button>
+								{#if !album.dynamic}
+									<Button
+										type="button"
+										variant="ghost"
+										size="icon"
+										class="size-9 shrink-0 rounded-full"
+										aria-label={t("chat.albums.editAria", {
+											name: album.name,
+										})}
+										disabled={sending}
+										onclick={() => (editing = { album })}
+									>
+										<PencilSimpleIcon class="size-4" />
+									</Button>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/if}
 			{/if}
 		</div>
 	</Drawer.Content>
