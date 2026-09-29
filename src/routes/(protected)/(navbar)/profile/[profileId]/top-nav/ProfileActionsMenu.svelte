@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
 	import {
 		CopyIcon,
+		CrosshairIcon,
 		DotsThreeIcon,
 		EyeSlashIcon,
 		FlagIcon,
@@ -14,6 +16,7 @@
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as DropdownMenu from "$lib/components/ui/dropdown-menu";
+	import { autoTriangulateProfile } from "$lib/location/auto-triangulate-profile";
 
 	let {
 		profileId,
@@ -60,6 +63,41 @@
 			<CopyIcon class="size-5" />
 			Copy profile ID
 		</DropdownMenu.Item>
+
+		<DropdownMenu.Item
+			disabled={submitting}
+			onSelect={async () => {
+				submitting = true;
+				try {
+					const result = await autoTriangulateProfile({ profileId });
+					const err =
+						result.error < 1000
+							? `±${Math.round(result.error)} m`
+							: `±${(result.error / 1000).toFixed(1)} km`;
+					toast.success(`Posición triangulada (${err})`, {
+						description: "Marcador añadido al mapa",
+						action: {
+							label: "Ver en mapa",
+							onClick: () => {
+								void goto("/map");
+							},
+						},
+					});
+				} catch (error) {
+					console.error(error);
+					showErrorToast({
+						label: "No se pudo triangular este perfil",
+						error,
+					});
+				} finally {
+					submitting = false;
+				}
+			}}
+		>
+			<CrosshairIcon class="size-5" />
+			Posicion
+		</DropdownMenu.Item>
+
 		<DropdownMenu.Item
 			onSelect={() => {
 				toast(ToastUnimplemented, {

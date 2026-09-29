@@ -40,6 +40,7 @@
 	import ProfileTags from "./ProfileTags.svelte";
 	import SexualPosition from "./SexualPosition.svelte";
 	import ProfileTopNavBar from "./top-nav/ProfileTopNavBar.svelte";
+	import TriangulateButton from "./TriangulateButton.svelte";
 
 	let { profileState }: { profileState: ProfileState } = $props();
 
@@ -167,6 +168,12 @@
 				if (profile.isFavorite) profileState.setNote(note);
 			}}
 		/>
+		<div class="flex items-center gap-2 px-4 pt-3">
+			<TriangulateButton profileId={profile.profileId} {displayName} />
+			<span class="text-xs text-muted-foreground">
+				Estima la ubicación real midiendo desde 3 posiciones
+			</span>
+		</div>
 	{/if}
 	<div
 		class={[
