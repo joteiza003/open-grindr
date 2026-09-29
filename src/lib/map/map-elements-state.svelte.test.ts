@@ -164,3 +164,54 @@ describe("MapElementsState", () => {
 		expect(state.mode).toBe("CIRCLE_CONFIGURATION");
 	});
 });
+
+describe("MapElementsState circle handles", () => {
+	async function withCircle() {
+		const backend = memoryMapElementsBackend();
+		const state = new MapElementsState(backend);
+		state.beginAddCircle();
+		state.handleMapClick(43.22, -2.05);
+		await state.saveCircleDraft();
+		const id = state.circles[0]?.id as string;
+		state.selectCircle(id);
+		return { backend, state, id };
+	}
+
+	it("moves an existing circle and persists the new centre", async () => {
+		const { backend, state } = await withCircle();
+		state.moveCircleDraft(43.3, -2.1);
+		expect((await state.saveCircleDraft()).ok).toBe(true);
+		expect(state.circles[0]?.latitude).toBe(43.3);
+		expect(state.circles[0]?.longitude).toBe(-2.1);
+		const reloaded = new MapElementsState(backend);
+		await reloaded.load();
+		expect(reloaded.circles[0]?.latitude).toBe(43.3);
+	});
+
+	it("ignores an invalid centre and keeps the draft", async () => {
+		const { state } = await withCircle();
+		state.moveCircleDraft(123, 0);
+		expect(state.circleDraft?.latitude).toBe(43.22);
+		expect(state.error).toMatch(/Latitude/);
+	});
+
+	it("resizes from a dragged edge handle", async () => {
+		const { state } = await withCircle();
+		const center = state.circleDraft;
+		expect(center).not.toBeNull();
+		// ~10 km east of the centre
+		state.resizeCircleDraftTo(
+			43.22,
+			-2.05 + 10 / (111.32 * Math.cos((43.22 * Math.PI) / 180)),
+		);
+		expect(state.circleDraft?.radiusKm).toBeGreaterThan(9.8);
+		expect(state.circleDraft?.radiusKm).toBeLessThan(10.2);
+	});
+
+	it("discarding an edit leaves the stored circle untouched", async () => {
+		const { state } = await withCircle();
+		state.moveCircleDraft(10, 10);
+		state.cancelCreation();
+		expect(state.circles[0]?.latitude).toBe(43.22);
+	});
+});

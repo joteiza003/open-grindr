@@ -75,8 +75,36 @@ grupo.
 ## Pendientes de fases posteriores (propuestas, no acordadas aún)
 
 - ~~#3 Descubribilidad de Mapa/Álbumes~~ ✅ Ajustes (Yo) ahora enlaza a Mapa y a Álbumes guardados (`settings.albums`), ambos localizados; la página `/albums` usa i18n. Falta valorar un acceso desde el Browse/barra inferior.
-- #5 Unificar notas de perfil (favorito vs. metadatos locales)
 - #6 Pulido de guardado/recepción (refresco en vivo del mapa, uso de almacenamiento)
 - #7 Estados vacíos/carga consistentes
 - #8 Accesibilidad y contraste
 - #9 Micro-detalles (duplicidad de acciones rápidas)
+
+## #5 — Notas de perfil unificadas ✅
+
+Había dos sistemas: la nota de favorito de Grindr (servidor, solo favoritos, 250 car. + teléfono) con botón,
+y una nota local en `profile-metadata` sin ninguna UI. Ahora hay **un solo botón/editor «Nota»** en todo
+perfil ajeno.
+
+- Guarda siempre la copia local (nota + teléfono) y, si es favorito, sincroniza la nota de Grindr primero
+  (si falla, no se guarda nada, así ambas copias coinciden).
+- Lectura: la copia de Grindr manda por campo; la local rellena huecos (sirve tras desmarcar favorito).
+- Límite: 250 si es favorito, 2000 si no; el editor lo explica.
+- Código: `src/lib/model/users/profile-note.ts` (+ tests), `profile-note/` (botón + editor), campo `phone` en `profile-metadata`.
+
+## Álbumes de fotos locales (selecciones) ✅
+
+Faltaba la pieza principal: `saveStoredPhotoAlbums` no se llamaba desde ningún sitio, así que solo existía «Recientes».
+Ahora, desde la hoja de fotos del chat: **Nuevo álbum**, editar (lápiz), reordenar por orden de toque (1.ª = portada) y eliminar
+(con confirmación). Son referencias a fotos del cajón, no copias. Escrituras serializadas (`mutateStoredPhotoAlbums`),
+fotos que ya no existen se conservan en el álbum. Portadas ahora pasan por `proxyMediaUrl`.
+
+## Mapa y círculos — pasada de detalle ✅
+
+- **Bug corregido:** `picking` se evaluaba una sola vez → el cursor de cruz y los clics sobre círculos/marcadores en modo «añadir» nunca funcionaban.
+- Círculos: tiradores en el mapa para **mover el centro** y **redimensionar** arrastrando el borde (antes solo slider); mover un círculo existente ahora se guarda.
+- Radio: slider **logarítmico** (0,1–200 km con precisión en radios pequeños), presets rápidos, coordenadas editables, diámetro/área y relación con tu ubicación personalizada.
+- Dibujo: círculos grandes debajo de los pequeños (todos seleccionables), borde discontinuo al seleccionar, etiqueta con nombre y radio, punto visible cuando el círculo es diminuto a ese zoom, enfoque automático al seleccionar.
+- Mapa: botones «ver todo» y «ir a mi ubicación», lista de elementos guardados, escala métrica, vista inicial mundial.
+- i18n completa (en/es/eu) de editores y controles. Utilidades geométricas nuevas (`destinationPoint`, área esférica, límites, escala log…) con tests.
+- Pendiente: los mensajes de validación del estado (`geographic.ts`) siguen en inglés (los tests los comprueban por texto).

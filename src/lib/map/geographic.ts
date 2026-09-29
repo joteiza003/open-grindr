@@ -106,3 +106,105 @@ export function distanceMeters(
 export function metersPerPixel(latitude: number, zoom: number): number {
 	return (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / 2 ** zoom;
 }
+
+type LatLon = { latitude: number; longitude: number };
+
+/** Point reached from `from` travelling `meters` along `bearingDeg` (0 = north). */
+export function destinationPoint(
+	from: LatLon,
+	bearingDeg: number,
+	meters: number,
+): LatLon {
+	const δ = meters / EARTH_RADIUS_M;
+	const θ = (bearingDeg * Math.PI) / 180;
+	const φ1 = (from.latitude * Math.PI) / 180;
+	const λ1 = (from.longitude * Math.PI) / 180;
+	const sinφ2 =
+		Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ);
+	const φ2 = Math.asin(Math.max(-1, Math.min(1, sinφ2)));
+	const λ2 =
+		λ1 +
+		Math.atan2(
+			Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+			Math.cos(δ) - Math.sin(φ1) * sinφ2,
+		);
+	const longitude =
+		(((((λ2 * 180) / Math.PI + 540) % 360) + 360) % 360) - 180;
+	return { latitude: (φ2 * 180) / Math.PI, longitude };
+}
+
+/** Radius in km implied by dragging a handle to `point`, clamped and rounded. */
+export function radiusFromPoint(center: LatLon, point: LatLon): number {
+	return roundRadius(distanceMeters(center, point) / KM_TO_METERS);
+}
+
+export function isPointInCircle(
+	point: LatLon,
+	circle: LatLon & { radiusKm: number },
+): boolean {
+	return distanceMeters(circle, point) <= circle.radiusKm * KM_TO_METERS;
+}
+
+/** Surface area of a spherical cap of the given radius, in km². */
+export function circleAreaKm2(radiusKm: number): number {
+	const earthKm = EARTH_RADIUS_M / KM_TO_METERS;
+	return 2 * Math.PI * earthKm * earthKm * (1 - Math.cos(radiusKm / earthKm));
+}
+
+/** [[south, west], [north, east]] box enclosing the circle. */
+export function circleBounds(
+	circle: LatLon & { radiusKm: number },
+): [[number, number], [number, number]] {
+	const meters = circle.radiusKm * KM_TO_METERS;
+	const north = destinationPoint(circle, 0, meters).latitude;
+	const south = destinationPoint(circle, 180, meters).latitude;
+	const east = destinationPoint(circle, 90, meters).longitude;
+	const west = destinationPoint(circle, 270, meters).longitude;
+	return [
+		[south, west],
+		[north, east],
+	];
+}
+
+/** "350 m" below one km, "5.2 km" / "120 km" above. */
+export function formatDistanceKm(km: number, locale?: string): string {
+	if (km < 1) {
+		return `${Math.round(km * KM_TO_METERS)} m`;
+	}
+	const digits = km < 10 ? 1 : 0;
+	return `${new Intl.NumberFormat(locale, {
+		maximumFractionDigits: digits,
+		minimumFractionDigits: 0,
+	}).format(km)} km`;
+}
+
+export function formatAreaKm2(km2: number, locale?: string): string {
+	const digits = km2 < 10 ? 2 : km2 < 1000 ? 1 : 0;
+	return `${new Intl.NumberFormat(locale, {
+		maximumFractionDigits: digits,
+	}).format(km2)} km²`;
+}
+
+export const RADIUS_SLIDER_STEPS = 1000;
+
+/** Slider position (0..1000) -> radius: logarithmic, so small radii are precise. */
+export function sliderToRadius(position: number): number {
+	const t = Math.min(1, Math.max(0, position / RADIUS_SLIDER_STEPS));
+	const ratio = MAX_RADIUS_KM / MIN_RADIUS_KM;
+	return roundRadius(MIN_RADIUS_KM * ratio ** t);
+}
+
+export function radiusToSlider(radiusKm: number): number {
+	const ratio = MAX_RADIUS_KM / MIN_RADIUS_KM;
+	const t = Math.log(clampRadius(radiusKm) / MIN_RADIUS_KM) / Math.log(ratio);
+	return Math.round(t * RADIUS_SLIDER_STEPS);
+}
+
+/** Circle radius in screen pixels at a given latitude/zoom. */
+export function radiusPixels(
+	radiusKm: number,
+	latitude: number,
+	zoom: number,
+): number {
+	return (radiusKm * KM_TO_METERS) / metersPerPixel(latitude, zoom);
+}

@@ -1,15 +1,21 @@
 <script lang="ts">
 	import "leaflet/dist/leaflet.css";
 	import {
-		divIcon,
 		DomEvent,
 		type Map as LeafletMap,
 		type LeafletMouseEvent,
 	} from "leaflet";
-	import { CaretLeftIcon, CircleIcon, MapPinPlusIcon } from "phosphor-svelte";
 	import {
-		Circle,
+		ArrowsOutIcon,
+		CaretLeftIcon,
+		CircleIcon,
+		CrosshairIcon,
+		ListIcon,
+		MapPinPlusIcon,
+	} from "phosphor-svelte";
+	import {
 		ControlAttribution,
+		ControlScale,
 		Map,
 		Marker,
 		Popup,
@@ -19,23 +25,26 @@
 
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
+	import MapCircleLayer from "$lib/components/map-elements/MapCircleLayer.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
+	import { currentLocale } from "$lib/i18n/t";
 	import {
 		clusterMarkers,
 		type MarkerCluster,
 	} from "$lib/map/cluster-markers";
-	import {
-		CIRCLE_FILL_OPACITY,
-		CIRCLE_SELECTED_WEIGHT,
-		CIRCLE_STROKE_OPACITY,
-		CIRCLE_WEIGHT,
-		convertKmToMeters,
-	} from "$lib/map/geographic";
+	import { circleBounds, radiusPixels } from "$lib/map/geographic";
 	import { MapElementsState } from "$lib/map/map-elements-state.svelte";
+	import {
+		clusterIcon,
+		placePinIcon,
+		selectedPlacePinIcon,
+		sharedPinIcon,
+		userPinIcon,
+	} from "$lib/map/map-icons";
 	import { decodeGeohash } from "$lib/model/geohash";
-	import type { MapMarker } from "$lib/model/map-elements";
+	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 
 	const library = new SavedLocationsState();
@@ -43,6 +52,7 @@
 	let map: LeafletMap | undefined = $state();
 	let confirmOpen = $state(false);
 	let zoom = $state(2);
+	let listOpen = $state(false);
 	let openCluster = $state<Extract<MarkerCluster, { type: "group" }> | null>(
 		null,
 	);
@@ -78,8 +88,9 @@
 		centered = true;
 	});
 
-	const picking =
-		overlays.mode === "ADD_CIRCLE" || overlays.mode === "ADD_MARKER";
+	const picking = $derived(
+		overlays.mode === "ADD_CIRCLE" || overlays.mode === "ADD_MARKER",
+	);
 
 	$effect(() => {
 		const instance = map;
@@ -103,47 +114,69 @@
 	});
 
 	const markerClusters = $derived(clusterMarkers(overlays.markers, zoom));
+	const locale = $derived(currentLocale());
+	const userLocation = $derived(
+		customLocation
+			? { latitude: customLocation.lat, longitude: customLocation.lon }
+			: null,
+	);
 
-	const sharedPinIcon = divIcon({
-		html: pinSvg("#ffba20", 36),
-		iconAnchor: [18, 36],
-		iconSize: [36, 36],
-		className: "",
-	});
-
-	const userPinIcon = divIcon({
-		html: pinSvg("#ffba20", 40),
-		iconAnchor: [20, 40],
-		iconSize: [40, 40],
-		className: "",
-	});
-
-	const placePinIcon = divIcon({
-		html: pinSvg("#e4e4e7", 28),
-		iconAnchor: [14, 28],
-		iconSize: [28, 28],
-		className: "",
-	});
-
-	const selectedPlacePinIcon = divIcon({
-		html: pinSvg("#fafafa", 36),
-		iconAnchor: [18, 36],
-		iconSize: [36, 36],
-		className: "",
-	});
-
-	function clusterIcon(count: number) {
-		const size = count > 9 ? 40 : 36;
-		return divIcon({
-			html: `<div style="width:${size}px;height:${size}px;border-radius:999px;background:#171717;border:2px solid #ffba20;color:#ffba20;display:grid;place-items:center;font:700 13px/1 'IBM Plex Sans Variable',sans-serif;box-shadow:0 8px 18px rgb(0 0 0 / 40%)">${count}</div>`,
-			iconAnchor: [size / 2, size / 2],
-			iconSize: [size, size],
-			className: "",
+	/** Frame a circle in the space left free by the bottom editor. */
+	function focusCircle(circle: MapCircle) {
+		if (!map) return;
+		const bounds = circleBounds(circle);
+		const pixels = radiusPixels(circle.radiusKm, circle.latitude, zoom);
+		if (map.getBounds().contains(bounds) && pixels >= 40) return;
+		map.fitBounds(bounds, {
+			paddingTopLeft: [40, 40],
+			paddingBottomRight: [40, 300],
+			maxZoom: 16,
 		});
 	}
 
-	function pinSvg(fill: string, size: number): string {
-		return `<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="${size}" height="${size}" fill="${fill}" stroke="#000000" stroke-width="8px" viewBox="0 0 256 256"><path d="M128,16a88.1,88.1,0,0,0-88,88c0,75.3,80,132.17,83.41,134.55a8,8,0,0,0,9.18,0C136,236.17,216,179.3,216,104A88.1,88.1,0,0,0,128,16Zm0,56a32,32,0,1,1-32,32A32,32,0,0,1,128,72Z"></path></svg>`;
+	function fitAll() {
+		if (!map) return;
+		const points: [number, number][] = [];
+		for (const circle of overlays.circles) {
+			const [[south, west], [north, east]] = circleBounds(circle);
+			points.push([south, west], [north, east]);
+		}
+		for (const marker of overlays.markers) {
+			points.push([marker.latitude, marker.longitude]);
+		}
+		for (const location of library.locations) {
+			points.push([location.lat, location.lon]);
+		}
+		if (customLocation) {
+			points.push([customLocation.lat, customLocation.lon]);
+		}
+		if (points.length === 0) return;
+		map.fitBounds(points, { padding: [40, 40], maxZoom: 16 });
+	}
+
+	function goToMyLocation() {
+		if (!map || !customLocation) return;
+		map.setView(
+			[customLocation.lat, customLocation.lon],
+			Math.max(zoom, 13),
+		);
+	}
+
+	// Bring a newly selected circle into view (not while dragging its handles).
+	let lastFocusedCircleId: string | null = null;
+	$effect(() => {
+		const id = overlays.selectedCircleId;
+		if (id === lastFocusedCircleId) return;
+		lastFocusedCircleId = id;
+		const circle = id
+			? overlays.circles.find((item) => item.id === id)
+			: null;
+		if (circle) focusCircle(circle);
+	});
+
+	function pickListedCircle(circle: MapCircle) {
+		listOpen = false;
+		overlays.selectCircle(circle.id);
 	}
 
 	function labelFor(location: SavedLocation): string {
@@ -213,6 +246,7 @@
 
 	function pickClusteredMarker(marker: MapMarker) {
 		openCluster = null;
+		listOpen = false;
 		overlays.selectMarker(marker.id);
 		map?.setView([marker.latitude, marker.longitude], Math.max(zoom, 16));
 	}
@@ -225,13 +259,22 @@
 		<a
 			href="/settings"
 			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
-			aria-label="Back"
+			aria-label={t("common.back")}
 		>
 			<CaretLeftIcon class="size-5" />
 		</a>
 		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">
 			{t("map.title")}
 		</h1>
+		<Button
+			variant={listOpen ? "default" : "secondary"}
+			size="icon"
+			aria-label={t("map.list")}
+			title={t("map.list")}
+			onclick={() => (listOpen = !listOpen)}
+		>
+			<ListIcon class="size-5" />
+		</Button>
 		<Button
 			variant={overlays.mode === "ADD_CIRCLE" ||
 			overlays.mode === "CIRCLE_CONFIGURATION"
@@ -262,7 +305,7 @@
 		<div class="h-full w-full">
 			<Map
 				options={{
-					center: [40.42267869390329, -3.697633348267032],
+					center: [25, 0],
 					zoom: 2,
 					attributionControl: false,
 				}}
@@ -277,59 +320,11 @@
 					}}
 				/>
 				<ControlAttribution options={{ prefix: undefined }} />
+				<ControlScale
+					options={{ imperial: false, position: "bottomleft" }}
+				/>
 
-				{#each overlays.circles as circle (circle.id)}
-					{@const live =
-						overlays.circleDraft?.id === circle.id
-							? overlays.circleDraft
-							: circle}
-					<Circle
-						latLng={[circle.latitude, circle.longitude]}
-						options={{
-							radius: convertKmToMeters(live.radiusKm),
-							color: live.color,
-							weight:
-								circle.id === overlays.selectedCircleId ||
-								overlays.circleDraft?.id === circle.id
-									? CIRCLE_SELECTED_WEIGHT
-									: CIRCLE_WEIGHT,
-							opacity: CIRCLE_STROKE_OPACITY,
-							fillColor: live.color,
-							fillOpacity: CIRCLE_FILL_OPACITY,
-						}}
-						onclick={(event: LeafletMouseEvent) => {
-							DomEvent.stopPropagation(event);
-							if (picking) {
-								overlays.handleMapClick(
-									event.latlng.lat,
-									event.latlng.lng,
-								);
-								return;
-							}
-							overlays.selectCircle(circle.id);
-						}}
-					/>
-				{/each}
-
-				{#if overlays.circleDraft && !overlays.circleDraft.id}
-					<Circle
-						latLng={[
-							overlays.circleDraft.latitude,
-							overlays.circleDraft.longitude,
-						]}
-						options={{
-							radius: convertKmToMeters(
-								overlays.circleDraft.radiusKm,
-							),
-							color: overlays.circleDraft.color,
-							weight: CIRCLE_WEIGHT,
-							opacity: CIRCLE_STROKE_OPACITY,
-							fillColor: overlays.circleDraft.color,
-							fillOpacity: CIRCLE_FILL_OPACITY,
-							dashArray: "6 4",
-						}}
-					/>
-				{/if}
+				<MapCircleLayer {overlays} {zoom} {picking} {locale} />
 
 				{#each markerClusters as cluster (cluster.type === "single" ? cluster.marker.id : cluster.id)}
 					{#if cluster.type === "single"}
@@ -370,7 +365,9 @@
 							latLng={[cluster.latitude, cluster.longitude]}
 							options={{
 								icon: clusterIcon(cluster.markers.length),
-								title: `${cluster.markers.length} markers`,
+								title: t("map.markerCount", {
+									count: cluster.markers.length,
+								}),
 								zIndexOffset: 650,
 							}}
 							onclick={(event: LeafletMouseEvent) => {
@@ -397,7 +394,9 @@
 						options={{
 							icon: placePinIcon,
 							zIndexOffset: 800,
-							title: overlays.markerDraft.title || "New marker",
+							title:
+								overlays.markerDraft.title ||
+								t("map.newMarker"),
 						}}
 					/>
 				{/if}
@@ -407,7 +406,7 @@
 						latLng={[customLocation.lat, customLocation.lon]}
 						options={{
 							icon: userPinIcon,
-							title: "Your location",
+							title: t("map.yourLocation"),
 							zIndexOffset: 1000,
 						}}
 					>
@@ -436,8 +435,37 @@
 			</Map>
 		</div>
 
+		<div
+			class="pointer-events-none absolute end-3 top-3 z-1000 flex flex-col gap-2"
+		>
+			<Button
+				variant="secondary"
+				size="icon"
+				class="pointer-events-auto shadow-lg"
+				aria-label={t("map.fitAll")}
+				title={t("map.fitAll")}
+				onclick={fitAll}
+			>
+				<ArrowsOutIcon class="size-5" />
+			</Button>
+			<Button
+				variant="secondary"
+				size="icon"
+				class="pointer-events-auto shadow-lg"
+				aria-label={t("map.locate")}
+				title={customLocation ? t("map.locate") : t("map.noLocation")}
+				disabled={!customLocation}
+				onclick={goToMyLocation}
+			>
+				<CrosshairIcon class="size-5" />
+			</Button>
+		</div>
+
 		<MapHud
 			{overlays}
+			bind:listOpen
+			{userLocation}
+			onPickCircle={pickListedCircle}
 			{modeHint}
 			{empty}
 			bind:openCluster
@@ -448,3 +476,20 @@
 		/>
 	</div>
 </main>
+
+<style>
+	:global(.leaflet-tooltip.map-circle-label) {
+		background: rgb(0 0 0 / 65%);
+		border: 0;
+		border-radius: 999px;
+		box-shadow: none;
+		color: #fff;
+		font-size: 12px;
+		font-weight: 600;
+		padding: 2px 8px;
+		pointer-events: none;
+	}
+	:global(.leaflet-tooltip.map-circle-label::before) {
+		display: none;
+	}
+</style>

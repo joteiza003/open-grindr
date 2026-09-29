@@ -1,14 +1,16 @@
 <script lang="ts">
-	import { MapPinIcon, TrashIcon, XIcon } from "phosphor-svelte";
+	import { CircleIcon, MapPinIcon, TrashIcon, XIcon } from "phosphor-svelte";
 
 	import CircleEditor from "$lib/components/map-elements/CircleEditor.svelte";
 	import MarkerEditor from "$lib/components/map-elements/MarkerEditor.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
+	import { currentLocale } from "$lib/i18n/t";
+	import { formatDistanceKm } from "$lib/map/geographic";
 	import type { MarkerCluster } from "$lib/map/cluster-markers";
 	import type { MapElementsState } from "$lib/map/map-elements-state.svelte";
-	import type { MapMarker } from "$lib/model/map-elements";
+	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
 
 	let {
 		overlays,
@@ -17,7 +19,10 @@
 		openCluster = $bindable(null),
 		confirmOpen = $bindable(false),
 		selectedMarker = null,
+		listOpen = $bindable(false),
+		userLocation = null,
 		onPickMarker,
+		onPickCircle,
 		onConfirmDelete,
 	}: {
 		overlays: MapElementsState;
@@ -26,9 +31,15 @@
 		openCluster: Extract<MarkerCluster, { type: "group" }> | null;
 		confirmOpen: boolean;
 		selectedMarker?: MapMarker | null;
+		listOpen?: boolean;
+		userLocation?: { latitude: number; longitude: number } | null;
 		onPickMarker: (marker: MapMarker) => void;
+		onPickCircle: (circle: MapCircle) => void;
 		onConfirmDelete: () => void | Promise<void>;
 	} = $props();
+
+	const locale = $derived(currentLocale());
+	const listVisible = $derived(listOpen && overlays.mode === "NORMAL");
 </script>
 
 {#if modeHint}
@@ -42,7 +53,7 @@
 			<Button
 				variant="ghost"
 				size="icon"
-				aria-label="Cancel"
+				aria-label={t("map.cancelAria")}
 				onclick={() => overlays.cancelCreation()}
 			>
 				<XIcon class="size-4" />
@@ -68,12 +79,14 @@
 		<CircleEditor
 			draft={overlays.circleDraft}
 			error={overlays.error}
+			{userLocation}
 			onchange={(patch) => overlays.updateCircleDraft(patch)}
+			onmove={(lat, lon) => overlays.moveCircleDraft(lat, lon)}
 			oncancel={() => overlays.cancelCreation()}
 			onsave={() => void overlays.saveCircleDraft()}
-			ondelete={
-				overlays.circleDraft.id ? () => (confirmOpen = true) : undefined
-			}
+			ondelete={overlays.circleDraft.id
+				? () => (confirmOpen = true)
+				: undefined}
 		/>
 	{:else if openCluster}
 		<section
@@ -81,12 +94,14 @@
 		>
 			<div class="mb-2 flex items-center justify-between">
 				<h2 class="text-sm font-semibold">
-					{openCluster.markers.length} {t("map.markers")}
+					{t("map.markerCount", {
+						count: openCluster.markers.length,
+					})}
 				</h2>
 				<Button
 					variant="ghost"
 					size="icon"
-					aria-label="Close cluster"
+					aria-label={t("map.closeCluster")}
 					onclick={() => (openCluster = null)}
 				>
 					<XIcon class="size-4" />
@@ -103,6 +118,75 @@
 						<span class="truncate">{marker.title}</span>
 					</button>
 				{/each}
+			</div>
+		</section>
+	{:else if listVisible}
+		<section
+			class="pointer-events-auto mx-auto w-full max-w-xl rounded-2xl border border-border bg-card/95 p-3 shadow-2xl"
+			aria-label={t("map.list")}
+		>
+			<div class="mb-2 flex items-center justify-between">
+				<h2 class="text-sm font-semibold">{t("map.list")}</h2>
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label={t("common.close")}
+					onclick={() => (listOpen = false)}
+				>
+					<XIcon class="size-4" />
+				</Button>
+			</div>
+			<div class="max-h-56 space-y-2 overflow-auto">
+				{#if overlays.circles.length === 0 && overlays.markers.length === 0}
+					<p class="px-2 py-3 text-sm text-muted-foreground">
+						{t("map.listEmpty")}
+					</p>
+				{/if}
+				{#if overlays.circles.length > 0}
+					<h3
+						class="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+					>
+						{t("map.circlesHeading")}
+					</h3>
+					{#each overlays.circles as circle (circle.id)}
+						<button
+							type="button"
+							class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
+							onclick={() => onPickCircle(circle)}
+						>
+							<CircleIcon
+								class="size-4 shrink-0"
+								weight="fill"
+								color={circle.color}
+							/>
+							<span class="min-w-0 flex-1 truncate">
+								{circle.name ?? t("map.unnamedCircle")}
+							</span>
+							<span
+								class="shrink-0 text-xs text-muted-foreground"
+							>
+								{formatDistanceKm(circle.radiusKm, locale)}
+							</span>
+						</button>
+					{/each}
+				{/if}
+				{#if overlays.markers.length > 0}
+					<h3
+						class="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+					>
+						{t("map.markersHeading")}
+					</h3>
+					{#each overlays.markers as marker (marker.id)}
+						<button
+							type="button"
+							class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
+							onclick={() => onPickMarker(marker)}
+						>
+							<MapPinIcon class="size-4 shrink-0" weight="fill" />
+							<span class="truncate">{marker.title}</span>
+						</button>
+					{/each}
+				{/if}
 			</div>
 		</section>
 	{:else if overlays.mode === "MARKER_CONFIGURATION" && overlays.markerDraft}
@@ -138,7 +222,7 @@
 			<Button
 				variant="destructive"
 				size="icon"
-				aria-label="Delete"
+				aria-label={t("map.deleteAria")}
 				onclick={() => (confirmOpen = true)}
 			>
 				<TrashIcon class="size-4" />
@@ -156,7 +240,9 @@
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
-			<AlertDialog.Cancel size="lg">{t("common.cancel")}</AlertDialog.Cancel>
+			<AlertDialog.Cancel size="lg"
+				>{t("common.cancel")}</AlertDialog.Cancel
+			>
 			<AlertDialog.Action
 				variant="destructive"
 				size="lg"

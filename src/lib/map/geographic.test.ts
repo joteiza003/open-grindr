@@ -63,3 +63,97 @@ describe("geographic utilities", () => {
 		expect(clampRadius(9999)).toBe(MAX_RADIUS_KM);
 	});
 });
+
+import {
+	circleAreaKm2,
+	circleBounds,
+	destinationPoint,
+	distanceMeters,
+	formatDistanceKm,
+	isPointInCircle,
+	radiusFromPoint,
+	radiusPixels,
+	radiusToSlider,
+	sliderToRadius,
+} from "./geographic";
+
+describe("circle geometry", () => {
+	const madrid = { latitude: 40.4168, longitude: -3.7038 };
+
+	it("destinationPoint travels the requested distance", () => {
+		for (const bearing of [0, 45, 90, 180, 270]) {
+			const point = destinationPoint(madrid, bearing, 12_345);
+			expect(distanceMeters(madrid, point)).toBeCloseTo(12_345, -1);
+		}
+		expect(destinationPoint(madrid, 0, 1000).latitude).toBeGreaterThan(
+			madrid.latitude,
+		);
+		expect(destinationPoint(madrid, 90, 1000).longitude).toBeGreaterThan(
+			madrid.longitude,
+		);
+	});
+
+	it("wraps longitude across the antimeridian", () => {
+		const point = destinationPoint(
+			{ latitude: 0, longitude: 179.9 },
+			90,
+			50_000,
+		);
+		expect(point.longitude).toBeLessThan(-179);
+	});
+
+	it("derives the radius from a dragged handle, clamped and rounded", () => {
+		const handle = destinationPoint(madrid, 90, 5000);
+		expect(radiusFromPoint(madrid, handle)).toBe(5);
+		expect(radiusFromPoint(madrid, madrid)).toBe(0.1);
+		expect(
+			radiusFromPoint(madrid, destinationPoint(madrid, 90, 900_000)),
+		).toBe(200);
+	});
+
+	it("detects points inside a circle", () => {
+		const circle = { ...madrid, radiusKm: 5 };
+		expect(
+			isPointInCircle(destinationPoint(madrid, 30, 4900), circle),
+		).toBe(true);
+		expect(
+			isPointInCircle(destinationPoint(madrid, 30, 5100), circle),
+		).toBe(false);
+	});
+
+	it("computes area close to pi r^2 for small radii", () => {
+		expect(circleAreaKm2(5)).toBeCloseTo(Math.PI * 25, 1);
+	});
+
+	it("bounds enclose the circle", () => {
+		const [[south, west], [north, east]] = circleBounds({
+			...madrid,
+			radiusKm: 10,
+		});
+		expect(south).toBeLessThan(madrid.latitude);
+		expect(north).toBeGreaterThan(madrid.latitude);
+		expect(west).toBeLessThan(madrid.longitude);
+		expect(east).toBeGreaterThan(madrid.longitude);
+	});
+
+	it("formats distances", () => {
+		expect(formatDistanceKm(0.35, "en")).toBe("350 m");
+		expect(formatDistanceKm(5.24, "en")).toBe("5.2 km");
+		expect(formatDistanceKm(120, "en")).toBe("120 km");
+	});
+
+	it("logarithmic slider round-trips and is monotonic", () => {
+		expect(sliderToRadius(0)).toBe(0.1);
+		expect(sliderToRadius(1000)).toBe(200);
+		expect(sliderToRadius(500)).toBeLessThan(10);
+		for (const km of [0.1, 0.5, 2, 5, 25, 100, 200]) {
+			const back = sliderToRadius(radiusToSlider(km));
+			expect(Math.abs(back - km) / km).toBeLessThan(0.05);
+		}
+		expect(radiusToSlider(1)).toBeLessThan(radiusToSlider(2));
+	});
+
+	it("shrinks pixel radius as you zoom out", () => {
+		expect(radiusPixels(5, 40, 12)).toBeGreaterThan(radiusPixels(5, 40, 8));
+	});
+});

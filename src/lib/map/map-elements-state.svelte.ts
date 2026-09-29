@@ -12,6 +12,7 @@ import {
 import {
 	clampRadius,
 	normalizeName,
+	radiusFromPoint,
 	roundRadius,
 	validateColor,
 	validateCoordinates,
@@ -131,6 +132,29 @@ export class MapElementsState {
 		this.error = null;
 	}
 
+	/** Move the circle draft centre (drag handle or typed coordinates). */
+	moveCircleDraft(latitude: number, longitude: number): void {
+		if (!this.circleDraft) return;
+		const coordError = validateCoordinates(latitude, longitude);
+		if (coordError) {
+			this.error = coordError;
+			return;
+		}
+		this.circleDraft = { ...this.circleDraft, latitude, longitude };
+		this.error = null;
+	}
+
+	/** Set the draft radius from a dragged edge handle. */
+	resizeCircleDraftTo(latitude: number, longitude: number): void {
+		if (!this.circleDraft) return;
+		this.updateCircleDraft({
+			radiusKm: radiusFromPoint(this.circleDraft, {
+				latitude,
+				longitude,
+			}),
+		});
+	}
+
 	updateMarkerDraft(patch: Partial<MarkerDraft>): void {
 		if (!this.markerDraft) return;
 		this.markerDraft = { ...this.markerDraft, ...patch };
@@ -166,6 +190,8 @@ export class MapElementsState {
 				circle.id === draft.id
 					? {
 							...circle,
+							latitude: draft.latitude,
+							longitude: draft.longitude,
 							radiusKm: roundRadius(draft.radiusKm),
 							color: draft.color.toLowerCase(),
 							name,
