@@ -31,6 +31,14 @@ describe("profile metadata store", () => {
 		expect(mod.profileMetadata(1).note).toBe("met at the bar");
 	});
 
+	it("stores note and phone together and prunes when both are cleared", async () => {
+		await mod.setProfileNoteAndPhone(7, { note: " hi ", phone: " 555 " });
+		expect(mod.profileMetadata(7).note).toBe("hi");
+		expect(mod.profileMetadata(7).phone).toBe("555");
+		await mod.setProfileNoteAndPhone(7, { note: "", phone: "" });
+		expect(mod.profileMetadataSnapshot()["7"]).toBeUndefined();
+	});
+
 	it("prunes a profile when its note is cleared and nothing else remains", async () => {
 		await mod.setProfileNote(1, "hi");
 		expect(mod.profileMetadataSnapshot()["1"]).toBeDefined();

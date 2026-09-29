@@ -28,6 +28,7 @@ import {
  */
 
 const MAX_NOTE_LENGTH = 2000;
+const MAX_PHONE_LENGTH = 20;
 const MAX_TAG_LENGTH = 48;
 const MAX_TAGS_PER_PROFILE = 32;
 
@@ -40,6 +41,7 @@ export const profileTagLimits = {
 const localProfileMetadataSchema = z.object({
 	tags: z.array(z.string()).default([]),
 	note: z.string().optional(),
+	phone: z.string().optional(),
 	lastViewed: z.number().optional(),
 	lastInteraction: z.number().optional(),
 	hidden: z.boolean().optional(),
@@ -132,6 +134,7 @@ function isEmptyMetadata(meta: LocalProfileMetadata): boolean {
 	return (
 		meta.tags.length === 0 &&
 		(meta.note === undefined || meta.note === "") &&
+		(meta.phone === undefined || meta.phone === "") &&
 		meta.lastViewed === undefined &&
 		meta.lastInteraction === undefined &&
 		!meta.hidden
@@ -184,6 +187,20 @@ export async function setProfileNote(
 	const trimmed = note.trim().slice(0, MAX_NOTE_LENGTH);
 	await updateProfileMetadata(profileId, {
 		note: trimmed === "" ? undefined : trimmed,
+	});
+}
+
+/** Set the note and phone together (the unified profile note). */
+export async function setProfileNoteAndPhone(
+	profileId: number,
+	{ note, phone }: { note: string; phone: string },
+	maxNoteLength: number = MAX_NOTE_LENGTH,
+): Promise<void> {
+	const trimmedNote = note.trim().slice(0, maxNoteLength);
+	const trimmedPhone = phone.trim().slice(0, MAX_PHONE_LENGTH);
+	await updateProfileMetadata(profileId, {
+		note: trimmedNote === "" ? undefined : trimmedNote,
+		phone: trimmedPhone === "" ? undefined : trimmedPhone,
 	});
 }
 

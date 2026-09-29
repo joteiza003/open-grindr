@@ -194,6 +194,21 @@ export const en = {
 		"It will be removed from the map and from local storage. This cannot be undone.",
 
 	"profile.photos": "Photos",
+	"profileNote.add": "Add note",
+	"profileNote.title": "Note",
+	"profileNote.description":
+		"A private note about this profile. Only you can see it.",
+	"profileNote.placeholder": "Note for this profile...",
+	"profileNote.phone": "Phone number",
+	"profileNote.optional": "Optional",
+	"profileNote.save": "Save",
+	"profileNote.saved": "Note saved",
+	"profileNote.deleted": "Note deleted",
+	"profileNote.saveFailed": "Failed to save note",
+	"profileNote.syncedHint":
+		"Saved on this device and synced with your Grindr favorite note.",
+	"profileNote.localHint":
+		"Saved only on this device. Favorite this profile to sync it with Grindr.",
 	"profile.identity": "Identity",
 	"profile.stats": "Stats",
 	"profile.preferences": "Preferences",

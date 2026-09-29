@@ -2,24 +2,30 @@
 	import { NotePencilIcon } from "phosphor-svelte";
 
 	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
+	import { isEmptyNote } from "$lib/model/users/profile-note";
 	import type { FavoriteNote } from "$lib/model/users/favorites";
 	import type { Profile } from "$lib/model/users/profiles";
-	import FavoriteNoteEditor from "./FavoriteNoteEditor.svelte";
+	import ProfileNoteEditor from "./ProfileNoteEditor.svelte";
 
 	let {
 		profileId,
+		isFavorite,
 		note,
-		onSave,
+		onSaved,
 	}: {
 		profileId: Profile["profileId"];
+		isFavorite: boolean;
 		note: FavoriteNote;
-		onSave: (note: FavoriteNote) => void;
+		onSaved: (note: FavoriteNote) => void;
 	} = $props();
 
 	let open = $state(false);
 
-	const empty = $derived(!note.notes && !note.phoneNumber);
-	const label = $derived(note.notes || note.phoneNumber || "Add note");
+	const empty = $derived(isEmptyNote(note));
+	const label = $derived(
+		note.notes || note.phoneNumber || t("profileNote.add"),
+	);
 </script>
 
 <Button
@@ -34,4 +40,4 @@
 	/>
 	<span class="truncate">{label}</span>
 </Button>
-<FavoriteNoteEditor {profileId} {note} {onSave} bind:open />
+<ProfileNoteEditor {profileId} {isFavorite} {note} {onSaved} bind:open />

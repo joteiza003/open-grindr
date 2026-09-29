@@ -7,25 +7,30 @@
 		deleteFavoriteNote,
 		putFavoriteNote,
 	} from "$lib/api/users/favorites";
+	import { setProfileNoteAndPhone } from "$lib/app-data/profile-metadata.svelte";
 	import MultilineField from "$lib/components/fields/MultilineField.svelte";
 	import TextField from "$lib/components/fields/TextField.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import * as ResponsiveDialog from "$lib/components/ui/responsive-dialog";
+	import { t } from "$lib/i18n";
 	import {
-		type FavoriteNote,
-		favoriteNoteLimits,
-	} from "$lib/model/users/favorites";
+		isEmptyNote,
+		profileNoteLimits,
+	} from "$lib/model/users/profile-note";
+	import type { FavoriteNote } from "$lib/model/users/favorites";
 	import type { Profile } from "$lib/model/users/profiles";
 
 	let {
 		profileId,
+		isFavorite,
 		note,
-		onSave,
+		onSaved,
 		open = $bindable(),
 	}: {
 		profileId: Profile["profileId"];
+		isFavorite: boolean;
 		note: FavoriteNote;
-		onSave: (note: FavoriteNote) => void;
+		onSaved: (note: FavoriteNote) => void;
 		open: boolean;
 	} = $props();
 
@@ -41,7 +46,10 @@
 		});
 	});
 
-	const over = $derived(notes.length > favoriteNoteLimits.notes);
+	const limits = $derived(profileNoteLimits({ isFavorite }));
+	const over = $derived(
+		notes.length > limits.notes || phoneNumber.length > limits.phoneNumber,
+	);
 	const dirty = $derived(
 		notes !== note.notes || phoneNumber !== note.phoneNumber,
 	);
@@ -53,16 +61,25 @@
 			notes: notes.trim(),
 			phoneNumber: phoneNumber.trim(),
 		} satisfies FavoriteNote;
-		const emptied = !next.notes && !next.phoneNumber;
+		const emptied = isEmptyNote(next);
 		try {
-			if (emptied) await deleteFavoriteNote({ profileId });
-			else await putFavoriteNote({ profileId, note: next });
-			onSave(next);
+			// Grindr first: if it fails nothing is saved, so both copies agree.
+			if (isFavorite) {
+				if (emptied) await deleteFavoriteNote({ profileId });
+				else await putFavoriteNote({ profileId, note: next });
+			}
+			await setProfileNoteAndPhone(profileId, {
+				note: next.notes,
+				phone: next.phoneNumber,
+			});
+			onSaved(next);
 			open = false;
-			toast.success(emptied ? "Note deleted" : "Note saved");
+			toast.success(
+				emptied ? t("profileNote.deleted") : t("profileNote.saved"),
+			);
 		} catch (error) {
 			console.error(error);
-			showErrorToast({ label: "Failed to save note", error });
+			showErrorToast({ label: t("profileNote.saveFailed"), error });
 		} finally {
 			saving = false;
 		}
@@ -76,9 +93,11 @@
 		dialogProps={{ showCloseButton: true }}
 	>
 		<ResponsiveDialog.Header drawerClass="p-0">
-			<ResponsiveDialog.Title>Note</ResponsiveDialog.Title>
+			<ResponsiveDialog.Title
+				>{t("profileNote.title")}</ResponsiveDialog.Title
+			>
 			<ResponsiveDialog.Description class="sr-only">
-				A private note about this profile. Only you can see it.
+				{t("profileNote.description")}
 			</ResponsiveDialog.Description>
 		</ResponsiveDialog.Header>
 		<fieldset disabled={saving} class="contents">
@@ -88,20 +107,25 @@
 			>
 				<MultilineField
 					bind:value={notes}
-					maxLength={favoriteNoteLimits.notes}
-					placeholder="Note for this profile..."
+					maxLength={limits.notes}
+					placeholder={t("profileNote.placeholder")}
 				/>
 				<TextField
-					label="Phone number"
+					label={t("profileNote.phone")}
 					bind:value={phoneNumber}
-					maxLength={favoriteNoteLimits.phoneNumber}
+					maxLength={limits.phoneNumber}
 					type="tel"
-					placeholder="Optional"
+					placeholder={t("profileNote.optional")}
 				/>
+				<p class="text-xs text-muted-foreground">
+					{isFavorite
+						? t("profileNote.syncedHint")
+						: t("profileNote.localHint")}
+				</p>
 			</ResponsiveDialog.Body>
 			<ResponsiveDialog.Footer drawerClass="pt-0">
 				<Button disabled={!dirty || over} onclick={() => save()}>
-					Save
+					{t("profileNote.save")}
 				</Button>
 			</ResponsiveDialog.Footer>
 		</fieldset>

@@ -199,6 +199,21 @@ export const es: Record<MessageKey, string> = {
 		"Se quitará del mapa y del almacenamiento local. No se puede deshacer.",
 
 	"profile.photos": "Fotos",
+	"profileNote.add": "Añadir nota",
+	"profileNote.title": "Nota",
+	"profileNote.description":
+		"Una nota privada sobre este perfil. Solo tú puedes verla.",
+	"profileNote.placeholder": "Nota para este perfil...",
+	"profileNote.phone": "Teléfono",
+	"profileNote.optional": "Opcional",
+	"profileNote.save": "Guardar",
+	"profileNote.saved": "Nota guardada",
+	"profileNote.deleted": "Nota eliminada",
+	"profileNote.saveFailed": "No se pudo guardar la nota",
+	"profileNote.syncedHint":
+		"Guardada en este dispositivo y sincronizada con tu nota de favorito de Grindr.",
+	"profileNote.localHint":
+		"Guardada solo en este dispositivo. Marca el perfil como favorito para sincronizarla con Grindr.",
 	"profile.identity": "Identidad",
 	"profile.stats": "Datos",
 	"profile.preferences": "Preferencias",

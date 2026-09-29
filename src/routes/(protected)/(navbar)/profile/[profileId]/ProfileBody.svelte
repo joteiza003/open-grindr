@@ -9,7 +9,9 @@
 		UsersThreeIcon,
 	} from "phosphor-svelte";
 
+	import { profileMetadata } from "$lib/app-data/profile-metadata.svelte";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { mergeProfileNote } from "$lib/model/users/profile-note";
 	import {
 		acceptNSFWPics,
 		ethnicities,
@@ -23,7 +25,6 @@
 	import AboutMe from "./AboutMe.svelte";
 	import ProfileBottomNavBar from "./bottom-nav/ProfileBottomNavBar.svelte";
 	import Distance from "./Distance.svelte";
-	import FavoriteNoteButton from "./favorite-note/FavoriteNoteButton.svelte";
 	import Genders from "./fields/GendersPronouns.svelte";
 	import HivStatusIcon from "./fields/HivStatusIcon.svelte";
 	import LastTested from "./fields/LastTested.svelte";
@@ -33,6 +34,7 @@
 	import ImageCarousel from "./ImageCarousel.svelte";
 	import MyProfileTags from "./my-tags/MyProfileTags.svelte";
 	import OnlineStatus from "./OnlineStatus.svelte";
+	import ProfileNoteButton from "./profile-note/ProfileNoteButton.svelte";
 	import type { ProfileState } from "./profile-state.svelte";
 	import ProfileSection from "./ProfileSection.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
@@ -43,6 +45,13 @@
 
 	const profile = $derived(profileState.profile);
 	const ourProfile = $derived(profileState.isOurProfile);
+	const localMeta = $derived(profileMetadata(profileState.profileId));
+	const unifiedNote = $derived(
+		mergeProfileNote({
+			local: { note: localMeta.note, phone: localMeta.phone },
+			favorite: profileState.note,
+		}),
+	);
 </script>
 
 {#if profileState.loading || !profile}
@@ -149,11 +158,14 @@
 			</div>
 		</div>
 	</div>
-	{#if !ourProfile && profile.isFavorite && profileState.note}
-		<FavoriteNoteButton
+	{#if !ourProfile}
+		<ProfileNoteButton
 			profileId={profile.profileId}
-			note={profileState.note}
-			onSave={(note) => profileState.setNote(note)}
+			isFavorite={profile.isFavorite}
+			note={unifiedNote}
+			onSaved={(note) => {
+				if (profile.isFavorite) profileState.setNote(note);
+			}}
 		/>
 	{/if}
 	<div

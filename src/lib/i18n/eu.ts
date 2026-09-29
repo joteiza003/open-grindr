@@ -187,6 +187,21 @@ export const eu: Record<MessageKey, string> = {
 	"map.deleteBody":
 		"Mapatik eta biltegi lokaletik kenduko da. Ezin da desegin.",
 	"profile.photos": "Argazkiak",
+	"profileNote.add": "Gehitu oharra",
+	"profileNote.title": "Oharra",
+	"profileNote.description":
+		"Profil honi buruzko ohar pribatua. Zuk bakarrik ikus dezakezu.",
+	"profileNote.placeholder": "Profil honetarako oharra...",
+	"profileNote.phone": "Telefonoa",
+	"profileNote.optional": "Aukerakoa",
+	"profileNote.save": "Gorde",
+	"profileNote.saved": "Oharra gordeta",
+	"profileNote.deleted": "Oharra ezabatuta",
+	"profileNote.saveFailed": "Ezin izan da oharra gorde",
+	"profileNote.syncedHint":
+		"Gailu honetan gordeta eta Grindr-eko gogoko oharrarekin sinkronizatuta.",
+	"profileNote.localHint":
+		"Gailu honetan bakarrik gordeta. Egin gogoko profila Grindr-ekin sinkronizatzeko.",
 	"profile.identity": "Nortasuna",
 	"profile.stats": "Datuak",
 	"profile.preferences": "Lehentasunak",
