@@ -118,6 +118,29 @@ const preferencesSchema = z.object({
 				photoUpdatedAt: 0,
 			},
 		}),
+	translation: z
+		.object({
+			// Off until the user accepts that text is sent to a third party.
+			enabled: z.boolean().default(false),
+			autoIncoming: z.boolean().default(true),
+			// null = follow the app language.
+			myLanguage: z.string().nullable().default(null),
+			defaultPartnerLanguage: z.string().default("en"),
+			// Per conversation id.
+			chatLanguages: z.record(z.string(), z.string()).default({}),
+			chatOutgoing: z.record(z.string(), z.boolean()).default({}),
+			// Optional: raises MyMemory's free daily limit.
+			email: z.string().default(""),
+		})
+		.default({
+			enabled: false,
+			autoIncoming: true,
+			myLanguage: null,
+			defaultPartnerLanguage: "en",
+			chatLanguages: {},
+			chatOutgoing: {},
+			email: "",
+		}),
 });
 
 type Preferences = z.infer<typeof preferencesSchema>;

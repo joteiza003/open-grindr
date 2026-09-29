@@ -3,8 +3,10 @@
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import { t } from "$lib/i18n";
 	import { draftFromMessage } from "$lib/model/messaging/messages";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
+	import { OutgoingTranslation } from "$lib/translate/translation-state.svelte";
 	import type {
 		ApiResponseMessage,
 		MessageDraft,
@@ -12,6 +14,7 @@
 	import ComposerAttachments from "./attachments/ComposerAttachments.svelte";
 	import ComposerReplyPreview from "./ComposerReplyPreview.svelte";
 	import ComposerSubmitButton from "./ComposerSubmitButton.svelte";
+	import ComposerTranslateBar from "./ComposerTranslateBar.svelte";
 	import { setMessageComposerContext } from "./message-composer-context.svelte";
 	import MessageTextInput from "./MessageTextInput.svelte";
 	import ComposerQuickActions from "./quick-actions/ComposerQuickActions.svelte";
@@ -36,15 +39,28 @@
 	const { drafts } = getConversations();
 
 	let textContent = $state(untrack(() => drafts.get(conversationId)));
+	const outgoing = $derived(new OutgoingTranslation(conversationId));
 	let form: HTMLFormElement | null = $state(null);
 	let textInput: HTMLTextAreaElement | null = $state(null);
 
 	async function onSubmit() {
 		const text = textContent.trim();
 		if (text === "") return;
+		let outbound: string;
 		try {
-			await onSend([draftFromMessage({ type: "Text", body: { text } })]);
+			// Live translation: what the other person receives is the translation.
+			outbound = await outgoing.resolve(text);
+		} catch (error) {
+			console.error(error);
+			showErrorToast({ label: t("translate.sendFailed"), error });
+			return;
+		}
+		try {
+			await onSend([
+				draftFromMessage({ type: "Text", body: { text: outbound } }),
+			]);
 			textContent = "";
+			outgoing.reset();
 			drafts.discard(conversationId);
 		} catch (error) {
 			console.error(error);
@@ -103,6 +119,7 @@
 	{#if replyTo}
 		<ComposerReplyPreview message={replyTo} onCancel={onCancelReply} />
 	{/if}
+	<ComposerTranslateBar {outgoing} text={textContent} />
 	<div class="flex w-full min-w-0 items-end gap-1">
 		<ComposerQuickActions {conversationId} {disabled} />
 		<div class="relative h-full min-w-0 flex-1 rounded-composer bg-popover">

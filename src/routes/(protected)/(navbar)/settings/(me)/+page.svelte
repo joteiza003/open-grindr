@@ -10,6 +10,7 @@
 	import ProfileLink from "./ProfileLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
+	import TranslationLink from "./TranslationLink.svelte";
 
 	const { data }: import("./$types").PageProps = $props();
 </script>
@@ -25,6 +26,7 @@
 					<MapLink />
 					<AlbumsLink />
 					<PhrasesLink />
+					<TranslationLink />
 					<AppSettingsLink />
 				</div>
 				<SignOutButton />

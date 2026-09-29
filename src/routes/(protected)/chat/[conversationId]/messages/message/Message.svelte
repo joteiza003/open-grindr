@@ -207,7 +207,7 @@
 		quoted={message.replyToMessage}
 	>
 		{#if message.type === "Text"}
-			<TextMessage message={message.body} />
+			<TextMessage message={message.body} messageId={message.messageId} />
 		{:else if message.type === "Image"}
 			<ImageMessage message={message.body} />
 		{:else if message.type === "ExpiringImage"}
