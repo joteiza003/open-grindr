@@ -11,6 +11,7 @@ mod photo;
 mod scroll_phase;
 mod state;
 mod storage;
+mod translate;
 
 use std::sync::OnceLock;
 
@@ -158,6 +159,7 @@ pub fn run() {
         .plugin(api::facebook_oauth::plugin())
         .plugin(api::update::plugin())
         .plugin(app_settings::plugin())
+        .plugin(translate::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
@@ -207,6 +209,12 @@ pub fn run() {
             api::update::commands::update_open_install_permission_settings,
             api::update::commands::update_discard,
             app_settings::open_app_settings,
+            translate::translate_available,
+            translate::translate_identify,
+            translate::translate_text,
+            translate::translate_models,
+            translate::translate_download,
+            translate::translate_delete,
             appearance::backdrop_filter_renders,
         ])
         .setup(|app| {

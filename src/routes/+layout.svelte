@@ -28,6 +28,7 @@
 	import { blockZoom } from "$lib/platform/block-zoom";
 	import { isAndroidPlatform } from "$lib/platform/os";
 	import { installScrollGestureBridge } from "$lib/platform/scroll-gesture";
+	import { deviceModels } from "$lib/translate/models.svelte";
 	import { startAddonUpdateWatch } from "$lib/updates/addon.svelte";
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
 	import { startUpdateWatch } from "$lib/updates/updates-manager";
@@ -58,9 +59,11 @@
 				console.error("Failed to register back button listener", error);
 			});
 		}
-		void hydratePreferences().catch((error: unknown) => {
-			console.error("Failed to hydrate preferences", error);
-		});
+		void hydratePreferences()
+			.then(() => deviceModels.ensureDefaults())
+			.catch((error: unknown) => {
+				console.error("Failed to hydrate preferences", error);
+			});
 		void hydrateProfileMetadata().catch((error: unknown) => {
 			console.error("Failed to hydrate profile metadata", error);
 		});

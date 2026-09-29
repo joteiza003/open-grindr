@@ -79,8 +79,6 @@ export const es: Record<MessageKey, string> = {
 	"translate.intro":
 		"Traduce los mensajes recibidos y lo que escribes, en vivo en el chat.",
 	"translate.enable": "Activar traducción",
-	"translate.enableDesc":
-		"El texto que traduces se envía a un servicio online gratuito (MyMemory, con Lingva como respaldo). No se envía nada hasta que traduces un mensaje o activas la traducción automática.",
 	"translate.autoIncoming": "Traducir automáticamente los mensajes recibidos",
 	"translate.autoIncomingDesc":
 		"Muestra la traducción bajo cada mensaje recibido.",
@@ -92,6 +90,48 @@ export const es: Record<MessageKey, string> = {
 	"translate.clearCache": "Vaciar caché de traducciones",
 	"translate.cleared": "Caché de traducciones vaciada",
 	"translate.settings": "Traducción",
+	"translate.modelMissing":
+		"Ese idioma no está descargado. Descárgalo en Traducción → Idiomas sin conexión.",
+	"translate.unsupported": "Ese idioma no se puede traducir sin conexión.",
+	"translate.downloadingDefaults":
+		"Descargando idiomas de traducción sin conexión…",
+	"translate.defaultsReady": "Traducción sin conexión lista",
+	"translate.downloadFailed": "No se pudo descargar el idioma",
+	"translate.deleteFailed": "No se pudo eliminar el idioma",
+	"translate.wifiRequired":
+		"Conéctate a Wi-Fi o permite datos móviles en los ajustes de traducción.",
+	"translate.onDevice": "Traducir en este dispositivo",
+	"translate.onDeviceDesc":
+		"Usa los idiomas descargados en tu móvil. Privado: el texto no sale del dispositivo.",
+	"translate.onlineFallback": "Usar servicios online como respaldo",
+	"translate.onlineFallbackDesc":
+		"Si un idioma no está descargado o no existe sin conexión (como el euskera), envía el texto a MyMemory. Desactívalo para que todo se quede en el dispositivo.",
+	"translate.mobileData": "Descargar idiomas con datos móviles",
+	"translate.mobileDataDesc":
+		"Si no, los idiomas solo se descargan con Wi-Fi.",
+	"translate.languages": "Idiomas sin conexión",
+	"translate.languagesDesc":
+		"Descarga o elimina los idiomas guardados en tu móvil.",
+	"translate.languagesIntro":
+		"Cada idioma ocupa unos {size} MB. El inglés es obligatorio y no se puede eliminar. Entre dos idiomas que no son inglés se traduce pasando por inglés.",
+	"translate.androidOnly":
+		"La traducción sin conexión solo está disponible en Android.",
+	"translate.search": "Buscar idiomas",
+	"translate.installed": "Descargado",
+	"translate.notInstalled": "No descargado",
+	"translate.download": "Descargar",
+	"translate.remove": "Eliminar",
+	"translate.required": "Obligatorio",
+	"translate.downloading": "Descargando…",
+	"translate.deleting": "Eliminando…",
+	"translate.storage": "{count} descargados · unos {size} MB",
+	"translate.noResults": "Ningún idioma coincide con la búsqueda.",
+	"translate.euskeraNote":
+		"El euskera no está disponible sin conexión. Usará el servicio online si lo permites.",
+	"translate.deleteTitle": "¿Eliminar {language}?",
+	"translate.deleteBody": "Podrás volver a descargarlo cuando quieras.",
+	"translate.enableDesc":
+		"En Android, la traducción se hace en tu móvil una vez descargados los idiomas. Si no, el texto se envía a un servicio online gratuito (MyMemory, con Lingva como respaldo), que puedes desactivar más abajo. No se traduce nada hasta que pulsas Traducir o activas la traducción automática.",
 	"chat.photos": "Fotos",
 	"chat.albums.loading": "Cargando álbumes…",
 	"chat.albums.loadError": "No se pudieron cargar los álbumes",

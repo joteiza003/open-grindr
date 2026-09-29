@@ -6,6 +6,8 @@ export type TranslateRequest = {
 	/** Source language code, or "auto" to let the provider detect it. */
 	from: string;
 	to: string;
+	/** Language to assume when detection is inconclusive (short drafts). */
+	fallbackFrom?: string;
 };
 
 export type ProviderResult = { text: string; detected?: string };
@@ -14,6 +16,8 @@ export type TranslateErrorCode =
 	| "quota"
 	| "network"
 	| "bad-response"
+	| "unsupported"
+	| "model-missing"
 	| "aborted";
 
 export class TranslateError extends Error {

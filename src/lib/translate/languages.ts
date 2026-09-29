@@ -32,3 +32,18 @@ export function baseLanguage(code: string | undefined): string | undefined {
 	if (!code) return undefined;
 	return code.toLowerCase().split(/[-_]/)[0];
 }
+
+/** Language name in the app's language ("francés"), falling back to our list. */
+export function displayLanguageName(code: string, locale: string): string {
+	try {
+		const name = new Intl.DisplayNames([locale], { type: "language" }).of(
+			code,
+		);
+		if (name && name.toLowerCase() !== code.toLowerCase()) {
+			return name.charAt(0).toLocaleUpperCase(locale) + name.slice(1);
+		}
+	} catch {
+		// Unsupported locale/code: use the static name.
+	}
+	return languageName(code);
+}
