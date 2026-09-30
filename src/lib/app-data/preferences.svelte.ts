@@ -132,6 +132,12 @@ const preferencesSchema = z.object({
 			chatOutgoing: z.record(z.string(), z.boolean()).default({}),
 			// Optional: raises MyMemory's free daily limit.
 			email: z.string().default(""),
+			// Android: translate on the phone (ML Kit) before any online service.
+			onDevice: z.boolean().default(true),
+			onlineFallback: z.boolean().default(true),
+			// Set once the default offline languages (en, fr, yours) are installed.
+			defaultsInstalled: z.boolean().default(false),
+			downloadOverMobile: z.boolean().default(false),
 		})
 		.default({
 			enabled: false,
@@ -141,6 +147,10 @@ const preferencesSchema = z.object({
 			chatLanguages: {},
 			chatOutgoing: {},
 			email: "",
+			onDevice: true,
+			onlineFallback: true,
+			defaultsInstalled: false,
+			downloadOverMobile: false,
 		}),
 });
 

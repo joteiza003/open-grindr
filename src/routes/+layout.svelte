@@ -32,6 +32,7 @@
 	import { installScrollGestureBridge } from "$lib/platform/scroll-gesture";
 	import { reconcileNotifications } from "$lib/push/notifications.svelte";
 	import { startPushWatch } from "$lib/push/watch";
+	import { deviceModels } from "$lib/translate/models.svelte";
 	import { startAddonUpdateWatch } from "$lib/updates/addon.svelte";
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
 	import { startUpdateWatch } from "$lib/updates/updates-manager";
@@ -70,9 +71,11 @@
 				console.error("Failed to register back button listener", error);
 			});
 		}
-		void hydratePreferences().catch((error: unknown) => {
-			console.error("Failed to hydrate preferences", error);
-		});
+		void hydratePreferences()
+			.then(() => deviceModels.ensureDefaults())
+			.catch((error: unknown) => {
+				console.error("Failed to hydrate preferences", error);
+			});
 		void hydrateProfileMetadata().catch((error: unknown) => {
 			console.error("Failed to hydrate profile metadata", error);
 		});

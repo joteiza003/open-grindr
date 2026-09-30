@@ -44,8 +44,14 @@ export class Translator {
 		{
 			from = "auto",
 			to,
+			fallbackFrom,
 			signal,
-		}: { from?: string; to: string; signal?: AbortSignal },
+		}: {
+			from?: string;
+			to: string;
+			fallbackFrom?: string;
+			signal?: AbortSignal;
+		},
 	): Promise<Translation> {
 		const clean = text.trim();
 		if (!isTranslatable(clean) || from === to) {
@@ -61,7 +67,7 @@ export class Translator {
 		const pending = this.#inflight.get(key);
 		if (pending) return pending;
 
-		const run = this.#run({ text: clean, from, to }, signal)
+		const run = this.#run({ text: clean, from, to, fallbackFrom }, signal)
 			.then((result) => {
 				this.#remember(key, result);
 				return result;

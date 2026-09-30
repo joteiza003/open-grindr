@@ -5,8 +5,8 @@ import {
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
 import { currentLocale } from "$lib/i18n/t";
-import { createLingvaProvider, createMyMemoryProvider } from "./providers";
 import { TranslateError } from "./providers";
+import { buildProviders } from "./providers-config";
 import { isTranslatable } from "./text";
 import { Translator } from "./translator";
 
@@ -23,16 +23,22 @@ export async function updateTranslationSettings(
 	});
 }
 
-export const translator = new Translator(() => [
-	createMyMemoryProvider({ email: preferencesSnapshot().translation.email }),
-	createLingvaProvider(),
-]);
+export const translator = new Translator(() =>
+	buildProviders(preferencesSnapshot().translation),
+);
 
 export function translationErrorKey(
 	error: unknown,
-): "translate.quota" | "translate.offline" | "translate.failed" {
+):
+	| "translate.quota"
+	| "translate.offline"
+	| "translate.failed"
+	| "translate.modelMissing"
+	| "translate.unsupported" {
 	if (error instanceof TranslateError) {
 		if (error.code === "quota") return "translate.quota";
+		if (error.code === "model-missing") return "translate.modelMissing";
+		if (error.code === "unsupported") return "translate.unsupported";
 		if (error.code === "network") return "translate.offline";
 	}
 	return "translate.failed";
@@ -187,6 +193,7 @@ export class OutgoingTranslation {
 		try {
 			const result = await translator.translate(text, {
 				to: this.language,
+				fallbackFrom: translationSettings().myLanguage,
 			});
 			if (token !== this.#token) return;
 			this.preview = result.sameLanguage ? null : result.text;
@@ -209,7 +216,10 @@ export class OutgoingTranslation {
 		if (!this.active || !isTranslatable(clean)) return text;
 		clearTimeout(this.#timer);
 		this.#token += 1;
-		const result = await translator.translate(clean, { to: this.language });
+		const result = await translator.translate(clean, {
+			to: this.language,
+			fallbackFrom: translationSettings().myLanguage,
+		});
 		return result.sameLanguage ? text : result.text;
 	}
 

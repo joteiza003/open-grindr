@@ -78,8 +78,6 @@ export const eu: Record<MessageKey, string> = {
 	"translate.intro":
 		"Itzuli jasotako mezuak eta idazten duzuna, zuzenean txatean.",
 	"translate.enable": "Gaitu itzulpena",
-	"translate.enableDesc":
-		"Itzultzen duzun testua doako lineako zerbitzu batera bidaltzen da (MyMemory, Lingva babes gisa). Ez da ezer bidaltzen mezu bat itzuli edo itzulpen automatikoa aktibatu arte.",
 	"translate.autoIncoming": "Itzuli automatikoki jasotako mezuak",
 	"translate.autoIncomingDesc":
 		"Erakutsi itzulpena jasotako mezu bakoitzaren azpian.",
@@ -91,6 +89,48 @@ export const eu: Record<MessageKey, string> = {
 	"translate.clearCache": "Garbitu itzulpenen cachea",
 	"translate.cleared": "Itzulpenen cachea garbituta",
 	"translate.settings": "Itzulpena",
+	"translate.modelMissing":
+		"Hizkuntza hori ez dago deskargatuta. Deskargatu Itzulpena → Lineaz kanpoko hizkuntzak atalean.",
+	"translate.unsupported": "Hizkuntza hori ezin da lineaz kanpo itzuli.",
+	"translate.downloadingDefaults":
+		"Lineaz kanpoko itzulpen-hizkuntzak deskargatzen…",
+	"translate.defaultsReady": "Lineaz kanpoko itzulpena prest",
+	"translate.downloadFailed": "Ezin izan da hizkuntza deskargatu",
+	"translate.deleteFailed": "Ezin izan da hizkuntza ezabatu",
+	"translate.wifiRequired":
+		"Konektatu Wi-Fira edo baimendu datu mugikorrak itzulpen-ezarpenetan.",
+	"translate.onDevice": "Itzuli gailu honetan",
+	"translate.onDeviceDesc":
+		"Zure telefonoan deskargatutako hizkuntzak erabiltzen ditu. Pribatua: testua ez da gailutik ateratzen.",
+	"translate.onlineFallback": "Erabili lineako zerbitzuak babes gisa",
+	"translate.onlineFallbackDesc":
+		"Hizkuntza bat deskargatuta ez badago edo lineaz kanpo ez badago (euskara bezala), testua MyMemory-ra bidaltzen du. Desaktibatu dena gailuan gordetzeko.",
+	"translate.mobileData": "Deskargatu hizkuntzak datu mugikorrekin",
+	"translate.mobileDataDesc":
+		"Bestela, hizkuntzak Wi-Fi bidez soilik deskargatzen dira.",
+	"translate.languages": "Lineaz kanpoko hizkuntzak",
+	"translate.languagesDesc":
+		"Deskargatu edo ezabatu zure telefonoan gordetako hizkuntzak.",
+	"translate.languagesIntro":
+		"Hizkuntza bakoitzak {size} MB inguru hartzen ditu. Ingelesa beharrezkoa da eta ezin da ezabatu. Ingelesa ez diren bi hizkuntzen artean ingelesetik pasatuta itzultzen da.",
+	"translate.androidOnly":
+		"Lineaz kanpoko itzulpena Android-en bakarrik dago.",
+	"translate.search": "Bilatu hizkuntzak",
+	"translate.installed": "Deskargatuta",
+	"translate.notInstalled": "Deskargatu gabe",
+	"translate.download": "Deskargatu",
+	"translate.remove": "Ezabatu",
+	"translate.required": "Beharrezkoa",
+	"translate.downloading": "Deskargatzen…",
+	"translate.deleting": "Ezabatzen…",
+	"translate.storage": "{count} deskargatuta · {size} MB inguru",
+	"translate.noResults": "Ez dago bilaketarekin bat datorren hizkuntzarik.",
+	"translate.euskeraNote":
+		"Euskara ez dago lineaz kanpo. Lineako zerbitzua erabiliko du, baimentzen baduzu.",
+	"translate.deleteTitle": "{language} ezabatu?",
+	"translate.deleteBody": "Nahi duzunean berriro deskarga dezakezu.",
+	"translate.enableDesc":
+		"Android-en, itzulpena zure telefonoan egiten da hizkuntzak deskargatu ondoren. Bestela, testua doako lineako zerbitzu batera bidaltzen da (MyMemory, Lingva babes gisa), behean desaktiba dezakezuna. Ez da ezer itzultzen Itzuli sakatu edo itzulpen automatikoa aktibatu arte.",
 	"chat.photos": "Argazkiak",
 	"chat.albums.loading": "Albumak kargatzen…",
 	"chat.albums.loadError": "Ezin izan dira albumak kargatu",

@@ -44,6 +44,10 @@
 			title: () => t("phrases.settings"),
 			back: "/settings",
 		},
+		[`${base}/translation/languages`]: {
+			title: () => t("translate.languages"),
+			back: "/settings/translation",
+		},
 		[`${base}/translation`]: {
 			title: () => t("translate.title"),
 			back: "/settings",

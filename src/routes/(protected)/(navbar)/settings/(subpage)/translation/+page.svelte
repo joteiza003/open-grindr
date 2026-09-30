@@ -1,13 +1,16 @@
 <script lang="ts">
+	import { CaretRightIcon, TranslateIcon } from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { preferencesLoaded } from "$lib/app-data/preferences.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
+	import * as Item from "$lib/components/ui/item";
 	import { Label } from "$lib/components/ui/label";
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
 	import { t } from "$lib/i18n";
+	import { deviceModels } from "$lib/translate/models.svelte";
 	import {
 		messageTranslations,
 		translationSettings,
@@ -51,6 +54,53 @@
 />
 
 {#if settings.enabled}
+	{#if deviceModels.available}
+		<SwitchField
+			title={t("translate.onDevice")}
+			description={t("translate.onDeviceDesc")}
+			disabled={!ready}
+			bind:checked={
+				() => settings.onDevice,
+				(value: boolean) => save({ onDevice: value })
+			}
+		/>
+		<SwitchField
+			title={t("translate.onlineFallback")}
+			description={t("translate.onlineFallbackDesc")}
+			disabled={!ready}
+			bind:checked={
+				() => settings.onlineFallback,
+				(value: boolean) => save({ onlineFallback: value })
+			}
+		/>
+		<SwitchField
+			title={t("translate.mobileData")}
+			description={t("translate.mobileDataDesc")}
+			disabled={!ready}
+			bind:checked={
+				() => settings.downloadOverMobile,
+				(value: boolean) => save({ downloadOverMobile: value })
+			}
+		/>
+		<Item.Root variant="outline">
+			{#snippet child({ props })}
+				<a href="/settings/translation/languages" {...props}>
+					<Item.Media>
+						<TranslateIcon weight="fill" class="size-5" />
+					</Item.Media>
+					<Item.Content class="min-w-0">
+						<Item.Title>{t("translate.languages")}</Item.Title>
+						<Item.Description>
+							{t("translate.languagesDesc")}
+						</Item.Description>
+					</Item.Content>
+					<Item.Actions>
+						<CaretRightIcon class="size-4" />
+					</Item.Actions>
+				</a>
+			{/snippet}
+		</Item.Root>
+	{/if}
 	<SwitchField
 		title={t("translate.autoIncoming")}
 		description={t("translate.autoIncomingDesc")}

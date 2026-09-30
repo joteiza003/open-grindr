@@ -76,8 +76,6 @@ export const en = {
 	"translate.intro":
 		"Translate received messages and what you write, live in the chat.",
 	"translate.enable": "Enable translation",
-	"translate.enableDesc":
-		"The text you translate is sent to a free online service (MyMemory, with Lingva as a backup). Nothing is sent until you translate a message or turn on auto-translation.",
 	"translate.autoIncoming": "Auto-translate received messages",
 	"translate.autoIncomingDesc":
 		"Show the translation under each received message.",
@@ -89,6 +87,48 @@ export const en = {
 	"translate.clearCache": "Clear translation cache",
 	"translate.cleared": "Translation cache cleared",
 	"translate.settings": "Translation",
+	"translate.modelMissing":
+		"That language isn't downloaded. Get it in Translation → Offline languages.",
+	"translate.unsupported": "That language can't be translated offline.",
+	"translate.downloadingDefaults":
+		"Downloading offline translation languages…",
+	"translate.defaultsReady": "Offline translation ready",
+	"translate.downloadFailed": "Couldn't download the language",
+	"translate.deleteFailed": "Couldn't delete the language",
+	"translate.wifiRequired":
+		"Connect to Wi-Fi, or allow mobile data in translation settings.",
+	"translate.onDevice": "Translate on this device",
+	"translate.onDeviceDesc":
+		"Uses the languages downloaded on your phone. Private: the text doesn't leave the device.",
+	"translate.onlineFallback": "Use online services as a backup",
+	"translate.onlineFallbackDesc":
+		"If a language isn't downloaded or isn't available offline (like Euskera), send the text to MyMemory. Turn off to keep everything on the device.",
+	"translate.mobileData": "Download languages over mobile data",
+	"translate.mobileDataDesc":
+		"Otherwise language packs are only downloaded on Wi-Fi.",
+	"translate.languages": "Offline languages",
+	"translate.languagesDesc":
+		"Download or delete the languages stored on your phone.",
+	"translate.languagesIntro":
+		"Each language takes about {size} MB. English is required and can't be removed. Two non-English languages translate through English.",
+	"translate.androidOnly":
+		"Offline translation is only available on Android.",
+	"translate.search": "Search languages",
+	"translate.installed": "Downloaded",
+	"translate.notInstalled": "Not downloaded",
+	"translate.download": "Download",
+	"translate.remove": "Delete",
+	"translate.required": "Required",
+	"translate.downloading": "Downloading…",
+	"translate.deleting": "Deleting…",
+	"translate.storage": "{count} downloaded · about {size} MB",
+	"translate.noResults": "No languages match your search.",
+	"translate.euskeraNote":
+		"Euskera isn't available offline. It will use the online service if you allow it.",
+	"translate.deleteTitle": "Delete {language}?",
+	"translate.deleteBody": "You can download it again at any time.",
+	"translate.enableDesc":
+		"On Android, translation happens on your phone once the languages are downloaded. Otherwise the text is sent to a free online service (MyMemory, with Lingva as a backup), which you can turn off below. Nothing is translated until you tap Translate or turn on auto-translation.",
 	"chat.photos": "Photos",
 	"chat.albums.loading": "Loading albums…",
 	"chat.albums.loadError": "Couldn't load albums",

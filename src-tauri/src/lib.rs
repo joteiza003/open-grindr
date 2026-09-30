@@ -19,6 +19,7 @@ mod push_poll;
 mod scroll_phase;
 mod state;
 mod storage;
+mod translate;
 mod upload;
 mod video;
 
@@ -173,6 +174,7 @@ pub fn run() {
         .plugin(api::update::plugin())
         .plugin(app_settings::plugin())
         .plugin(media_picker::plugin())
+        .plugin(translate::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
@@ -242,6 +244,12 @@ pub fn run() {
             api::update::commands::updater_discard,
             app_settings::open_app_settings,
             media_picker::pick_android_media,
+            translate::translate_available,
+            translate::translate_identify,
+            translate::translate_text,
+            translate::translate_models,
+            translate::translate_download,
+            translate::translate_delete,
             appearance::backdrop_filter_renders,
             app_data::read_app_data,
             app_data::write_app_data,
