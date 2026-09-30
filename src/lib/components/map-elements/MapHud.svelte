@@ -1,12 +1,13 @@
 <script lang="ts">
-	import { CircleIcon, MapPinIcon, NavigationArrowIcon, TrashIcon, XIcon } from "phosphor-svelte";
 	import { goto } from "$app/navigation";
+	import { CircleIcon, MapPinIcon, XIcon } from "phosphor-svelte";
 
 	import CircleEditor from "$lib/components/map-elements/CircleEditor.svelte";
 	import MarkerEditor from "$lib/components/map-elements/MarkerEditor.svelte";
+	import SelectedMarkerCard from "$lib/components/map-elements/SelectedMarkerCard.svelte";
+	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
-	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import { t } from "$lib/i18n";
 	import { currentLocale } from "$lib/i18n/t";
 	import { formatDistanceKm } from "$lib/map/geographic";
@@ -46,19 +47,25 @@
 
 	const locale = $derived(currentLocale());
 	const listVisible = $derived(listOpen && overlays.mode === "NORMAL");
+
+	function openProfile(id: number) {
+		(onOpenProfile ?? ((pid: number) => void goto(`/profile/${pid}`)))(id);
+	}
 </script>
 
+<!-- Mode hint (add circle / add marker) -->
 {#if modeHint}
 	<div
 		class="pointer-events-none absolute inset-x-0 top-3 z-1000 flex justify-center px-14"
 	>
 		<div
-			class="pointer-events-auto flex max-w-xl items-center gap-2 rounded-2xl border border-border bg-card/95 px-3 py-2 shadow-xl"
+			class="pointer-events-auto flex max-w-md items-center gap-2.5 rounded-2xl border border-border/80 bg-card/95 px-3.5 py-2.5 shadow-xl backdrop-blur-xl"
 		>
-			<p class="flex-1 text-sm">{modeHint}</p>
+			<p class="flex-1 text-sm leading-snug font-medium">{modeHint}</p>
 			<Button
 				variant="ghost"
 				size="icon"
+				class="size-8 shrink-0 rounded-full"
 				aria-label={t("map.cancelAria")}
 				onclick={() => overlays.cancelCreation()}
 			>
@@ -68,18 +75,22 @@
 	</div>
 {/if}
 
+<!-- Empty state -->
 {#if empty}
 	<div
 		class="pointer-events-none absolute inset-x-0 top-3 z-1000 flex justify-center px-4"
 	>
 		<div
-			class="max-w-xl rounded-2xl border border-border bg-card/95 px-3 py-2 text-center shadow-xl"
+			class="max-w-md rounded-2xl border border-border/80 bg-card/95 px-4 py-3 text-center shadow-xl backdrop-blur-xl"
 		>
-			<p class="text-sm text-muted-foreground">{t("map.empty")}</p>
+			<p class="text-sm leading-relaxed text-muted-foreground">
+				{t("map.empty")}
+			</p>
 		</div>
 	</div>
 {/if}
 
+<!-- Bottom panels -->
 <div class="pointer-events-none absolute inset-x-0 bottom-4 z-1000 px-3">
 	{#if overlays.mode === "CIRCLE_CONFIGURATION" && overlays.circleDraft}
 		<CircleEditor
@@ -95,10 +106,13 @@
 				: undefined}
 		/>
 	{:else if openCluster}
+		<!-- Cluster list -->
 		<section
-			class="pointer-events-auto mx-auto w-full max-w-xl rounded-2xl border border-border bg-card/95 p-3 shadow-2xl"
+			class="pointer-events-auto mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl"
 		>
-			<div class="mb-2 flex items-center justify-between">
+			<div
+				class="flex items-center justify-between border-b border-border/60 px-4 py-3"
+			>
 				<h2 class="text-sm font-semibold">
 					{t("map.markerCount", {
 						count: openCluster.markers.length,
@@ -107,101 +121,148 @@
 				<Button
 					variant="ghost"
 					size="icon"
+					class="size-8 rounded-full"
 					aria-label={t("map.closeCluster")}
 					onclick={() => (openCluster = null)}
 				>
 					<XIcon class="size-4" />
 				</Button>
 			</div>
-			<div class="max-h-48 overflow-auto">
+			<div class="max-h-52 overflow-y-auto overscroll-contain p-2">
 				{#each openCluster.markers as marker (marker.id)}
 					<button
 						type="button"
-						class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
+						class="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70 active:bg-muted"
 						onclick={() => onPickMarker(marker)}
 					>
 						{#if marker.mediaHash}
-							<span class="size-8 shrink-0 overflow-hidden rounded-full">
-								<UserAvatar mediaHash={marker.mediaHash} class="size-8" size="md" />
+							<span
+								class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+							>
+								<UserAvatar
+									mediaHash={marker.mediaHash}
+									class="size-9"
+									size="md"
+								/>
 							</span>
 						{:else}
-							<MapPinIcon class="size-4 shrink-0" />
+							<span
+								class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"
+							>
+								<MapPinIcon class="size-4" weight="fill" />
+							</span>
 						{/if}
-						<span class="truncate">{marker.displayName ?? marker.title}</span>
+						<span
+							class="min-w-0 flex-1 truncate text-sm font-medium"
+						>
+							{marker.displayName ?? marker.title}
+						</span>
 					</button>
 				{/each}
 			</div>
 		</section>
 	{:else if listVisible}
+		<!-- Saved elements list -->
 		<section
-			class="pointer-events-auto mx-auto w-full max-w-xl rounded-2xl border border-border bg-card/95 p-3 shadow-2xl"
+			class="pointer-events-auto mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl"
 			aria-label={t("map.list")}
 		>
-			<div class="mb-2 flex items-center justify-between">
+			<div
+				class="flex items-center justify-between border-b border-border/60 px-4 py-3"
+			>
 				<h2 class="text-sm font-semibold">{t("map.list")}</h2>
 				<Button
 					variant="ghost"
 					size="icon"
+					class="size-8 rounded-full"
 					aria-label={t("common.close")}
 					onclick={() => (listOpen = false)}
 				>
 					<XIcon class="size-4" />
 				</Button>
 			</div>
-			<div class="max-h-56 space-y-2 overflow-auto">
+
+			<div
+				class="max-h-60 space-y-1 overflow-y-auto overscroll-contain p-2"
+			>
 				{#if overlays.circles.length === 0 && overlays.markers.length === 0}
-					<p class="px-2 py-3 text-sm text-muted-foreground">
+					<p
+						class="px-3 py-6 text-center text-sm text-muted-foreground"
+					>
 						{t("map.listEmpty")}
 					</p>
 				{/if}
+
 				{#if overlays.circles.length > 0}
-					<h3
-						class="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+					<p
+						class="px-3 pt-1.5 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
 					>
 						{t("map.circlesHeading")}
-					</h3>
+					</p>
 					{#each overlays.circles as circle (circle.id)}
 						<button
 							type="button"
-							class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
+							class="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70 active:bg-muted"
 							onclick={() => onPickCircle(circle)}
 						>
-							<CircleIcon
-								class="size-4 shrink-0"
-								weight="fill"
-								color={circle.color}
-							/>
-							<span class="min-w-0 flex-1 truncate">
+							<span
+								class="grid size-9 shrink-0 place-items-center rounded-full"
+								style:background-color="{circle.color}22"
+							>
+								<CircleIcon
+									class="size-4"
+									weight="fill"
+									color={circle.color}
+								/>
+							</span>
+							<span
+								class="min-w-0 flex-1 truncate text-sm font-medium"
+							>
 								{circle.name ?? t("map.unnamedCircle")}
 							</span>
 							<span
-								class="shrink-0 text-xs text-muted-foreground"
+								class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground tabular-nums"
 							>
 								{formatDistanceKm(circle.radiusKm, locale)}
 							</span>
 						</button>
 					{/each}
 				{/if}
+
 				{#if overlays.markers.length > 0}
-					<h3
-						class="px-2 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+					<p
+						class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
 					>
 						{t("map.markersHeading")}
-					</h3>
+					</p>
 					{#each overlays.markers as marker (marker.id)}
 						<button
 							type="button"
-							class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
+							class="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70 active:bg-muted"
 							onclick={() => onPickMarker(marker)}
 						>
 							{#if marker.mediaHash}
-								<span class="size-8 shrink-0 overflow-hidden rounded-full">
-									<UserAvatar mediaHash={marker.mediaHash} class="size-8" size="md" />
+								<span
+									class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+								>
+									<UserAvatar
+										mediaHash={marker.mediaHash}
+										class="size-9"
+										size="md"
+									/>
 								</span>
 							{:else}
-								<MapPinIcon class="size-4 shrink-0" weight="fill" />
+								<span
+									class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"
+								>
+									<MapPinIcon class="size-4" weight="fill" />
+								</span>
 							{/if}
-							<span class="truncate">{marker.displayName ?? marker.title}</span>
+							<span
+								class="min-w-0 flex-1 truncate text-sm font-medium"
+							>
+								{marker.displayName ?? marker.title}
+							</span>
 						</button>
 					{/each}
 				{/if}
@@ -216,90 +277,17 @@
 			onsave={() => void overlays.saveMarkerDraft()}
 		/>
 	{:else if overlays.mode === "SELECTED_MARKER" && selectedMarker}
-		<section
-			class="pointer-events-auto mx-auto flex w-full max-w-xl items-center gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-2xl"
-		>
-			{#if selectedMarker.mediaHash || selectedMarker.profileId}
-				<button
-					type="button"
-					class="size-12 shrink-0 overflow-hidden rounded-full ring-2 ring-border"
-					onclick={() => {
-						if (selectedMarker.profileId) {
-							(onOpenProfile ?? ((id: number) => void goto(`/profile/${id}`)))(
-								selectedMarker.profileId,
-							);
-						}
-					}}
-				>
-					<UserAvatar
-						mediaHash={selectedMarker.mediaHash ?? null}
-						class="size-12"
-						size="md"
-					/>
-				</button>
-			{:else}
-				<MapPinIcon class="size-5 shrink-0" weight="fill" />
-			{/if}
-			<div class="min-w-0 flex-1">
-				<h2 class="truncate text-sm font-semibold">
-					{selectedMarker.displayName ?? selectedMarker.title}
-				</h2>
-				<p class="truncate text-xs text-muted-foreground">
-					{selectedMarker.latitude.toFixed(4)}, {selectedMarker.longitude.toFixed(
-						4,
-					)}
-				</p>
-				<div class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-					{#if selectedMarker.profileId}
-						<button
-							type="button"
-							class="text-xs font-medium text-primary"
-							onclick={() => {
-								(onOpenProfile ?? ((id: number) => void goto(`/profile/${id}`)))(
-									selectedMarker.profileId!,
-								);
-							}}
-						>
-							Ver perfil
-						</button>
-					{/if}
-					<button
-						type="button"
-						class="text-xs font-medium text-primary"
-						onclick={() => onOpenDirections?.(selectedMarker)}
-					>
-						Ruta en Maps
-					</button>
-				</div>
-			</div>
-			<Button
-				variant="secondary"
-				size="icon"
-				aria-label="Ruta en Google Maps"
-				title="Ruta en Google Maps"
-				onclick={() => onOpenDirections?.(selectedMarker)}
-			>
-				<NavigationArrowIcon class="size-4" weight="fill" />
-			</Button>
-			<Button
-				variant="ghost"
-				size="sm"
-				onclick={() => overlays.clearSelection()}
-			>
-				{t("common.close")}
-			</Button>
-			<Button
-				variant="destructive"
-				size="icon"
-				aria-label={t("map.deleteAria")}
-				onclick={() => (confirmOpen = true)}
-			>
-				<TrashIcon class="size-4" />
-			</Button>
-		</section>
+		<SelectedMarkerCard
+			{selectedMarker}
+			onOpenProfile={openProfile}
+			{onOpenDirections}
+			onClose={() => overlays.clearSelection()}
+			onDelete={() => (confirmOpen = true)}
+		/>
 	{/if}
 </div>
 
+<!-- Delete confirmation -->
 <AlertDialog.Root bind:open={confirmOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>

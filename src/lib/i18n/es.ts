@@ -396,6 +396,8 @@ export const es: Record<MessageKey, string> = {
 	"map.markerCount": "{count} marcadores",
 	"map.resizeHandle": "Redimensionar",
 	"map.moveHandle": "Mover",
+	"map.viewProfile": "Ver perfil",
+	"map.directions": "Ruta en Maps",
 
 	"profile.photos": "Fotos",
 	"profileNote.add": "Añadir nota",

@@ -383,6 +383,8 @@ export const eu: Record<MessageKey, string> = {
 	"map.markerCount": "{count} markatzaile",
 	"map.resizeHandle": "Aldatu tamaina",
 	"map.moveHandle": "Mugitu",
+	"map.viewProfile": "Ikusi profila",
+	"map.directions": "Ibilbidea Maps-en",
 	"profile.photos": "Argazkiak",
 	"profileNote.add": "Gehitu oharra",
 	"profileNote.title": "Oharra",

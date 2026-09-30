@@ -38,7 +38,6 @@
 	}: {
 		draft: CircleDraft;
 		error?: string | null;
-		/** Custom location of the user, to relate the circle to it. */
 		userLocation?: { latitude: number; longitude: number } | null;
 		onchange: (patch: Partial<CircleDraft>) => void;
 		onmove: (latitude: number, longitude: number) => void;
@@ -71,23 +70,26 @@
 </script>
 
 <section
-	class="pointer-events-auto mx-auto max-h-[70dvh] w-full max-w-xl overflow-y-auto rounded-2xl border border-border bg-card/95 p-4 shadow-2xl"
+	class="pointer-events-auto mx-auto max-h-[72dvh] w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl"
 	aria-label={t("map.circleAria")}
 >
-	<div class="flex items-start justify-between gap-3">
-		<div>
+	<!-- Sticky header -->
+	<div
+		class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-border/60 bg-card/90 px-4 py-3.5 backdrop-blur-md"
+	>
+		<div class="min-w-0 flex-1">
 			<h2 class="text-base font-semibold tracking-tight">
 				{editing ? t("map.circleEdit") : t("map.circle")}
 			</h2>
-			<p class="mt-0.5 text-xs text-muted-foreground">
+			<p class="mt-0.5 text-xs leading-snug text-muted-foreground">
 				{t("map.dragHint")}
 			</p>
 		</div>
 		<div
-			class="grid size-12 shrink-0 place-items-center"
+			class="grid size-12 shrink-0 place-items-center rounded-2xl bg-muted/60"
 			aria-hidden="true"
 		>
-			<svg viewBox="0 0 48 48" class="size-12">
+			<svg viewBox="0 0 48 48" class="size-10">
 				<circle
 					cx="24"
 					cy="24"
@@ -95,192 +97,248 @@
 					fill={draft.color}
 					fill-opacity={CIRCLE_FILL_OPACITY}
 					stroke={draft.color}
-					stroke-width="3"
+					stroke-width="2.5"
 				/>
 				<circle cx="24" cy="24" r="2.5" fill={draft.color} />
 			</svg>
 		</div>
 	</div>
 
-	<dl
-		class="mt-3 grid grid-cols-3 gap-2 rounded-xl bg-muted/50 p-2 text-center text-xs"
+	<div
+		class="max-h-[calc(72dvh-8.5rem)] overflow-y-auto overscroll-contain px-4 py-4"
 	>
-		<div>
-			<dt class="text-muted-foreground">{t("map.radius")}</dt>
-			<dd class="font-medium">
-				{formatDistanceKm(draft.radiusKm, locale)}
-			</dd>
-		</div>
-		<div>
-			<dt class="text-muted-foreground">{t("map.diameter")}</dt>
-			<dd class="font-medium">
-				{formatDistanceKm(draft.radiusKm * 2, locale)}
-			</dd>
-		</div>
-		<div>
-			<dt class="text-muted-foreground">{t("map.area")}</dt>
-			<dd class="font-medium">
-				{formatAreaKm2(circleAreaKm2(draft.radiusKm), locale)}
-			</dd>
-		</div>
-	</dl>
-	{#if relation}
-		<p class="mt-2 text-xs text-muted-foreground">{relation}</p>
-	{/if}
-
-	<div class="mt-4 space-y-2">
-		<Label for="circle-name">{t("map.nameOptional")}</Label>
-		<Input
-			id="circle-name"
-			maxlength={MAX_TITLE_LENGTH}
-			placeholder={t("map.circleNamePlaceholder")}
-			value={draft.name}
-			oninput={(event) =>
-				onchange({
-					name: (event.currentTarget as HTMLInputElement).value,
-				})}
-		/>
-	</div>
-
-	<div class="mt-4 space-y-3">
-		<div class="flex items-center justify-between gap-3">
-			<Label for="circle-radius">{t("map.radius")}</Label>
-			<div class="flex items-center gap-2">
-				<Input
-					id="circle-radius"
-					type="number"
-					inputmode="decimal"
-					min={MIN_RADIUS_KM}
-					max={MAX_RADIUS_KM}
-					step={0.1}
-					value={draft.radiusKm}
-					class="h-8 w-20 text-right"
-					oninput={(event) => {
-						const next = Number.parseFloat(
-							(event.currentTarget as HTMLInputElement).value,
-						);
-						if (Number.isFinite(next)) onchange({ radiusKm: next });
-					}}
-				/>
-				<span class="text-sm text-muted-foreground">km</span>
+		<!-- Stats -->
+		<div
+			class="grid grid-cols-3 gap-2 rounded-2xl bg-muted/50 p-2.5 text-center"
+		>
+			<div class="rounded-xl px-1 py-1.5">
+				<p
+					class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+				>
+					{t("map.radius")}
+				</p>
+				<p class="mt-0.5 text-sm font-semibold tabular-nums">
+					{formatDistanceKm(draft.radiusKm, locale)}
+				</p>
+			</div>
+			<div class="rounded-xl px-1 py-1.5">
+				<p
+					class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+				>
+					{t("map.diameter")}
+				</p>
+				<p class="mt-0.5 text-sm font-semibold tabular-nums">
+					{formatDistanceKm(draft.radiusKm * 2, locale)}
+				</p>
+			</div>
+			<div class="rounded-xl px-1 py-1.5">
+				<p
+					class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+				>
+					{t("map.area")}
+				</p>
+				<p class="mt-0.5 text-sm font-semibold tabular-nums">
+					{formatAreaKm2(circleAreaKm2(draft.radiusKm), locale)}
+				</p>
 			</div>
 		</div>
-		<Slider
-			type="single"
-			min={0}
-			max={RADIUS_SLIDER_STEPS}
-			step={1}
-			thumbLabels={[t("map.radiusAria")]}
-			thumbValueTexts={[formatDistanceKm(draft.radiusKm, locale)]}
-			bind:value={
-				() => radiusToSlider(draft.radiusKm),
-				(next: number) => onchange({ radiusKm: sliderToRadius(next) })
-			}
-		/>
-		<div class="flex flex-wrap gap-1.5">
-			{#each RADIUS_PRESETS_KM as preset (preset)}
-				<Button
-					type="button"
-					size="sm"
-					variant={draft.radiusKm === preset ? "default" : "outline"}
-					class="h-7 rounded-full px-2.5 text-xs"
-					onclick={() => onchange({ radiusKm: preset })}
-				>
-					{formatDistanceKm(preset, locale)}
-				</Button>
-			{/each}
-		</div>
-	</div>
 
-	<div class="mt-4 grid grid-cols-2 gap-3">
-		<div class="space-y-1.5">
-			<Label for="circle-lat">{t("map.latitude")}</Label>
-			<Input
-				id="circle-lat"
-				type="number"
-				inputmode="decimal"
-				step="any"
-				min={-90}
-				max={90}
-				value={Number(draft.latitude.toFixed(6))}
-				oninput={(event) => {
-					const next = parseCoordinate(event);
-					if (next !== null) onmove(next, draft.longitude);
-				}}
-			/>
-		</div>
-		<div class="space-y-1.5">
-			<Label for="circle-lon">{t("map.longitude")}</Label>
-			<Input
-				id="circle-lon"
-				type="number"
-				inputmode="decimal"
-				step="any"
-				min={-180}
-				max={180}
-				value={Number(draft.longitude.toFixed(6))}
-				oninput={(event) => {
-					const next = parseCoordinate(event);
-					if (next !== null) onmove(draft.latitude, next);
-				}}
-			/>
-		</div>
-	</div>
-
-	<div class="mt-4 space-y-2">
-		<Label>{t("map.color")}</Label>
-		<div class="flex flex-wrap items-center gap-2">
-			{#each CIRCLE_COLORS as color (color)}
-				<button
-					type="button"
-					aria-label={t("map.colorAria", { color })}
-					aria-pressed={draft.color.toLowerCase() === color}
-					class={[
-						"size-7 rounded-full border-2 transition-transform",
-						{
-							"scale-110 border-foreground":
-								draft.color.toLowerCase() === color,
-							"border-transparent":
-								draft.color.toLowerCase() !== color,
-						},
-					]}
-					style:background-color={color}
-					onclick={() => onchange({ color })}
-				></button>
-			{/each}
-			<label
-				class="relative size-7 overflow-hidden rounded-full border border-border"
+		{#if relation}
+			<p
+				class="mt-2.5 rounded-xl bg-primary/10 px-3 py-2 text-xs leading-snug text-primary"
 			>
-				<span class="sr-only">{t("map.customColor")}</span>
-				<input
-					type="color"
-					value={draft.color}
-					class="absolute inset-0 cursor-pointer opacity-0"
-					oninput={(event) =>
-						onchange({ color: event.currentTarget.value })}
-				/>
-				<span
-					class="block size-full"
-					style:background-color={draft.color}
-				></span>
-			</label>
+				{relation}
+			</p>
+		{/if}
+
+		<!-- Name -->
+		<div class="mt-5 space-y-2">
+			<Label for="circle-name" class="text-sm font-medium">
+				{t("map.nameOptional")}
+			</Label>
+			<Input
+				id="circle-name"
+				maxlength={MAX_TITLE_LENGTH}
+				placeholder={t("map.circleNamePlaceholder")}
+				value={draft.name}
+				class="h-11 rounded-xl"
+				oninput={(event) =>
+					onchange({
+						name: (event.currentTarget as HTMLInputElement).value,
+					})}
+			/>
 		</div>
+
+		<!-- Radius -->
+		<div class="mt-5 space-y-3">
+			<div class="flex items-center justify-between gap-3">
+				<Label for="circle-radius" class="text-sm font-medium">
+					{t("map.radius")}
+				</Label>
+				<div class="flex items-center gap-1.5">
+					<Input
+						id="circle-radius"
+						type="number"
+						inputmode="decimal"
+						min={MIN_RADIUS_KM}
+						max={MAX_RADIUS_KM}
+						step={0.1}
+						value={draft.radiusKm}
+						class="h-9 w-[4.5rem] rounded-lg text-right tabular-nums"
+						oninput={(event) => {
+							const next = Number.parseFloat(
+								(event.currentTarget as HTMLInputElement).value,
+							);
+							if (Number.isFinite(next))
+								onchange({ radiusKm: next });
+						}}
+					/>
+					<span class="text-sm text-muted-foreground">km</span>
+				</div>
+			</div>
+
+			<Slider
+				type="single"
+				min={0}
+				max={RADIUS_SLIDER_STEPS}
+				step={1}
+				thumbLabels={[t("map.radiusAria")]}
+				thumbValueTexts={[formatDistanceKm(draft.radiusKm, locale)]}
+				bind:value={
+					() => radiusToSlider(draft.radiusKm),
+					(next: number) =>
+						onchange({ radiusKm: sliderToRadius(next) })
+				}
+			/>
+
+			<div class="flex flex-wrap gap-1.5">
+				{#each RADIUS_PRESETS_KM as preset (preset)}
+					<Button
+						type="button"
+						size="sm"
+						variant={draft.radiusKm === preset
+							? "default"
+							: "outline"}
+						class="h-8 rounded-full px-3 text-xs font-medium"
+						onclick={() => onchange({ radiusKm: preset })}
+					>
+						{formatDistanceKm(preset, locale)}
+					</Button>
+				{/each}
+			</div>
+		</div>
+
+		<!-- Coordinates -->
+		<div class="mt-5 grid grid-cols-2 gap-3">
+			<div class="space-y-1.5">
+				<Label for="circle-lat" class="text-sm font-medium">
+					{t("map.latitude")}
+				</Label>
+				<Input
+					id="circle-lat"
+					type="number"
+					inputmode="decimal"
+					step="any"
+					min={-90}
+					max={90}
+					value={Number(draft.latitude.toFixed(6))}
+					class="h-10 rounded-xl tabular-nums"
+					oninput={(event) => {
+						const next = parseCoordinate(event);
+						if (next !== null) onmove(next, draft.longitude);
+					}}
+				/>
+			</div>
+			<div class="space-y-1.5">
+				<Label for="circle-lon" class="text-sm font-medium">
+					{t("map.longitude")}
+				</Label>
+				<Input
+					id="circle-lon"
+					type="number"
+					inputmode="decimal"
+					step="any"
+					min={-180}
+					max={180}
+					value={Number(draft.longitude.toFixed(6))}
+					class="h-10 rounded-xl tabular-nums"
+					oninput={(event) => {
+						const next = parseCoordinate(event);
+						if (next !== null) onmove(draft.latitude, next);
+					}}
+				/>
+			</div>
+		</div>
+
+		<!-- Color -->
+		<div class="mt-5 space-y-2.5">
+			<Label class="text-sm font-medium">{t("map.color")}</Label>
+			<div class="flex flex-wrap items-center gap-2.5">
+				{#each CIRCLE_COLORS as color (color)}
+					<button
+						type="button"
+						aria-label={t("map.colorAria", { color })}
+						aria-pressed={draft.color.toLowerCase() === color}
+						class={[
+							"size-8 rounded-full border-2 transition-all duration-150",
+							{
+								"scale-110 border-foreground shadow-md ring-2 ring-foreground/20":
+									draft.color.toLowerCase() === color,
+								"border-transparent opacity-90 hover:scale-105 hover:opacity-100":
+									draft.color.toLowerCase() !== color,
+							},
+						]}
+						style:background-color={color}
+						onclick={() => onchange({ color })}
+					></button>
+				{/each}
+				<label
+					class="relative size-8 overflow-hidden rounded-full border-2 border-border shadow-sm transition-transform hover:scale-105"
+					title={t("map.customColor")}
+				>
+					<span class="sr-only">{t("map.customColor")}</span>
+					<input
+						type="color"
+						value={draft.color}
+						class="absolute inset-0 cursor-pointer opacity-0"
+						oninput={(event) =>
+							onchange({ color: event.currentTarget.value })}
+					/>
+					<span
+						class="block size-full"
+						style:background-color={draft.color}
+					></span>
+				</label>
+			</div>
+		</div>
+
+		{#if error}
+			<p
+				class="mt-4 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive"
+				role="alert"
+			>
+				{error}
+			</p>
+		{/if}
 	</div>
 
-	{#if error}
-		<p class="mt-3 text-sm text-destructive" role="alert">{error}</p>
-	{/if}
-
-	<div class="mt-4 flex items-center justify-end gap-2">
+	<!-- Sticky actions -->
+	<div
+		class="sticky bottom-0 flex items-center gap-2 border-t border-border/60 bg-card/90 px-4 py-3 backdrop-blur-md"
+	>
 		{#if editing && ondelete}
-			<Button variant="destructive" class="me-auto" onclick={ondelete}>
+			<Button
+				variant="destructive"
+				class="me-auto rounded-xl"
+				onclick={ondelete}
+			>
 				{t("common.delete")}
 			</Button>
 		{/if}
-		<Button variant="outline" onclick={oncancel}>
+		<Button variant="ghost" class="rounded-xl" onclick={oncancel}>
 			{t("common.cancel")}
 		</Button>
-		<Button onclick={onsave}>
+		<Button class="min-w-24 rounded-xl" onclick={onsave}>
 			{editing ? t("map.update") : t("common.save")}
 		</Button>
 	</div>

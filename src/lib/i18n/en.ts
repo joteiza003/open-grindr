@@ -386,6 +386,8 @@ export const en = {
 	"map.markerCount": "{count} markers",
 	"map.resizeHandle": "Resize",
 	"map.moveHandle": "Move",
+	"map.viewProfile": "View profile",
+	"map.directions": "Directions",
 
 	"profile.photos": "Photos",
 	"profileNote.add": "Add note",

@@ -255,55 +255,82 @@
 		overlays.selectMarker(marker.id);
 		map?.setView([marker.latitude, marker.longitude], Math.max(zoom, 16));
 	}
+
+	const circleActive =
+		overlays.mode === "ADD_CIRCLE" ||
+		overlays.mode === "CIRCLE_CONFIGURATION";
+	const markerActive =
+		overlays.mode === "ADD_MARKER" ||
+		overlays.mode === "MARKER_CONFIGURATION";
 </script>
 
 <main
 	class="relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
-	<header class="flex items-center gap-2 px-4 pt-3 pb-2">
+	<!-- Glass header -->
+	<header
+		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/80 px-3 py-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70"
+	>
 		<BackLink
 			href="/"
 			label={t("common.back")}
-			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
+			class="grid size-10 shrink-0 place-items-center rounded-full text-foreground transition-colors active:bg-muted can-hover:hover:bg-muted"
 		>
-			<CaretLeftIcon class="size-5" />
+			<CaretLeftIcon class="size-5" weight="bold" />
 		</BackLink>
-		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">
+
+		<h1
+			class="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight"
+		>
 			{t("map.title")}
 		</h1>
-		<Button
-			variant={listOpen ? "default" : "secondary"}
-			size="icon"
-			aria-label={t("map.list")}
-			title={t("map.list")}
-			onclick={() => (listOpen = !listOpen)}
-		>
-			<ListIcon class="size-5" />
-		</Button>
-		<Button
-			variant={overlays.mode === "ADD_CIRCLE" ||
-			overlays.mode === "CIRCLE_CONFIGURATION"
-				? "default"
-				: "secondary"}
-			size="icon"
-			aria-label={t("map.addCircle")}
-			title={t("map.addCircle")}
-			onclick={() => overlays.beginAddCircle()}
-		>
-			<CircleIcon class="size-5" />
-		</Button>
-		<Button
-			variant={overlays.mode === "ADD_MARKER" ||
-			overlays.mode === "MARKER_CONFIGURATION"
-				? "default"
-				: "secondary"}
-			size="icon"
-			aria-label={t("map.addMarker")}
-			title={t("map.addMarker")}
-			onclick={() => overlays.beginAddMarker()}
-		>
-			<MapPinPlusIcon class="size-5" />
-		</Button>
+
+		<div class="flex items-center gap-1">
+			<Button
+				variant={listOpen ? "default" : "ghost"}
+				size="icon"
+				class="size-10 rounded-full"
+				aria-label={t("map.list")}
+				title={t("map.list")}
+				aria-pressed={listOpen}
+				onclick={() => (listOpen = !listOpen)}
+			>
+				<ListIcon
+					class="size-5"
+					weight={listOpen ? "fill" : "regular"}
+				/>
+			</Button>
+
+			<Button
+				variant={circleActive ? "default" : "ghost"}
+				size="icon"
+				class="size-10 rounded-full"
+				aria-label={t("map.addCircle")}
+				title={t("map.addCircle")}
+				aria-pressed={circleActive}
+				onclick={() => overlays.beginAddCircle()}
+			>
+				<CircleIcon
+					class="size-5"
+					weight={circleActive ? "fill" : "regular"}
+				/>
+			</Button>
+
+			<Button
+				variant={markerActive ? "default" : "ghost"}
+				size="icon"
+				class="size-10 rounded-full"
+				aria-label={t("map.addMarker")}
+				title={t("map.addMarker")}
+				aria-pressed={markerActive}
+				onclick={() => overlays.beginAddMarker()}
+			>
+				<MapPinPlusIcon
+					class="size-5"
+					weight={markerActive ? "fill" : "regular"}
+				/>
+			</Button>
+		</div>
 	</header>
 
 	<div class="relative min-h-0 flex-1">
@@ -451,13 +478,14 @@
 			</Map>
 		</div>
 
+		<!-- Floating map controls -->
 		<div
 			class="pointer-events-none absolute end-3 top-3 z-1000 flex flex-col gap-2"
 		>
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto shadow-lg"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg backdrop-blur-md can-hover:hover:bg-card"
 				aria-label={t("map.fitAll")}
 				title={t("map.fitAll")}
 				onclick={fitAll}
@@ -467,7 +495,7 @@
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto shadow-lg"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg backdrop-blur-md disabled:opacity-40 can-hover:hover:bg-card"
 				aria-label={t("map.locate")}
 				title={customLocation ? t("map.locate") : t("map.noLocation")}
 				disabled={!customLocation}
@@ -507,17 +535,27 @@
 
 <style>
 	:global(.leaflet-tooltip.map-circle-label) {
-		background: rgb(0 0 0 / 65%);
+		background: rgb(0 0 0 / 70%);
 		border: 0;
 		border-radius: 999px;
 		box-shadow: none;
 		color: #fff;
 		font-size: 12px;
 		font-weight: 600;
-		padding: 2px 8px;
+		letter-spacing: 0.01em;
+		padding: 3px 9px;
 		pointer-events: none;
 	}
 	:global(.leaflet-tooltip.map-circle-label::before) {
 		display: none;
+	}
+
+	/* Soften leaflet attribution on dark/light */
+	:global(.leaflet-control-attribution) {
+		background: rgb(255 255 255 / 75%) !important;
+		backdrop-filter: blur(8px);
+		border-radius: 8px 0 0 0;
+		font-size: 10px !important;
+		padding: 2px 6px !important;
 	}
 </style>
