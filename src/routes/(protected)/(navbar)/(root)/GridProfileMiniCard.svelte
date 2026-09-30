@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+
 	import ProfileMiniCard from "$lib/components/profile/ProfileMiniCard.svelte";
+	import { isPlainClick } from "$lib/util/plain-click";
 
 	let {
 		id,
@@ -36,6 +39,12 @@
 		showOnlineStatus?: boolean;
 		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
+
+	function openInPager(event: MouseEvent) {
+		if (!isPlainClick(event)) return;
+		event.preventDefault();
+		void goto(`/profile/${id}`, { state: { profileOrigin: "browse" } });
+	}
 </script>
 
 <ProfileMiniCard
@@ -55,4 +64,5 @@
 	{showOnlineStatus}
 	{nameStyle}
 	href="/profile/{id}"
+	onclick={openInPager}
 />

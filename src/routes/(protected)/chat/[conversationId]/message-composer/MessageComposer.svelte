@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onNavigate } from "$app/navigation";
 	import { tick, untrack } from "svelte";
 
 	import { showErrorToast } from "$lib/api/error-toast";
@@ -7,6 +8,8 @@
 	import { draftFromMessage } from "$lib/model/messaging/messages";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { OutgoingTranslation } from "$lib/translate/translation-state.svelte";
+	import { below } from "$lib/util/breakpoints.svelte";
+	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
 	import type {
 		ApiResponseMessage,
 		MessageDraft,
@@ -37,6 +40,7 @@
 	} = $props();
 
 	const { drafts } = getConversations();
+	const mobile = below("split");
 
 	let textContent = $state(untrack(() => drafts.get(conversationId)));
 	const outgoing = $derived(new OutgoingTranslation(conversationId));
@@ -91,6 +95,11 @@
 		drafts.autosave({ conversationId, text: textContent });
 	});
 
+	onNavigate(({ to }) => {
+		if (to?.params?.conversationId !== conversationId)
+			drafts.save({ conversationId, text: textContent });
+	});
+
 	// Arming a reply should hand the user straight back to the composer, which
 	// on touch is also what raises the keyboard.
 	$effect(() => {
@@ -108,8 +117,9 @@
 <form
 	bind:this={form}
 	data-slot="message-composer"
-	class="absolute bottom-0 z-20 flex min-h-9.5 w-full min-w-0 shrink-0 flex-col gap-1 px-3 pb-2"
+	class="absolute bottom-0 z-20 flex min-h-9.5 w-full min-w-0 shrink-0 flex-col gap-1 px-2 pb-2"
 	bind:clientHeight={height}
+	{@attach mobile.current && bottomChrome}
 	oninput={remeasureBeforeResizeObserverCatchesUp}
 	onsubmit={(event) => {
 		event.preventDefault();

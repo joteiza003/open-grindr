@@ -1,4 +1,5 @@
 import {
+	type AlbumMediaPath,
 	existsAppDataFile,
 	readAppDataFile,
 	removeAppDataFile,
@@ -39,11 +40,19 @@ function extensionFor(contentType: string): string {
 	return EXTENSIONS[contentType.toLowerCase()] ?? "bin";
 }
 
+/** Album media lives in the closed family of names the native side accepts. */
+export function albumMediaPath(path: string): AlbumMediaPath {
+	if (!path.startsWith("album-media__")) {
+		throw new Error(`Not an album media path: ${path}`);
+	}
+	return path as AlbumMediaPath;
+}
+
 export function mediaFileName(
 	storageId: string,
 	key: string,
 	contentType: string,
-): string {
+): AlbumMediaPath {
 	return `album-media__${storageId}__${key}.${extensionFor(contentType)}`;
 }
 
@@ -102,7 +111,7 @@ export async function deleteSavedAlbum(localId: string): Promise<void> {
 			].filter((path): path is string => path !== null);
 			for (const path of paths) {
 				try {
-					await removeAppDataFile(path);
+					await removeAppDataFile(albumMediaPath(path));
 				} catch (error) {
 					console.error(
 						"[album-library] Failed to remove media",
@@ -119,7 +128,10 @@ export async function writeMediaFile(
 	path: string,
 	bytes: Uint8Array,
 ): Promise<void> {
-	await writeAppDataFileAtomic({ path, content: bytes });
+	await writeAppDataFileAtomic({
+		path: albumMediaPath(path),
+		content: bytes,
+	});
 }
 
 /**
@@ -130,8 +142,9 @@ export async function savedMediaUrl(
 	path: string,
 	contentType: string,
 ): Promise<string | null> {
-	if (!(await existsAppDataFile(path))) return null;
-	const bytes = await readAppDataFile(path);
+	const mediaPath = albumMediaPath(path);
+	if (!(await existsAppDataFile(mediaPath))) return null;
+	const bytes = await readAppDataFile(mediaPath);
 	const copy = new Uint8Array(bytes.byteLength);
 	copy.set(bytes);
 	return URL.createObjectURL(new Blob([copy], { type: contentType }));

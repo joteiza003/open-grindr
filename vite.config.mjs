@@ -12,6 +12,10 @@ export default defineConfig(async ({ command }) => ({
 	plugins: [sveltekit(), tailwindcss()],
 	resolve: process.env.VITEST ? { conditions: ["browser"] } : undefined,
 
+	// OPEN_GRIND_STORE already selects the Android manifest overlay; exposing it
+	// here lets the bundle drop what a store build may not carry.
+	envPrefix: ["VITE_", "OPEN_GRIND_"],
+
 	esbuild: { drop: command === "build" ? ["console", "debugger"] : [] },
 
 	optimizeDeps: { include: ["leaflet", "sveaflet"] },
@@ -40,7 +44,7 @@ export default defineConfig(async ({ command }) => ({
 
 	test: {
 		environment: "jsdom",
-		include: ["src/**/*.test.ts"],
+		include: ["src/**/*.test.ts", "e2e-live/support/**/*.test.ts"],
 		setupFiles: ["src/test-setup.ts"],
 		// tinykeys caches navigator.platform at load, so vi.resetModules() cannot
 		// re-resolve `$mod` unless tinykeys goes through the module runner too.

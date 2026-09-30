@@ -2,9 +2,11 @@ import { invoke } from "@tauri-apps/api/core";
 import z from "zod";
 
 import {
+	ApiError,
 	type ApiErrorKind,
 	apiErrorKinds,
 	blockedAndStaleMessages,
+	httpStatusOf,
 } from "$lib/api/api-error";
 import { capText } from "$lib/api/redact/text";
 import { summariseNonJson } from "$lib/api/redact/value";
@@ -25,7 +27,8 @@ const connectionFailedMessage =
 const messagelessMessages: Partial<Record<ApiErrorKind, string>> = {
 	...blockedAndStaleMessages,
 	RateLimited: "Grindr is rate limiting us",
-	NotLoggedIn: "You're signed out",
+	NotSignedIn: "You're signed out",
+	ContentTooLarge: "Larger than the upload limit",
 };
 
 export const banInfoSchema = z.object({
@@ -50,28 +53,31 @@ export const restrictionSchema = z.object({
 });
 export type Restriction = z.infer<typeof restrictionSchema>;
 
-export const loginResultSchema = z.object({
+export const signInResultSchema = z.object({
 	profileId: z.coerce.number().int().nonnegative(),
 	restriction: restrictionSchema.nullish(),
 });
 
 export const methods = {
-	login: {
-		request: z.object({ email: z.email(), password: z.string().min(1) }),
-		response: loginResultSchema,
+	sign_in_with_email: {
+		request: z.object({
+			email: z.email(),
+			password: z.string().min(1),
+			captchaToken: z.string().optional(),
+		}),
+		response: signInResultSchema,
 	},
-	login_with_google: { request: z.undefined(), response: loginResultSchema },
-	google_sign_in: {
+	sign_in_with_google: {
+		request: z.undefined(),
+		response: signInResultSchema,
+	},
+	sign_in_with_google_token: {
 		request: z.object({ token: z.string().min(1) }),
-		response: loginResultSchema,
+		response: signInResultSchema,
 	},
-	login_with_facebook: {
+	sign_in_with_facebook: {
 		request: z.undefined(),
-		response: loginResultSchema,
-	},
-	auth_state: {
-		request: z.undefined(),
-		response: z.int().nonnegative().nullable(),
+		response: signInResultSchema,
 	},
 	account_restriction: {
 		request: z.undefined(),
@@ -81,9 +87,9 @@ export const methods = {
 		request: z.undefined(),
 		response: z.enum(["keyring", "file", "unavailable"]),
 	},
-	refresh_token: {
+	refresh_session: {
 		request: z.object({ geohash: geohashSchema.optional() }).optional(),
-		response: loginResultSchema,
+		response: signInResultSchema,
 	},
 	rotate_api_params: {
 		request: z.undefined(),
@@ -92,15 +98,28 @@ export const methods = {
 			"l-device-info": z.string(),
 		}),
 	},
-	logout: { request: z.undefined(), response: z.null() },
+	sign_out: { request: z.undefined(), response: z.null() },
 	recaptcha_first_party_enabled: {
 		request: z.undefined(),
 		response: z.boolean(),
 	},
-	session_health: {
+	mint_recaptcha_token: {
+		request: z.object({
+			action: z.enum([
+				"sign_up",
+				"login",
+				"forgot_password",
+				"report",
+				"decision_appeal",
+				"device_key_registration",
+			]),
+		}),
+		response: z.string().min(1),
+	},
+	current_session: {
 		request: z.undefined(),
 		response: z.object({
-			signedIn: z.boolean(),
+			profileId: z.int().nonnegative().nullable(),
 			expiresAt: z.int().nonnegative().nullable(),
 			stale: z.boolean(),
 		}),
@@ -167,6 +186,12 @@ export function asAppError(error: unknown) {
 			message: z
 				.string()
 				.or(z.object({ code: z.number(), message: z.string() }))
+				.or(
+					z.object({
+						reason: z.string(),
+						detail: z.string().nullish(),
+					}),
+				)
 				.optional(),
 		})
 		.safeParse(error);
@@ -176,7 +201,7 @@ export function asAppError(error: unknown) {
 			prettyMessage = connectionFailedMessage;
 		} else if (typeof data.message === "string") {
 			prettyMessage = summarizeServerMessage(data.message);
-		} else if (data.message) {
+		} else if (data.message && "code" in data.message) {
 			const { code, message } = data.message;
 			prettyMessage = `Error ${code}: ${summarizeServerMessage(message)}`;
 		} else {
@@ -185,6 +210,28 @@ export function asAppError(error: unknown) {
 		}
 		return { ...data, prettyMessage };
 	}
+}
+
+export function errorKindOf(error: unknown): ApiErrorKind | null {
+	return error instanceof ApiError
+		? error.kind
+		: (asAppError(error)?.kind ?? null);
+}
+
+export function uploadRefusalMessage({
+	error,
+	limitLabel,
+}: {
+	error: unknown;
+	limitLabel: string;
+}): string | null {
+	const kind = errorKindOf(error);
+	if (kind === "ContentTooLarge" || httpStatusOf(error) === 413) {
+		return `Larger than the ${limitLabel} limit`;
+	}
+	if (kind !== "Media") return null;
+	const detail = asAppError(error)?.message;
+	return typeof detail === "string" && detail !== "" ? detail : null;
 }
 
 export function summarizeServerMessage(message: string): string {

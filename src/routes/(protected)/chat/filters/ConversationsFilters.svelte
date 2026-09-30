@@ -5,6 +5,7 @@
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
+	import { topChrome } from "$lib/util/screen-chrome.svelte";
 	import type { ConversationFilters } from "$lib/chat/conversation-filters.svelte";
 	import type { ConversationFilterValues } from "$lib/model/messaging/conversation-filters";
 	import DistanceQuickFilter from "./DistanceQuickFilter.svelte";
@@ -37,7 +38,9 @@
 	class="absolute inset-x-0 top-0 z-10"
 	bgClass="bg-linear-to-b from-background to-transparent"
 	contentClass="scrollbar-thin flex gap-0.5 overflow-x-auto px-4 pt-4 pb-2"
+	contentScrollIntent="x"
 	{inert}
+	{@attach !inert && topChrome}
 >
 	<ToggleGroup.Root
 		type="multiple"

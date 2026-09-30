@@ -1,10 +1,10 @@
 import z from "zod";
 
 import {
+	ADDON_NAME,
 	APP_COMPONENT,
+	COMPONENT_KEYS,
 	type ComponentKey,
-	GOOGLE_OAUTH_COMPONENT,
-	RECAPTCHA_COMPONENT,
 } from "./components";
 import {
 	asUpdateError,
@@ -39,6 +39,7 @@ export function unsupportedIsFixable(detail: Unsupported): boolean {
 }
 
 type KnownKind = Exclude<UpdateError["kind"], "unsupported">;
+type AddonText = (addon: string) => string;
 
 const copy: Record<KnownKind, string> = {
 	network: "Couldn't reach the release server",
@@ -62,61 +63,54 @@ const copy: Record<KnownKind, string> = {
 	busy: "Another download is already running",
 };
 
-const addonUnsupportedCopy: Partial<Record<Unsupported["reason"], string>> = {
-	externallyManaged:
-		"The store that installed the Google OAuth app manages its updates",
-	foreignSigner:
-		"This copy of Grindr + isn't signed by Grindr +, so it can't install the Google OAuth app",
-	foreignTarget:
-		"The installed Google OAuth app isn't signed by Grindr +. Uninstall it to install the official one.",
-	noReleaseArtifacts: "The Google OAuth app isn't published for this device",
-	undetermined:
-		"Grindr + can't tell whether it may install the Google OAuth app",
+const addonUnsupportedCopy: Partial<Record<Unsupported["reason"], AddonText>> =
+	{
+		externallyManaged: (addon) =>
+			`The store that installed the ${addon} manages its updates`,
+		foreignSigner: (addon) =>
+			`This copy of Grindr + isn't signed by Grindr +, so it can't install the ${addon}`,
+		foreignTarget: (addon) =>
+			`The installed ${addon} isn't signed by Grindr +. Uninstall it to install the official one.`,
+		noReleaseArtifacts: (addon) =>
+			`The ${addon} isn't published for this device`,
+		undetermined: (addon) =>
+			`Grindr + can't tell whether it may install the ${addon}`,
+	};
+
+const addonCopy: Partial<Record<KnownKind, AddonText>> = {
+	unsigned: (addon) => `Failed to verify the ${addon}`,
+	signature: (addon) => `Failed to verify the ${addon}`,
+	storage: (addon) => `Couldn't save the ${addon} download`,
+	install: (addon) => `Couldn't install the ${addon}`,
 };
 
-const addonCopy: Partial<Record<KnownKind, string>> = {
-	unsigned: "Failed to verify the Google OAuth app",
-	signature: "Failed to verify the Google OAuth app",
-	storage: "Couldn't save the Google OAuth app download",
-	install: "Couldn't install the Google OAuth app",
+const addonUpdateCopy: Partial<Record<KnownKind, AddonText>> = {
+	install: (addon) => `Couldn't update the ${addon}`,
 };
 
-const addonUpdateCopy: Partial<Record<KnownKind, string>> = {
-	install: "Couldn't update the Google OAuth app",
+const addonNoStorageCopy: Record<Release["kind"], AddonText> = {
+	install: (addon) => `Not enough storage to install the ${addon}`,
+	update: (addon) => `Not enough storage to update the ${addon}`,
 };
 
-const busyCopy: Record<ComponentKey, string> = {
-	[APP_COMPONENT]: "Wait for the Grindr + update to finish downloading",
-	[GOOGLE_OAUTH_COMPONENT]:
-		"Wait for the Google OAuth app to finish downloading",
-	[RECAPTCHA_COMPONENT]:
-		"Wait for the reCAPTCHA helper to finish downloading",
-};
-
-const busyDetailSchema = z.object({
-	component: z.enum([
-		APP_COMPONENT,
-		GOOGLE_OAUTH_COMPONENT,
-		RECAPTCHA_COMPONENT,
-	]),
-});
+const busyDetailSchema = z.object({ component: z.enum(COMPONENT_KEYS) });
 
 const PACKAGE_MANAGER_INSTALL_FAILED_INSUFFICIENT_STORAGE = -4;
 
-const noStorageCopy: Record<typeof APP_COMPONENT | Release["kind"], string> = {
-	[APP_COMPONENT]: "Not enough storage to install the update",
-	install: "Not enough storage to install the Google OAuth app",
-	update: "Not enough storage to update the Google OAuth app",
-};
-
-const GOOGLE_OAUTH_SUBJECT = "Google OAuth app";
+function busyText(component: ComponentKey): string {
+	return component === APP_COMPONENT
+		? "Wait for the Grindr + update to finish downloading"
+		: `Wait for the ${ADDON_NAME[component]} to finish downloading`;
+}
 
 export function unsupportedText(
 	{ reason }: Unsupported | Pick<Unsupported, "reason">,
 	{ component = APP_COMPONENT }: { component?: ComponentKey } = {},
 ): string {
 	const addonText =
-		component === APP_COMPONENT ? undefined : addonUnsupportedCopy[reason];
+		component === APP_COMPONENT
+			? undefined
+			: addonUnsupportedCopy[reason]?.(ADDON_NAME[component]);
 	return addonText ?? unsupportedCopy[reason];
 }
 
@@ -125,9 +119,9 @@ export function noReleaseText({
 }: {
 	component: ComponentKey;
 }): string {
-	return component === APP_COMPONENT
-		? "No Grindr + release is published yet"
-		: "No Google OAuth app release is published yet";
+	const subject =
+		component === APP_COMPONENT ? "Grindr +" : ADDON_NAME[component];
+	return `No ${subject} release is published yet`;
 }
 
 export function updateErrorText(
@@ -145,12 +139,13 @@ export function updateErrorText(
 	}
 	if (known.kind === "busy") {
 		const running = busyDetailSchema.safeParse(known.detail);
-		return running.success ? busyCopy[running.data.component] : copy.busy;
+		return running.success ? busyText(running.data.component) : copy.busy;
 	}
 	if (component === APP_COMPONENT) return copy[known.kind];
+	const addon = ADDON_NAME[component];
 	const updateText =
-		kind === "update" ? addonUpdateCopy[known.kind] : undefined;
-	return updateText ?? addonCopy[known.kind] ?? copy[known.kind];
+		kind === "update" ? addonUpdateCopy[known.kind]?.(addon) : undefined;
+	return updateText ?? addonCopy[known.kind]?.(addon) ?? copy[known.kind];
 }
 
 export function installFailedText({
@@ -163,9 +158,9 @@ export function installFailedText({
 	kind: Release["kind"];
 }): string {
 	if (code === PACKAGE_MANAGER_INSTALL_FAILED_INSUFFICIENT_STORAGE) {
-		return noStorageCopy[
-			component === APP_COMPONENT ? APP_COMPONENT : kind
-		];
+		return component === APP_COMPONENT
+			? "Not enough storage to install the update"
+			: addonNoStorageCopy[kind](ADDON_NAME[component]);
 	}
 	return updateErrorText(
 		{ kind: "install" },
@@ -180,10 +175,9 @@ export function problemBody({
 	component: ComponentKey;
 	title: string;
 }): string | undefined {
-	const named = title
-		.toLowerCase()
-		.includes(GOOGLE_OAUTH_SUBJECT.toLowerCase());
-	return component === APP_COMPONENT || named
+	if (component === APP_COMPONENT) return undefined;
+	const addon = ADDON_NAME[component];
+	return title.toLowerCase().includes(addon.toLowerCase())
 		? undefined
-		: GOOGLE_OAUTH_SUBJECT;
+		: addon;
 }

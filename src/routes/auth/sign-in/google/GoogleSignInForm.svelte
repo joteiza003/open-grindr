@@ -2,16 +2,18 @@
 	import { page } from "$app/state";
 	import { toast } from "svelte-sonner";
 
-	import { googleHandbackState } from "$lib/api/google-handback-state.svelte";
+	import { googleHandoffState } from "$lib/api/google-handoff-state.svelte";
 	import { callMethod } from "$lib/api/methods";
 	import {
 		companionDisabled,
+		companionRefused,
 		companionUnavailable,
 		companionUntrusted,
 		disabledCompanionMessage,
 		finishSignIn,
+		refusedCompanionMessage,
 		reportSignInFailure,
-		untrustedCompanionCopy,
+		untrustedCompanionMessage,
 	} from "$lib/api/sign-in";
 	import { Button } from "$lib/components/ui/button";
 	import * as Card from "$lib/components/ui/card";
@@ -21,6 +23,7 @@
 	import { Textarea } from "$lib/components/ui/textarea";
 	import { openExternalLink } from "$lib/platform/link-opener";
 	import { isAndroidPlatform } from "$lib/platform/os";
+	import { isPlayBuild } from "$lib/platform/store";
 	import { getInstalledVersion, GOOGLE_OAUTH_COMPONENT } from "$lib/updates";
 	import {
 		addonActivity,
@@ -28,14 +31,15 @@
 		addonPublishedHere,
 		addonUpdates,
 	} from "$lib/updates/addon.svelte";
+	import { installedFromFdroid } from "$lib/updates/capability.svelte";
+	import { manualInstallHref } from "$lib/updates/manual-install";
 	import {
 		googleSignInView,
 		installButton,
 		stageAwaitsUser,
 	} from "./google-sign-in-view";
 
-	const COMPANION_RELEASES =
-		"https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases#install";
+	const companionHref = manualInstallHref(GOOGLE_OAUTH_COMPONENT);
 	const automated = isAndroidPlatform();
 
 	let token = $state("");
@@ -94,7 +98,7 @@
 			) {
 				await addonUpdates.installNow();
 			} else {
-				openExternalLink(COMPANION_RELEASES);
+				openExternalLink(companionHref);
 			}
 		} finally {
 			starting = false;
@@ -105,7 +109,7 @@
 		if (continuing) return;
 		continuing = true;
 		try {
-			finishSignIn(await callMethod("login_with_google"));
+			finishSignIn(await callMethod("sign_in_with_google"));
 		} catch (error) {
 			reportSignInFailure({
 				error,
@@ -122,7 +126,12 @@
 						return true;
 					}
 					if (message === companionUntrusted) {
-						toast.error(untrustedCompanionCopy());
+						toast.error(untrustedCompanionMessage);
+						pasting = true;
+						return true;
+					}
+					if (message === companionRefused) {
+						toast.error(refusedCompanionMessage);
 						pasting = true;
 						return true;
 					}
@@ -145,14 +154,14 @@
 
 {#snippet companionLink()}
 	<Link
-		href={COMPANION_RELEASES}
+		href={companionHref}
 		class="font-medium text-primary underline underline-offset-2"
 	>
 		Open Grind Google OAuth app
 	</Link>
 {/snippet}
 
-{#if googleHandbackState.phase === "signingIn"}
+{#if googleHandoffState.phase === "signingIn"}
 	<Card.Root class="m-auto w-full max-w-sm gap-2">
 		<Card.Header>
 			<Card.Title>Signing you in</Card.Title>
@@ -172,7 +181,7 @@
 				try {
 					submitting = true;
 					finishSignIn(
-						await callMethod("google_sign_in", {
+						await callMethod("sign_in_with_google_token", {
 							token: token.trim(),
 						}),
 					);
@@ -188,9 +197,16 @@
 				<Card.Header>
 					<Card.Title>Sign in with Google</Card.Title>
 					<Card.Description>
-						{#if view === "install"}
+						{#if view === "install" && isPlayBuild()}
+							Signing in with Google needs the {@render companionLink()}
+						{:else if view === "install"}
 							Download and install the {@render companionLink()} to
 							sign in with Google
+							{#if installedFromFdroid()}
+								<span class="mt-2 block">
+									This add-on bypasses F-Droid's checks
+								</span>
+							{/if}
 						{:else if view === "continue"}
 							Continue in the {@render companionLink()} to sign in with
 							Google

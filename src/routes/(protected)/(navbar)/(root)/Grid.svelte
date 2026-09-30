@@ -27,22 +27,12 @@
 			: Number.POSITIVE_INFINITY;
 	}
 
-	const gridProfiles = $derived.by(() => {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and spread inside this $derived, never mutated afterwards
-		const byId = new Map<number, GridProfile>();
-		for (const item of gridState.items) {
-			const existing = byId.get(item.id);
-			if (
-				!existing ||
-				(existing.type === "lazy" && item.type === "rendered")
-			) {
-				byId.set(item.id, item);
-			}
-		}
-		return [...byId.values()].sort(
+	// gridState.profiles is already de-duplicated; we only reorder it.
+	const gridProfiles = $derived(
+		[...gridState.profiles].sort(
 			(a, b) => gridDistance(a) - gridDistance(b),
-		);
-	});
+		),
+	);
 
 	const browsePreferences = $derived(preferencesSnapshot().browse);
 
@@ -78,7 +68,8 @@
 	const visibleSkeletons = $derived(
 		Math.max(
 			0,
-			view.endIndex - Math.max(view.startIndex, gridProfiles.length),
+			view.endIndex -
+				Math.max(view.startIndex, gridProfiles.length),
 		),
 	);
 
@@ -97,6 +88,7 @@
 <div class="relative flex flex-1 flex-col">
 	<div
 		bind:this={gridElement}
+		data-slot="grid-cells"
 		class={["photo-grid", `photo-grid-${cardVariant}`]}
 		style:padding-top="{view.paddingTopPx}px"
 		style:padding-bottom="{view.paddingBottomPx}px"

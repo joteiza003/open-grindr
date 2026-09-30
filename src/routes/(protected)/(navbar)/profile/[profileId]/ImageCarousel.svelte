@@ -1,14 +1,15 @@
 <script lang="ts">
 	import "photoswipe/style.css";
 	import { format } from "date-fns";
-	import { UserIcon } from "phosphor-svelte";
 	import z from "zod";
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
+	import UserSilhouette from "$lib/components/profile/UserSilhouette.svelte";
 	import { profileMediaUrl } from "$lib/util/media";
 	import {
 		applyPhotoSwipeBackGesture,
 		applyPhotoSwipeErrorUi,
+		applyPhotoSwipeOpenTracking,
 		applyPhotoSwipeThumbDimensions,
 		applyPhotoSwipeViewportSync,
 	} from "$lib/util/photoswipe";
@@ -24,14 +25,24 @@
 		}[];
 	} = $props();
 
+	const PHOTOS_LOADED_AHEAD = 2;
+	const SUBPIXEL_SNAP_PX = 1;
+
 	let gallery: HTMLDivElement | null = $state(null);
+	let reach = $state(PHOTOS_LOADED_AHEAD);
+
+	function raiseReach(index: number) {
+		if (index > reach) reach = index;
+	}
 
 	$effect(() => {
 		if (!gallery) return;
+		let disposed = false;
 		let lightbox: PhotoSwipeLightbox | undefined;
+		let stopOpenTracking: (() => void) | undefined;
 		import("photoswipe/lightbox")
 			.then(({ default: PhotoSwipeLightbox }) => {
-				if (!gallery) return;
+				if (disposed || !gallery) return;
 				lightbox = new PhotoSwipeLightbox({
 					gallery,
 					children: ".item[href]",
@@ -42,6 +53,10 @@
 				applyPhotoSwipeThumbDimensions(lightbox);
 				applyPhotoSwipeViewportSync(lightbox);
 				applyPhotoSwipeBackGesture(lightbox);
+				stopOpenTracking = applyPhotoSwipeOpenTracking(lightbox);
+				lightbox.on("beforeOpen", () => {
+					raiseReach(medias.length - 1);
+				});
 				lightbox.on("openingAnimationStart", () => {
 					gallery?.querySelectorAll(".item").forEach((item) => {
 						if (item instanceof HTMLElement) {
@@ -92,7 +107,11 @@
 				lightbox.init();
 			})
 			.catch((error) => console.error(error));
-		return () => lightbox?.destroy();
+		return () => {
+			disposed = true;
+			lightbox?.destroy();
+			stopOpenTracking?.();
+		};
 	});
 
 	const GAP_PX = 4;
@@ -112,7 +131,8 @@
 			bind:this={gallery}
 			onscroll={() => {
 				if (!gallery) return;
-				const item = gallery.scrollTop / gallery.clientHeight;
+				const photoHeight = gallery.getBoundingClientRect().height;
+				const item = gallery.scrollTop / photoHeight;
 				const frac = item % 1;
 				const stretch = Math.min(frac, 1 - frac);
 				const index = Math.floor(item);
@@ -128,13 +148,17 @@
 					(item > 0 && item < medias.length - 1
 						? indicatorStretch
 						: 0);
+				const lastVisible = Math.ceil(
+					(gallery.scrollTop - SUBPIXEL_SNAP_PX) / photoHeight,
+				);
+				raiseReach(lastVisible + PHOTOS_LOADED_AHEAD);
 			}}
 		>
 			{#each medias as { mediaHash, createdAt }, index (mediaHash + index)}
 				{@const src = profileMediaUrl({ mediaHash, size: "full" })}
 				<ImageCarouselItem
 					{src}
-					thumb={src}
+					eager={index <= reach}
 					{createdAt}
 					label="Profile photo {index + 1} of {medias.length}"
 				/>
@@ -157,9 +181,7 @@
 		</div>
 	{:else}
 		<div class="absolute size-full bg-neutral-700">
-			<UserIcon
-				weight="fill"
-				color="var(--color-stone-400)"
+			<UserSilhouette
 				class="absolute top-1/2 left-1/2 size-3/4 -translate-1/2"
 			/>
 		</div>
@@ -176,7 +198,10 @@
 			display: none;
 		}
 		.pswp--profile-carousel .pswp__button--close {
-			@apply mr-3 size-11 self-center rounded-full bg-black/55 opacity-100 backdrop-filter-(--bd-veil) focus:bg-black/55 active:bg-black/55 can-hover:hover:bg-black/75;
+			@apply mr-3 size-11 self-center rounded-full bg-black/55 opacity-100 backdrop-filter-(--bd-veil) focus:bg-black/55 active:bg-black/55;
+			@variant hover {
+				@apply bg-black/75;
+			}
 		}
 		.pswp--profile-carousel .pswp__button--close .pswp__icn {
 			@apply inset-0 m-auto;

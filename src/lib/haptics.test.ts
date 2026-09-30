@@ -19,7 +19,7 @@ vi.mock("$lib/app-data", () => ({
 }));
 
 import { setPreferences } from "$lib/app-data/preferences.svelte";
-import { hapticsAvailable, hapticThresholdReached } from "$lib/haptics";
+import { hapticsAvailable, playHaptic } from "$lib/haptics";
 
 const tauri = globalThis as {
 	isTauri?: boolean;
@@ -63,21 +63,21 @@ describe("hapticsAvailable", () => {
 	});
 });
 
-describe("hapticThresholdReached", () => {
-	it("asks the backend for a tap on a platform that has one", () => {
+describe("playHaptic", () => {
+	it("asks the backend for the named kind on a platform that has one", () => {
 		runningOn("android");
 
-		hapticThresholdReached();
+		playHaptic("longPress");
 
-		expect(invokeMock).toHaveBeenCalledExactlyOnceWith(
-			"haptic_threshold_reached",
-		);
+		expect(invokeMock).toHaveBeenCalledExactlyOnceWith("play_haptic", {
+			kind: "longPress",
+		});
 	});
 
 	it("stays quiet where nothing can be played", () => {
 		runningOn("windows");
 
-		hapticThresholdReached();
+		playHaptic("threshold");
 
 		expect(invokeMock).not.toHaveBeenCalled();
 	});
@@ -86,7 +86,7 @@ describe("hapticThresholdReached", () => {
 		runningOn("macos");
 		await setPreferences({ hapticFeedback: false });
 
-		hapticThresholdReached();
+		playHaptic("threshold");
 
 		expect(invokeMock).not.toHaveBeenCalled();
 	});
@@ -96,7 +96,7 @@ describe("hapticThresholdReached", () => {
 		const haptics = await import("$lib/haptics");
 		runningOn("android");
 
-		haptics.hapticThresholdReached();
+		haptics.playHaptic("dragStart");
 
 		expect(invokeMock).not.toHaveBeenCalled();
 	});

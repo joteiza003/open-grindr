@@ -10,30 +10,29 @@ Starting with v0.1.0-beta.2 it's possible to authenticate if your account in Gri
 
 ## Windows, Linux, macOS, iOS
 
-Just download the app and tap "Sign in with Google" on the login screen.
+Just download the app and tap "Sign in with Google" on the sign-in screen.
 
 ## Android
 
-Due to platform limitations enforced by Google, it's not possible to log in via the Open Grind app itself. Read the technical in-depth explanation below. **For Android specifically, Open Grind supports signing in with Google via the Google OAuth app or manual token paste.**
+Due to security checks by Google, you must [install a Google OAuth add-on (recommended)](#open-grind-google-oauth-app-recommended) or [paste the sign in token manually](#manually-paste-google-oauth-token).
 
 ### Open Grind Google OAuth app (recommended)
 
-1. Go to Open Grind sign in screen and tap "Sign in with Google"
-2. Tap "Install". Open Grind downloads the build matching your device and verifies its signature. The progress shows at the top of the screen and keeps going if you leave the screen
-3. The first time, Android asks you to allow Open Grind to install apps: turn the switch on and go back, and the install continues on its own
-4. Confirm Android's install prompt
-5. Tap "Continue"
-6. You should now have another screen opened with the same "Sign in with Google" button, tap it again and follow the instructions, no further setup needed
+1. Tap "Sign in with Google"
+2. On the sign in screen, tap "Install" and confirm Android's install prompt; alternatively, install [Google OAuth App manually](https://git.opengrind.org/open-grind/google-oauth-app/releases)
+3. Tap "Continue", then follow the instructions
 
-If you install the Google OAuth app another way while this screen is open, come back to Open Grind and the screen shows "Continue": tap it. If the install fails, the message at the top of the screen says what went wrong, and you can tap "Install" again. If it still does not work, tap "paste the OAuth token manually" under the card and follow [Manual Google OAuth copy-paste](#manual-google-oauth-copy-paste-advanced) below. To get back from the token form, tap "use the Open Grind Google OAuth app".
+### Installed from Google Play
 
-If Open Grind says the Google OAuth app is turned off, turn it on in Android settings and try again. If it says the installed Google OAuth app isn't signed by Open Grind, uninstall that app and install the official one.
+Open Grind from Google Play can't install other apps, so install the add-on yourself:
 
-Once the Google OAuth app is installed, you can check it for updates from Settings → App: automatically when "Check updates automatically" is on (on store-installed builds it reads "Check add-on updates automatically"), or anytime with "Check for updates".
+1. Open [Google OAuth App releases](https://git.opengrind.org/open-grind/google-oauth-app/releases) in your browser
+2. Download the APK for your device and open it; Android asks your browser for permission to install apps once
+3. Return to Open Grind, tap "Sign in with Google", then "Continue"
 
-To install it yourself instead, download the build for your device's CPU architecture from the [Google OAuth app's Releases page](https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases) — 98% of devices today support arm64-v8a, so **try arm64-v8a.apk first**.
+Or skip the add-on and [paste the sign in token manually](#manually-paste-google-oauth-token).
 
-### Manual Google OAuth copy-paste (advanced)
+### Manually paste Google OAuth token
 
 **If you already have Open Grind Google OAuth app installed,** try these steps to retrieve Google OAuth token and put it into Open Grind manually:
 
@@ -74,7 +73,7 @@ MicroG itself does not allow spoofing, as it's a drop-in that works via the same
 
 Yes, that's how web.grindr.com works. The entire authentication is web flow, meaning it's supposed to run in browsers, without requiring any device attestation tokens, so it's possible to run it on any platform, even in emulators. Web flow is launched from web.grindr.com with `responseType=postMessage` and the resulting code is posted by GIS JavaScript with `web.grindr.com` origin, so only pages with web.grindr.com origin can receive the callback. Additionally, browsers (even embedded ones) prevent actions such as opening new tabs without user gesture, which is why a tap is needed on the launch page. 
 
-However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the login page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
+However, there's another problem: Google OAuth Web Flow page checks aggressively for any signs of rendering the sign-in page in embedded windows (including system WebViews, which is what Tauri uses under the hood of Open Grind UI), and while changing User-Agent and removing Sec- headers is possible for both WebKit-based WebViews (WKWebView for macOS & iOS, WebKitGTK for Linux) and Chromium-based WebViews (WebView2 for Windows, Chromium for Android), **Android's Chromium WebView specifically adds a special X-Requested-With header that's impossible to remove.** This has been pushed by Google specifically for "fraud/abuse detection" (i.e. to detect Android WebView in their services, such as the OAuth page). In 2023 it was announced Google starts a trial to allow developers to opt-out of sending this header, **but in 2025 the decision was reversed and X-Requested-With is now sent on all Android system's Chromium WebView requests with no option to disable it,** which is exactly what triggers Google OAuth page "security checks" and rejects attempts to sign in.
 
 **All other platforms work just fine by rendering Google's OAuth page directly in platform's native WebView,** so it's only an issue on Android.
 
@@ -100,6 +99,6 @@ To solve these Google OAuth issues, we've built the [Grindr Google OAuth WebExte
 
 The whole app is basically a headless browser powered by [GeckoView](https://mozilla.github.io/geckoview/) embedding the extension. The reason is simply that most Android users don't have Firefox and use Google Chrome for Android instead, which does not support extensions.
 
-Also, the app features a programmatic intent, which allows the Open Grind app to call this app and get the token back automatically without copy-pasting. For security, this only works if both apps are signed by the same JKS.
+Also, the app features a programmatic intent, which allows the Open Grind app to call this app and get the token back automatically without copy-pasting. For security, this only works with official builds: Open Grind must be signed by Open Grind or installed from Google Play, and the Google OAuth app must be signed by Open Grind.
 
 If you're an *advanced user* and prefer to avoid installing an unnecessary app, consider using the browser extension directly and copy-pasting the token into Open Grind app.

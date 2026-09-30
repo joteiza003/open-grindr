@@ -39,7 +39,7 @@ Projects reference:
 - **[grindr.rs](https://git.opengrind.org/open-grind/grindr.rs) Rust crate** — Grindr API transport layer, authentication, network calls
 - **[Grindr Google OAuth WebExtension](https://git.opengrind.org/open-grind/grindr-google-oauth-webextension)** — a web browser extension that extracts a Google OAuth token for Grindr (used for Sign in with Google)
 - **[Open Grind](https://git.opengrind.org/open-grind/open-grind)** — cross-platform Tauri application using **grindr.rs** and sharing code from **Grindr Google OAuth WebExtension** for non-Android Google OAuth flow
-- **[Open Grind Google OAuth Android App](https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app)** — a companion Android-only app that renders Geckoview with **Grindr Google OAuth WebExtension** embedded, needed because Android system's WebView blocks the Google OAuth page
+- **[Open Grind Google OAuth Android App](https://git.opengrind.org/open-grind/google-oauth-app)** — a companion Android-only app that renders Geckoview with **Grindr Google OAuth WebExtension** embedded, needed because Android system's WebView blocks the Google OAuth page
 - **[Grindr Web Unlock](https://git.opengrind.org/open-grind/grindr-web-unlock)** — separate web browser extension that bypasses web.grindr.com client-side paywall
 - **[Grindr API developer tool](https://git.opengrind.org/open-grind/grindr-api-dev-tool)** — Desktop Tauri app that handles API authorization, security headers, request fingerprints for you and provides type hints for known fields
 
@@ -87,10 +87,10 @@ const securityHeaders = {
 	requireRealDeviceInfo: "true",
 	"L-Time-Zone": "Europe/Madrid",
 	"User-Agent":
-		"grindr3/25.20.0.147239;147239;Free;Android 13;Pixel 7;Google",
+		"grindr3/26.17.0.181424;181424;Free;Android 13;Pixel 7;Google",
 	"L-Device-Info":
 		"1fAf9fB2aFfd47Fd;GLOBAL;2;3543028095;2400x1080;a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-	// modify L-Device-Info values randomly if you're getting ACCOUNT_BANNED at login stage
+	// modify L-Device-Info values randomly if you're getting ACCOUNT_BANNED at sign-in
 	// more info about these headers in docs: ./docs/content/grindr-api/security-headers.md
 };
 
@@ -100,7 +100,7 @@ const req = await fetch("https://grindr.mobi/v8/sessions", {
 	body: JSON.stringify({
 		email: "yourmail@example.org",
 		password:
-			"comment out this field after you log in once, use authToken to refresh session",
+			"comment out this field after you sign in once, use authToken to refresh session",
 		// authToken:
 		//	"just reuse any of previous authTokens, even expired",
 		token: null,
@@ -206,6 +206,7 @@ Before opening a pull request, run the same checks CI runs:
 End-to-end tests are a separate tier:
 
 - `bun run test:e2e` — Playwright. One-time setup: `bunx playwright install chromium`. It drives the web build and runs the browser serially, which is why it stays out of `bun run test`.
+- `bun run test:e2e:guard` — the layout guard. It builds the web demo for production, then checks every signed-in page and the 404 page at a phone and a desktop size: the bars can't scroll and stay see-through in every blur mode, nothing overflows, and the page structure passes axe. About 5 minutes, build included.
 - `bun run test:android` — JUnit tests for the Android sources. Needs the Android SDK and the Gradle files that `bun run tauri android build` generates, which is why it stays out of `bun run test`.
 
 Local updater testing:

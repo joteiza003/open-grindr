@@ -12,6 +12,7 @@ import {
 
 import {
 	awaitingPermission,
+	installedBy,
 	offer,
 	outcomeOf,
 	progressOf,
@@ -24,7 +25,7 @@ import {
 import type { Capability } from "$lib/updates/types";
 
 const COMPANION_RELEASES =
-	"https://git.opengrind.org/open-grind/open-grind-google-oauth-android-app/releases#install";
+	"https://git.opengrind.org/open-grind/google-oauth-app/releases#install";
 const SCREEN_URL = "http://localhost/auth/sign-in/google";
 
 const fake = updateApiFake();
@@ -144,6 +145,15 @@ describe("GoogleSignInForm", () => {
 		expect(screen.queryByLabelText("Token")).toBeNull();
 	});
 
+	it("says the app bypasses F-Droid's checks on an F-Droid install", async () => {
+		getUpdateCapability.mockResolvedValue(installedBy("org.fdroid.fdroid"));
+		const { screen } = await opened();
+
+		expect(textOf(screen.getByText(/bypasses F-Droid's checks/))).toBe(
+			"It comes from git.opengrind.org, not F-Droid, so installing it bypasses F-Droid's checks.",
+		);
+	});
+
 	it("installs through the toast and then offers to continue", async () => {
 		const { screen, fireEvent } = await opened();
 
@@ -233,7 +243,7 @@ describe("GoogleSignInForm", () => {
 		await fireEvent.click(button("Install"));
 		await settled();
 
-		expect(callMethodMock).toHaveBeenCalledWith("login_with_google");
+		expect(callMethodMock).toHaveBeenCalledWith("sign_in_with_google");
 		expect(api.checkForUpdate).not.toHaveBeenCalled();
 		expectBusy("Continue");
 	});
@@ -257,7 +267,7 @@ describe("GoogleSignInForm", () => {
 		answerInstallProbe(null);
 		await settled();
 
-		expect(callMethodMock).toHaveBeenCalledWith("login_with_google");
+		expect(callMethodMock).toHaveBeenCalledWith("sign_in_with_google");
 		expect(api.checkForUpdate).not.toHaveBeenCalled();
 		expectBusy("Continue");
 	});
@@ -316,7 +326,7 @@ describe("GoogleSignInForm", () => {
 		expect(api.checkForUpdate).not.toHaveBeenCalled();
 	});
 
-	it("sends a build Open Grind didn't sign to the release page and the pasted token", async () => {
+	it("sends a build Open Grind didn't sign, such as a Google Play install, to the release page and the pasted token", async () => {
 		getUpdateCapability.mockResolvedValue({
 			state: "unsupported",
 			detail: { reason: "foreignSigner" },
@@ -417,10 +427,10 @@ describe("GoogleSignInForm", () => {
 		expect(toCompanion.closest('[data-slot="card"]')).toBeNull();
 	});
 
-	it("keeps the signing-in card while a handback is being exchanged", async () => {
-		const { googleHandbackState } =
-			await import("$lib/api/google-handback-state.svelte");
-		googleHandbackState.phase = "signingIn";
+	it("keeps the signing-in card while a handoff is being exchanged", async () => {
+		const { googleHandoffState } =
+			await import("$lib/api/google-handoff-state.svelte");
+		googleHandoffState.phase = "signingIn";
 		try {
 			const { screen } = await opened();
 
@@ -429,7 +439,7 @@ describe("GoogleSignInForm", () => {
 				screen.queryByRole("button", { name: "Install" }),
 			).toBeNull();
 		} finally {
-			googleHandbackState.phase = "idle";
+			googleHandoffState.phase = "idle";
 		}
 	});
 
@@ -444,9 +454,10 @@ describe("GoogleSignInForm", () => {
 		await fireEvent.click(button("Sign in"));
 		await settled();
 
-		expect(callMethodMock).toHaveBeenCalledWith("google_sign_in", {
-			token: "pasted-token",
-		});
+		expect(callMethodMock).toHaveBeenCalledWith(
+			"sign_in_with_google_token",
+			{ token: "pasted-token" },
+		);
 	});
 
 	it("leaves Install tappable while the install permission is pending", async () => {
@@ -478,27 +489,31 @@ describe("GoogleSignInForm", () => {
 		expect(screen.getByLabelText("Token")).toBeTruthy();
 	});
 
-	it("blames this build, not the Google OAuth app, when a build Open Grind didn't sign is refused", async () => {
+	it("falls back to the pasted token, not the install screen, when the Google OAuth app refuses this build", async () => {
 		getUpdateCapability.mockResolvedValue({
 			state: "unsupported",
 			detail: { reason: "foreignSigner" },
 		});
 		api.getInstalledVersion.mockResolvedValue("1.1.0");
 		const { screen, fireEvent } = await opened();
-		const { foreignBuildCompanionMessage } =
-			await import("$lib/api/sign-in");
+		const { refusedCompanionMessage } = await import("$lib/api/sign-in");
 		callMethodMock.mockRejectedValue({
 			kind: "Auth",
-			message: "companion-untrusted",
+			message: "companion-refused",
 		});
 
 		await fireEvent.click(button("Continue"));
 		await settled();
 
 		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
-			foreignBuildCompanionMessage,
+			refusedCompanionMessage,
 		);
 		expect(screen.getByLabelText("Token")).toBeTruthy();
+
+		await fireEvent.click(button("use the Open Grind Google OAuth app"));
+
+		expect(button("Continue")).toBeTruthy();
+		expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
 	});
 
 	it("opens on the pasted token when the sign-in screen asks for it", async () => {

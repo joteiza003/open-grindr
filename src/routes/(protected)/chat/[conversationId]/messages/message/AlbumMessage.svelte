@@ -1,37 +1,16 @@
 <script lang="ts">
-	import "photoswipe/style.css";
-	import { ImagesIcon, VideoIcon } from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
-	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import { showErrorToast } from "$lib/api/error-toast";
-	import {
-		type AlbumContentResponse,
-		getAlbumContent,
-	} from "$lib/api/messaging/albums";
 	import { albumShares } from "$lib/chat/album-shares.svelte";
 	import { saveAlbumToLibrary } from "$lib/chat/archive-album";
-	import MediaImage from "$lib/components/shared/MediaImage.svelte";
+	import AlbumPreview from "$lib/components/album/AlbumPreview.svelte";
 	import { t } from "$lib/i18n";
-	import { now } from "$lib/util/clock";
-	import { proxyMediaUrl } from "$lib/util/media";
-	import {
-		measureImage,
-		measureVideo,
-		type MediaDimensions,
-	} from "$lib/util/media-dimensions";
-	import {
-		applyPhotoSwipeBackGesture,
-		applyPhotoSwipeErrorUi,
-		applyPhotoSwipeVideo,
-		applyPhotoSwipeViewportSync,
-	} from "$lib/util/photoswipe";
+	import type { AlbumSlide } from "$lib/components/album/album-lightbox";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../../conversation-state.svelte";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
-
-	const ALBUM_MEMO_TTL_MS = 10 * 60 * 1000;
 
 	let { message }: { message: AlbumMessage["body"] } = $props();
 
@@ -50,47 +29,19 @@
 		);
 	});
 
-	const className: import("svelte/elements").ClassValue = $derived([
-		"aspect-3/4 h-auto relative",
-		{
-			"ring ring-accent": message.hasUnseenContent,
-			"w-2/5 min-w-35 max-w-60 ms-3": !media.clone,
-			"size-full": media.clone,
-		},
-	]);
-
-	const contentClass: import("svelte/elements").ClassValue = $derived([
-		"rounded-xl",
-		media.cornerClass,
-	]);
-
-	type LoadedAlbum = AlbumContentResponse & {
-		content: (AlbumContentResponse["content"][number] & MediaDimensions)[];
-	};
-
-	type AlbumState =
-		| { status: "idle" }
-		| { status: "loading" }
-		| { status: "open"; album: LoadedAlbum };
-
-	let albumState = $state<AlbumState>({ status: "idle" });
-	let cachedAlbum: LoadedAlbum | null = null;
-	let cachedAt = 0;
 	let savingAlbum = false;
 
-	async function handleSaveAlbum() {
+	async function saveAlbum(slides: AlbumSlide[]) {
 		if (savingAlbum) return;
 		savingAlbum = true;
 		const profile = conversationState.profile;
-		// Reuse the content the viewer already loaded so we never re-fetch a
-		// single-view album (which can come back empty after being opened).
-		const loaded =
-			albumState.status === "open" ? albumState.album.content : undefined;
 		try {
+			// Reuse the slides the viewer already loaded so a single-view album
+			// is never fetched twice.
 			await saveAlbumToLibrary({
 				body: message,
 				conversationId: conversationState.conversationId,
-				content: loaded,
+				content: slides,
 				profileSnapshot: {
 					profileId:
 						profile?.profileId ?? message.ownerProfileId ?? null,
@@ -108,177 +59,42 @@
 		}
 	}
 
-	function openAlbum() {
-		const fresh = now() - cachedAt < ALBUM_MEMO_TTL_MS;
-		if (cachedAlbum !== null && fresh) {
-			albumState = { status: "open", album: cachedAlbum };
-		} else {
-			albumState = { status: "loading" };
-		}
-	}
+	const className: import("svelte/elements").ClassValue = $derived([
+		"aspect-3/4 h-auto",
+		{
+			"ring ring-accent": message.hasUnseenContent,
+			"w-2/5 min-w-35 max-w-60 ms-3": !media.clone,
+			"size-full": media.clone,
+		},
+	]);
 
-	$effect(() => {
-		if (albumState.status !== "loading") return;
-		(async () => {
-			const album = await getAlbumContent(message.albumId);
-			const loaded = {
-				...album,
-				content: await Promise.all(
-					album.content.map(async (slide) => {
-						const kind = slide.contentType.startsWith("video/")
-							? "video"
-							: "image";
-						const url = proxyMediaUrl(slide.url, { as: kind });
-						const coverUrl = proxyMediaUrl(slide.coverUrl);
-						const measurable = { video: coverUrl, image: url }[
-							kind
-						];
-						return {
-							...slide,
-							url,
-							coverUrl,
-							...(measurable === null
-								? await measureVideo(url)
-								: await measureImage(measurable)),
-						};
-					}),
-				),
-			};
-			cachedAlbum = loaded;
-			cachedAt = now();
-			albumState = { status: "open", album: loaded };
-		})().catch((error) => {
-			console.error(error);
-			showErrorToast({ label: t("album.loadFailed"), error });
-			albumState = { status: "idle" };
-		});
-	});
-
-	$effect(() => {
-		if (albumState.status !== "open") return;
-		const { album } = albumState;
-		let lightbox: PhotoSwipeLightbox | undefined;
-		let canceled = false;
-		import("photoswipe/lightbox")
-			.then(({ default: PhotoSwipeLightbox }) => {
-				if (canceled) return;
-				lightbox = new PhotoSwipeLightbox({
-					showHideAnimationType: "fade",
-					pswpModule: () => import("photoswipe"),
-					mainClass: `pswp--buttons-visible`,
-				});
-				applyPhotoSwipeErrorUi(lightbox);
-				applyPhotoSwipeViewportSync(lightbox);
-				lightbox.addFilter("numItems", () => album.content.length);
-				lightbox.addFilter("itemData", (itemData, index) => {
-					const slide = album.content[index];
-					if (slide === undefined) return itemData;
-					return {
-						src: slide.url,
-						width: slide.width,
-						height: slide.height,
-					};
-				});
-				applyPhotoSwipeBackGesture(lightbox);
-				applyPhotoSwipeVideo(lightbox, (index) => {
-					const slide = album.content[index];
-					if (!slide?.contentType.startsWith("video/")) return null;
-					return { src: slide.url, poster: slide.coverUrl };
-				});
-				lightbox.on("uiRegister", () => {
-					lightbox?.pswp?.ui?.registerElement({
-						name: "save-to-library",
-						ariaLabel: t("album.saveToLibrary"),
-						order: 9,
-						isButton: true,
-						html: '<svg aria-hidden="true" class="pswp__icn" viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M12 16l-5-5h3V4h4v7h3l-5 5zM5 18h14v2H5z"/></svg>',
-						onClick: () => {
-							void handleSaveAlbum();
-						},
-					});
-				});
-				lightbox.on("closingAnimationEnd", () => {
-					albumState = { status: "idle" };
-				});
-				lightbox.init();
-				lightbox.loadAndOpen(0);
-			})
-			.catch((error) => {
-				console.error(error);
-				showErrorToast({ label: t("album.openFailed"), error });
-				albumState = { status: "idle" };
-			});
-		return () => {
-			canceled = true;
-			lightbox?.destroy();
-			lightbox = undefined;
-		};
-	});
+	const contentClass: import("svelte/elements").ClassValue = $derived([
+		"rounded-xl",
+		media.cornerClass,
+	]);
 </script>
 
 {#if isViewable}
-	<button
-		class={[
-			className,
-			contentClass,
-			{
-				"cursor-pointer": albumState.status === "idle",
-				"opacity-50": albumState.status === "loading",
-			},
-		]}
-		aria-label={t("album.open")}
-		onclick={openAlbum}
-		disabled={albumState.status !== "idle"}
-		{@attach media.attach}
+	<AlbumPreview
+		albumId={message.albumId}
+		coverUrl={message.coverUrl}
+		hasPhoto={message.hasPhoto}
+		hasVideo={message.hasVideo}
+		label={t("album.open")}
+		class={className}
+		{contentClass}
+		attach={media.attach}
+		onSave={(slides) => void saveAlbum(slides)}
 	>
-		<MediaImage
-			src={proxyMediaUrl(message.coverUrl)}
-			class="absolute top-0 left-0 h-full w-full rounded-[inherit]"
-			imgClass="bg-card-foreground/10"
-		/>
-		<div
-			class={["@container absolute top-0 left-0 size-full", contentClass]}
-		>
-			<div
-				class="absolute bottom-1/5 left-1/2 flex -translate-x-1/2 items-center gap-1 px-2 py-0.5 *:aspect-square *:w-[20cqw] *:rounded-full *:bg-card *:p-2"
-			>
-				{#if message.hasPhoto}
-					<div>
-						<ImagesIcon
-							width="100%"
-							height="auto"
-							weight="fill"
-							color="var(--color-neutral-200)"
-						/>
-					</div>
-				{/if}
-				{#if message.hasVideo}
-					<div>
-						<VideoIcon
-							width="100%"
-							height="auto"
-							weight="fill"
-							color="var(--color-neutral-200)"
-						/>
-					</div>
-				{/if}
-			</div>
-		</div>
 		{@render media.adornments?.()}
-	</button>
+	</AlbumPreview>
 {:else}
 	<div
 		data-slot="locked-album"
-		class={[className, contentClass]}
+		class={[className, contentClass, "relative"]}
 		{@attach media.attach}
 	>
 		<LockedMedia class={media.cornerClass} />
 		{@render media.adornments?.()}
 	</div>
 {/if}
-
-<style>
-	:global(.pswp__img) {
-		object-fit: contain;
-	}
-</style>

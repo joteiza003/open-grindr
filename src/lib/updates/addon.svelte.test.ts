@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Capability, Readiness, Unsupported } from "./types";
 import {
@@ -87,7 +87,28 @@ describe("the add-on activity the sign-in screen observes", () => {
 		expect(toasts.showAddonInstalled).toHaveBeenCalledOnce();
 	});
 
-	it("does not count an install the user cancelled", async () => {
+	it("tells each install listener once about a finished install, never a canceled one", async () => {
+		const { addonUpdates, onAddonInstalled } =
+			await import("./addon.svelte");
+		const listener = vi.fn(() => Promise.resolve());
+		onAddonInstalled({ component: "google-oauth", listener });
+		onAddonInstalled({ component: "google-oauth", listener });
+		readiness["google-oauth"] = ready("install");
+
+		await addonUpdates.installNow();
+		emitOutcome(
+			outcomeOf("google-oauth", { succeeded: false, canceled: true }),
+		);
+		await settled();
+		expect(listener).not.toHaveBeenCalled();
+
+		await addonUpdates.installNow();
+		emitOutcome(outcomeOf("google-oauth"));
+		await settled();
+		expect(listener).toHaveBeenCalledOnce();
+	});
+
+	it("does not count an install the user canceled", async () => {
 		const { addonActivity, addonUpdates } = await import("./addon.svelte");
 		readiness["google-oauth"] = ready("install");
 
@@ -129,6 +150,62 @@ describe("the add-on activity the sign-in screen observes", () => {
 	});
 });
 
+describe("the reCAPTCHA helper's update flow", () => {
+	beforeEach(() => {
+		vi.resetModules();
+		vi.clearAllMocks();
+		fake.reset();
+		platform.isAndroidPlatform.mockReturnValue(true);
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("is watched alongside every other add-on", async () => {
+		vi.useFakeTimers();
+		await probedCapability(releaseSigned);
+		const { startAddonUpdateWatch } = await import("./addon.svelte");
+
+		await startAddonUpdateWatch();
+
+		const checked = api.checkForUpdate.mock.calls.map(
+			([{ component }]) => component,
+		);
+		expect(checked).toEqual(
+			expect.arrayContaining(["google-oauth", "recaptcha", "fcm"]),
+		);
+		expect(checked).toHaveLength(3);
+	});
+
+	it("offers its update without touching the sign-in screen's activity", async () => {
+		const { addonActivity, recaptchaUpdates } =
+			await import("./addon.svelte");
+		api.checkForUpdate.mockResolvedValue(
+			offer("update", { component: "recaptcha" }),
+		);
+
+		await expect(recaptchaUpdates.checkNow()).resolves.toBe("offered");
+
+		expect(lastShownToast()).toMatchObject({
+			component: "recaptcha",
+			view: { stage: "available" },
+		});
+		expect(addonActivity.stage).toBeNull();
+	});
+
+	it("says the reCAPTCHA helper is up to date when a tap finds nothing newer", async () => {
+		const { recaptchaUpdates } = await import("./addon.svelte");
+		api.checkForUpdate.mockResolvedValue(upToDate);
+
+		await recaptchaUpdates.installNow();
+
+		expect(toasts.showUpToDate).toHaveBeenCalledExactlyOnceWith(
+			"The reCAPTCHA helper is up to date",
+		);
+	});
+});
+
 describe("where the Google OAuth app can be installed from here", () => {
 	beforeEach(() => {
 		vi.resetModules();
@@ -157,7 +234,7 @@ describe("where the Google OAuth app can be installed from here", () => {
 		expect(addonInstallerAvailable()).toBe(true);
 	});
 
-	it("is not on a build someone else signed, which the Google OAuth app refuses", async () => {
+	it("is not on a build Open Grind didn't sign, such as a Google Play install", async () => {
 		await probedCapability({
 			state: "unsupported",
 			detail: { reason: "foreignSigner" },
