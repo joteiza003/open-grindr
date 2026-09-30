@@ -31,10 +31,10 @@ describe("RangeBoundInputs", () => {
 		renderInputs([25, 99]);
 
 		expect(
-			(screen.getByLabelText("Minimum age")).value,
+			screen.getByLabelText<HTMLInputElement>("Minimum age").value,
 		).toBe("25");
 		expect(
-			(screen.getByLabelText("Maximum age")).value,
+			screen.getByLabelText<HTMLInputElement>("Maximum age").value,
 		).toBe("");
 	});
 
