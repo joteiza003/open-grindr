@@ -150,7 +150,7 @@ describe("GoogleSignInForm", () => {
 		const { screen } = await opened();
 
 		expect(textOf(screen.getByText(/bypasses F-Droid's checks/))).toBe(
-			"It comes from git.opengrind.org, not F-Droid, so installing it bypasses F-Droid's checks.",
+			"This add-on bypasses F-Droid's checks",
 		);
 	});
 

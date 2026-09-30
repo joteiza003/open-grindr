@@ -47,7 +47,7 @@
 		<span
 			data-slot="interest-tab-chip"
 			aria-hidden="true"
-			class="tab-chip pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-3xl bg-muted-foreground/15"
+			class="tab-chip pointer-events-none absolute inset-y-0 left-0 -z-10 rounded-md border border-(--border-subtle) bg-surface shadow-e1"
 			style:width="{100 / INTEREST_TABS.length}%"
 			style:--routed-tab={routedTab}
 			style:--last-tab={INTEREST_TABS.length - 1}

@@ -56,14 +56,12 @@
 	>
 		<img src={icon} alt="" class="size-28" />
 		<div class="flex flex-col gap-1">
-			<h1 class="font-heading text-3xl font-semibold tracking-tight">
-				Grindr +
-			</h1>
-			<p class="text-xl text-muted-foreground">
+			<h1 class="font-heading text-display font-semibold">Grindr +</h1>
+			<p class="text-title-2 text-muted-foreground">
 				Unofficial Grindr client
 			</p>
 		</div>
-		<p class="max-w-sm text-balance text-muted-foreground">
+		<p class="max-w-[60ch] text-body-lg text-balance text-muted-foreground">
 			Cross-platform, free, libre, ad-free, tracker-free, privacy-centered
 			and community-driven
 		</p>

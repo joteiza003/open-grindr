@@ -101,36 +101,43 @@
 	description="Let others know when you've viewed their profile. Your profile view history remains unaffected."
 />
 <h2>Security</h2>
-<Item.Root variant="outline">
-	{#snippet child({ props })}
-		<a href="/settings/app/icon" {...props}>
-			{@render rowContent({ title: t("icon.title") })}
-		</a>
-	{/snippet}
-</Item.Root>
-{@render item({ title: "PIN", unimplemented: { feature: "PIN", issue: 50 } })}
+<div class="og-settings-group">
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<a href="/settings/app/icon" {...props}>
+				{@render rowContent({ title: t("icon.title") })}
+			</a>
+		{/snippet}
+	</Item.Root>
+	{@render item({
+		title: "PIN",
+		unimplemented: { feature: "PIN", issue: 50 },
+	})}
+</div>
 {#if updatesSelfManaged() || updatesUnsupportedReason() !== null || addonInstallerAvailable()}
 	<h2>Updates</h2>
 	<AutomaticUpdatesSetting />
 {/if}
 <h2>About</h2>
-<Item.Root variant="outline">
-	{#snippet child({ props })}
-		<Link href="https://opengrind.org/privacy" {...props}>
-			{@render rowContent({
-				title: "Privacy policy",
-				trailingIcon: ArrowSquareOutIcon,
-			})}
-		</Link>
-	{/snippet}
-</Item.Root>
-<Item.Root variant="outline">
-	{#snippet child({ props })}
-		<a href="/settings/app/credits" {...props}>
-			{@render rowContent({ title: "Credits & Licenses" })}
-		</a>
-	{/snippet}
-</Item.Root>
+<div class="og-settings-group">
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<Link href="https://opengrind.org/privacy" {...props}>
+				{@render rowContent({
+					title: "Privacy policy",
+					trailingIcon: ArrowSquareOutIcon,
+				})}
+			</Link>
+		{/snippet}
+	</Item.Root>
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<a href="/settings/app/credits" {...props}>
+				{@render rowContent({ title: "Credits & Licenses" })}
+			</a>
+		{/snippet}
+	</Item.Root>
+</div>
 
 <style lang="postcss">
 	@reference "$layout";

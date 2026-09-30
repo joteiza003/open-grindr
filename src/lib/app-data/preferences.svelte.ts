@@ -9,6 +9,7 @@ import {
 	DEFAULT_BUBBLE_OUT,
 	DEFAULT_CHAT_BACKGROUND_COLOR,
 } from "$lib/appearance/chat-colors";
+import { DEFAULT_LOOK, lookSchema } from "$lib/appearance/looks";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
@@ -44,12 +45,16 @@ const preferencesSchema = z.object({
 	locale: localeSchema.default(DEFAULT_LOCALE),
 	appearance: z
 		.object({
+			// Look de fábrica: paquete de tema/acento/densidad con su propio
+			// material de superficie. Sin `look` guardado → "lumen".
+			look: lookSchema.default(DEFAULT_LOOK),
 			theme: z.enum(["system", "dark", "light"]).default("system"),
 			accent: accentSchema.default(DEFAULT_ACCENT),
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			animations: z.boolean().default(true),
 		})
 		.default({
+			look: DEFAULT_LOOK,
 			theme: "system",
 			accent: DEFAULT_ACCENT,
 			density: "comfortable",

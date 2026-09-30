@@ -9,7 +9,6 @@
 	import {
 		ArrowsOutIcon,
 		CaretLeftIcon,
-		CircleIcon,
 		CrosshairIcon,
 		ListIcon,
 		MapPinPlusIcon,
@@ -26,17 +25,14 @@
 
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
-	import MapCircleLayer from "$lib/components/map-elements/MapCircleLayer.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
 	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
-	import { currentLocale } from "$lib/i18n/t";
 	import {
 		clusterMarkers,
 		type MarkerCluster,
 	} from "$lib/map/cluster-markers";
-	import { circleBounds, radiusPixels } from "$lib/map/geographic";
 	import { MapElementsState } from "$lib/map/map-elements-state.svelte";
 	import {
 		clusterIcon,
@@ -46,10 +42,17 @@
 		sharedPinIcon,
 		userPinIcon,
 	} from "$lib/map/map-icons";
+	import {
+		allMapPoints,
+		directionsUrl,
+		formatReceivedAt,
+		locationLabel,
+	} from "$lib/map/map-page-helpers";
 	import { decodeGeohash } from "$lib/model/geohash";
+	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { openExternalLink } from "$lib/platform/link-opener";
 	import { profileMediaUrl } from "$lib/util/media";
-	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
+	import type { MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 
 	const library = new SavedLocationsState();
@@ -93,9 +96,7 @@
 		centered = true;
 	});
 
-	const picking = $derived(
-		overlays.mode === "ADD_CIRCLE" || overlays.mode === "ADD_MARKER",
-	);
+	const picking = $derived(overlays.mode === "ADD_MARKER");
 
 	$effect(() => {
 		const instance = map;
@@ -119,42 +120,13 @@
 	});
 
 	const markerClusters = $derived(clusterMarkers(overlays.markers, zoom));
-	const locale = $derived(currentLocale());
-	const userLocation = $derived(
-		customLocation
-			? { latitude: customLocation.lat, longitude: customLocation.lon }
-			: null,
-	);
-
-	/** Frame a circle in the space left free by the bottom editor. */
-	function focusCircle(circle: MapCircle) {
-		if (!map) return;
-		const bounds = circleBounds(circle);
-		const pixels = radiusPixels(circle.radiusKm, circle.latitude, zoom);
-		if (map.getBounds().contains(bounds) && pixels >= 40) return;
-		map.fitBounds(bounds, {
-			paddingTopLeft: [40, 40],
-			paddingBottomRight: [40, 300],
-			maxZoom: 16,
-		});
-	}
-
 	function fitAll() {
 		if (!map) return;
-		const points: [number, number][] = [];
-		for (const circle of overlays.circles) {
-			const [[south, west], [north, east]] = circleBounds(circle);
-			points.push([south, west], [north, east]);
-		}
-		for (const marker of overlays.markers) {
-			points.push([marker.latitude, marker.longitude]);
-		}
-		for (const location of library.locations) {
-			points.push([location.lat, location.lon]);
-		}
-		if (customLocation) {
-			points.push([customLocation.lat, customLocation.lon]);
-		}
+		const points = allMapPoints(
+			overlays.markers,
+			library.locations,
+			customLocation,
+		);
 		if (points.length === 0) return;
 		map.fitBounds(points, { padding: [40, 40], maxZoom: 16 });
 	}
@@ -167,72 +139,71 @@
 		);
 	}
 
-	// Bring a newly selected circle into view (not while dragging its handles).
-	let lastFocusedCircleId: string | null = null;
-	$effect(() => {
-		const id = overlays.selectedCircleId;
-		if (id === lastFocusedCircleId) return;
-		lastFocusedCircleId = id;
-		const circle = id
-			? overlays.circles.find((item) => item.id === id)
-			: null;
-		if (circle) focusCircle(circle);
-	});
-
-	function pickListedCircle(circle: MapCircle) {
-		listOpen = false;
-		overlays.selectCircle(circle.id);
-	}
-
-	function labelFor(location: SavedLocation): string {
-		return (
-			location.displayName ??
-			(location.senderId !== null
-				? `#${location.senderId}`
-				: t("chat.sharedLocation"))
-		);
-	}
-
-	function when(timestamp: number): string {
-		return new Date(timestamp).toLocaleString();
-	}
-
-	const selectedCircle = $derived(
-		overlays.circles.find(
-			(circle) => circle.id === overlays.selectedCircleId,
-		) ?? null,
-	);
 	const selectedMarker = $derived(
 		overlays.markers.find(
 			(marker) => marker.id === overlays.selectedMarkerId,
 		) ?? null,
 	);
 
-	const empty =
+	const empty = $derived(
 		!library.loading &&
-		!overlays.loading &&
-		library.locations.length === 0 &&
-		overlays.circles.length === 0 &&
-		overlays.markers.length === 0 &&
-		overlays.mode === "NORMAL";
+			!overlays.loading &&
+			library.locations.length === 0 &&
+			overlays.markers.length === 0 &&
+			overlays.mode === "NORMAL",
+	);
 
-	const modeHint =
-		overlays.mode === "ADD_CIRCLE"
-			? t("map.tapCircle")
-			: overlays.mode === "ADD_MARKER"
-				? t("map.tapMarker")
-				: null;
+	const modeHint = $derived(
+		overlays.mode === "ADD_MARKER" ? t("map.tapMarker") : null,
+	);
+
+	let pendingLocationId = $state<string | null>(null);
+
+	function requestDeleteLocation(location: SavedLocation) {
+		pendingLocationId = location.localId;
+		confirmOpen = true;
+	}
+
+	function pickListedLocation(location: SavedLocation) {
+		listOpen = false;
+		map?.setView([location.lat, location.lon], Math.max(zoom, 14));
+	}
 
 	async function confirmDelete(): Promise<void> {
-		if (overlays.circleDraft?.id) {
-			await overlays.deleteCircle(overlays.circleDraft.id);
-		} else if (selectedCircle) {
-			await overlays.deleteCircle(selectedCircle.id);
-		} else if (selectedMarker) {
-			await overlays.deleteMarker(selectedMarker.id);
+		const locationId = pendingLocationId;
+		try {
+			if (locationId) {
+				await library.remove(locationId);
+			} else if (selectedMarker) {
+				await overlays.deleteMarker(selectedMarker.id);
+			}
+		} catch (error) {
+			console.error("[map] Failed to delete", error);
+			overlays.error = String(error);
+		} finally {
+			confirmOpen = false;
 		}
-		confirmOpen = false;
 	}
+
+	$effect(() => {
+		if (!confirmOpen) pendingLocationId = null;
+		if (overlays.mode !== "NORMAL") listOpen = false;
+	});
+
+	// System back closes the innermost open panel before leaving the map.
+	dismissOnBackGesture({
+		active: () =>
+			confirmOpen ||
+			openCluster !== null ||
+			listOpen ||
+			overlays.mode !== "NORMAL",
+		dismiss: () => {
+			if (confirmOpen) confirmOpen = false;
+			else if (openCluster) openCluster = null;
+			else if (overlays.mode === "NORMAL") listOpen = false;
+			else overlays.cancelCreation();
+		},
+	});
 
 	function onClusterClick(
 		cluster: Extract<MarkerCluster, { type: "group" }>,
@@ -256,12 +227,17 @@
 		map?.setView([marker.latitude, marker.longitude], Math.max(zoom, 16));
 	}
 
-	const circleActive =
-		overlays.mode === "ADD_CIRCLE" ||
-		overlays.mode === "CIRCLE_CONFIGURATION";
-	const markerActive =
+	const markerActive = $derived(
 		overlays.mode === "ADD_MARKER" ||
-		overlays.mode === "MARKER_CONFIGURATION";
+			overlays.mode === "MARKER_CONFIGURATION",
+	);
+
+	function toggleAdd(active: boolean, begin: () => void) {
+		listOpen = false;
+		openCluster = null;
+		if (active) overlays.cancelCreation();
+		else begin();
+	}
 </script>
 
 <main
@@ -269,7 +245,7 @@
 >
 	<!-- Glass header -->
 	<header
-		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/80 px-3 py-2.5 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70"
+		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/95 px-3 py-2.5"
 	>
 		<BackLink
 			href="/"
@@ -289,11 +265,15 @@
 			<Button
 				variant={listOpen ? "default" : "ghost"}
 				size="icon"
-				class="size-10 rounded-full"
+				class="size-10 rounded-full text-foreground"
 				aria-label={t("map.list")}
 				title={t("map.list")}
 				aria-pressed={listOpen}
-				onclick={() => (listOpen = !listOpen)}
+				onclick={() => {
+					openCluster = null;
+					if (overlays.mode !== "NORMAL") overlays.cancelCreation();
+					listOpen = !listOpen;
+				}}
 			>
 				<ListIcon
 					class="size-5"
@@ -302,28 +282,14 @@
 			</Button>
 
 			<Button
-				variant={circleActive ? "default" : "ghost"}
-				size="icon"
-				class="size-10 rounded-full"
-				aria-label={t("map.addCircle")}
-				title={t("map.addCircle")}
-				aria-pressed={circleActive}
-				onclick={() => overlays.beginAddCircle()}
-			>
-				<CircleIcon
-					class="size-5"
-					weight={circleActive ? "fill" : "regular"}
-				/>
-			</Button>
-
-			<Button
 				variant={markerActive ? "default" : "ghost"}
 				size="icon"
-				class="size-10 rounded-full"
+				class="size-10 rounded-full text-foreground"
 				aria-label={t("map.addMarker")}
 				title={t("map.addMarker")}
 				aria-pressed={markerActive}
-				onclick={() => overlays.beginAddMarker()}
+				onclick={() =>
+					toggleAdd(markerActive, () => overlays.beginAddMarker())}
 			>
 				<MapPinPlusIcon
 					class="size-5"
@@ -355,8 +321,6 @@
 				<ControlScale
 					options={{ imperial: false, position: "bottomleft" }}
 				/>
-
-				<MapCircleLayer {overlays} {zoom} {picking} {locale} />
 
 				{#each markerClusters as cluster (cluster.type === "single" ? cluster.marker.id : cluster.id)}
 					{#if cluster.type === "single"}
@@ -465,13 +429,13 @@
 						latLng={[location.lat, location.lon]}
 						options={{
 							icon: sharedPinIcon,
-							title: labelFor(location),
+							title: locationLabel(location),
 							zIndexOffset: 400,
 						}}
 					>
 						<Popup>
-							<strong>{labelFor(location)}</strong><br />
-							{when(location.receivedAt)}
+							<strong>{locationLabel(location)}</strong><br />
+							{formatReceivedAt(location.receivedAt)}
 						</Popup>
 					</Marker>
 				{/each}
@@ -485,7 +449,7 @@
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg backdrop-blur-md can-hover:hover:bg-card"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg can-hover:hover:bg-card"
 				aria-label={t("map.fitAll")}
 				title={t("map.fitAll")}
 				onclick={fitAll}
@@ -495,7 +459,7 @@
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg backdrop-blur-md disabled:opacity-40 can-hover:hover:bg-card"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg disabled:opacity-40 can-hover:hover:bg-card"
 				aria-label={t("map.locate")}
 				title={customLocation ? t("map.locate") : t("map.noLocation")}
 				disabled={!customLocation}
@@ -508,8 +472,10 @@
 		<MapHud
 			{overlays}
 			bind:listOpen
-			{userLocation}
-			onPickCircle={pickListedCircle}
+			locations={library.locations}
+			{locationLabel}
+			onPickLocation={pickListedLocation}
+			onDeleteLocation={requestDeleteLocation}
 			{modeHint}
 			{empty}
 			bind:openCluster
@@ -518,42 +484,16 @@
 			onPickMarker={pickClusteredMarker}
 			onConfirmDelete={confirmDelete}
 			onOpenProfile={(id) => void goto(`/profile/${id}`)}
-			onOpenDirections={(marker) => {
-				const dest = `${marker.latitude},${marker.longitude}`;
-				const origin =
-					customLocation !== null
-						? `${customLocation.lat},${customLocation.lon}`
-						: null;
-				const url = origin
-					? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=walking`
-					: `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking`;
-				openExternalLink(url);
-			}}
+			onOpenDirections={(marker) =>
+				openExternalLink(directionsUrl(marker, customLocation))}
 		/>
 	</div>
 </main>
 
 <style>
-	:global(.leaflet-tooltip.map-circle-label) {
-		background: rgb(0 0 0 / 70%);
-		border: 0;
-		border-radius: 999px;
-		box-shadow: none;
-		color: #fff;
-		font-size: 12px;
-		font-weight: 600;
-		letter-spacing: 0.01em;
-		padding: 3px 9px;
-		pointer-events: none;
-	}
-	:global(.leaflet-tooltip.map-circle-label::before) {
-		display: none;
-	}
-
 	/* Soften leaflet attribution on dark/light */
 	:global(.leaflet-control-attribution) {
 		background: rgb(255 255 255 / 75%) !important;
-		backdrop-filter: blur(8px);
 		border-radius: 8px 0 0 0;
 		font-size: 10px !important;
 		padding: 2px 6px !important;

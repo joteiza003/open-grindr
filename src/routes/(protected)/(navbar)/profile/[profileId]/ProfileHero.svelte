@@ -21,12 +21,12 @@
 		onFavorite={(isFavorite) => profileState.setFavorite(isFavorite)}
 	/>
 	<div
-		class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/35 to-transparent px-4 pt-18 pb-4 text-white"
+		class="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/90 via-black/55 to-transparent px-4 pt-20 pb-4 text-white"
 		data-slot="profile-hero-overlay"
 	>
 		<div class="max-w-3xl pr-16">
 			<h1
-				class="flex flex-wrap items-end gap-x-2 gap-y-1 text-3xl leading-none font-semibold tracking-tight wrap-break-word"
+				class="flex flex-wrap items-end gap-x-2 gap-y-1 text-title-1 [text-shadow:0_1px_3px_rgb(0_0_0/0.75)] wrap-break-word"
 			>
 				<span>
 					{#if displayName !== null}
@@ -37,12 +37,12 @@
 				</span>
 				{#if age !== null}
 					<span class="sr-only">, </span>
-					<span class="pb-0.5 text-xl font-medium">{age}</span>
+					<span class="pb-0.5 text-title-3 font-medium">{age}</span>
 				{/if}
 			</h1>
 			<div
 				data-slot="profile-status-row"
-				class="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/85"
+				class="mt-2 flex flex-wrap items-center gap-2 text-caption text-white/85"
 			>
 				<OnlineStatus
 					onlineUntil={onlineUntil ?? null}

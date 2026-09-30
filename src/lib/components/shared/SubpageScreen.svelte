@@ -60,9 +60,9 @@
 		href={current.back}
 		class="flex h-full w-19 shrink-0 items-center justify-center"
 	>
-		<ArrowLeftIcon size={32} />
+		<ArrowLeftIcon size={24} />
 	</BackLink>
-	<span class="min-w-0 flex-1 truncate">
+	<span class="min-w-0 flex-1 truncate text-title-3">
 		{typeof current.title === "function" ? current.title() : current.title}
 	</span>
 	{@render actions.snippet?.()}

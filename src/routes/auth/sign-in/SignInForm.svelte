@@ -196,10 +196,11 @@
 </script>
 
 <form onsubmit={signIn} class="contents">
-	<Card.Root class="m-auto w-full max-w-sm">
+	<Card.Root class="m-auto w-full max-w-100">
 		<Card.Header>
-			<Card.Title>Sign in to your account</Card.Title>
-			<Card.Description>
+			<Card.Title class="text-title-1">Sign in to your account</Card.Title
+			>
+			<Card.Description class="text-body">
 				Enter your email below to sign in to your account
 			</Card.Description>
 			<Card.Action>
@@ -245,6 +246,7 @@
 		<Card.Footer class="flex-col gap-2">
 			<Button
 				type="submit"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "password"}
@@ -257,6 +259,7 @@
 			<Button
 				type="button"
 				variant="outline"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "google"}
@@ -272,6 +275,7 @@
 			<Button
 				type="button"
 				variant="outline"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "facebook"}

@@ -97,7 +97,7 @@
 		<div
 			bind:this={scroller}
 			{...scrollerHooks}
-			class="h-full overflow-x-hidden overflow-y-auto overscroll-contain overscroll-x-auto"
+			class="h-full overflow-x-hidden overflow-y-auto overscroll-contain overscroll-x-auto pb-[calc(var(--nav-height)+var(--safe-area-bottom)+6.5rem)]"
 		>
 			<main
 				inert={!active}

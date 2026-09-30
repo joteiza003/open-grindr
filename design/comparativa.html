@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Grindr + · Comparativa antes / después</title>
+		<style>
+			:root {
+				--bg: #101114;
+				--fg: #f2f3f5;
+				--muted: #9aa0aa;
+				--line: #26282e;
+				--accent: #f5c245;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			body {
+				margin: 0;
+				background: var(--bg);
+				color: var(--fg);
+				font:
+					15px/1.5 system-ui,
+					-apple-system,
+					"Segoe UI",
+					sans-serif;
+			}
+			header {
+				position: sticky;
+				top: 0;
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				padding: 14px 28px;
+				background: rgba(16, 17, 20, 0.86);
+				backdrop-filter: blur(14px);
+				border-bottom: 1px solid var(--line);
+			}
+			header h1 {
+				font-size: 15px;
+				margin: 0;
+				margin-right: auto;
+				letter-spacing: -0.01em;
+			}
+			button {
+				background: #1c1e23;
+				color: var(--fg);
+				border: 1px solid var(--line);
+				border-radius: 999px;
+				padding: 6px 14px;
+				font-size: 12px;
+				cursor: pointer;
+			}
+			button[aria-pressed="true"] {
+				background: color-mix(in oklab, var(--accent) 22%, transparent);
+				border-color: color-mix(in oklab, var(--accent) 55%, transparent);
+			}
+			main {
+				max-width: 1180px;
+				margin: 0 auto;
+				padding: 28px;
+			}
+			p.lead {
+				color: var(--muted);
+				max-width: 70ch;
+			}
+			.screen {
+				margin-top: 40px;
+			}
+			.screen h2 {
+				font-size: 20px;
+				margin: 0 0 4px;
+			}
+			.screen p {
+				margin: 0 0 14px;
+				color: var(--muted);
+				max-width: 78ch;
+			}
+			.pair {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+				gap: 16px;
+			}
+			figure {
+				margin: 0;
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				overflow: hidden;
+				background: #16181c;
+			}
+			figcaption {
+				padding: 8px 12px;
+				font-size: 12px;
+				color: var(--muted);
+				border-bottom: 1px solid var(--line);
+			}
+			img {
+				display: block;
+				width: 100%;
+				height: auto;
+			}
+			.tag {
+				display: inline-block;
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--accent);
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+			<h1>Grindr + · comparativa antes / después</h1>
+			<span id="theme-label" style="color: var(--muted); font-size: 12px">después en oscuro</span>
+			<button data-theme="dark" aria-pressed="true">oscuro</button>
+			<button data-theme="light" aria-pressed="false">claro</button>
+		</header>
+		<main>
+			<p class="lead">
+				Capturas reales del modo demo (mismo dispositivo de 1080 × 1920 y mismo
+				estado de datos). La oleada 1 toca los tokens, el chrome y tres
+				pantallas: Browse, la bandeja y la conversación. El resto de pantallas
+				ya se benefician de los tokens nuevos, pero su composición se revisa en
+				las oleadas 2 y 3.
+			</p>
+			<div id="screens"></div>
+		</main>
+
+		<script>
+			const SCREENS = [
+				["browse", "Browse", "Píldoras del TopBar, separación y radio de la rejilla, lectura de la distancia y barra inferior."],
+				["chat-list", "Bandeja", "Filas de 72, cabecera translúcida con hairline y acento reservado a lo no leído."],
+				["conversation", "Conversación", "Burbuja entrante neutra (ya no azul), radio 18, meta tabular y compositor con superficie y sombra propias."],
+				["profile", "Perfil", "Jerarquía tipográfica y datos en formato etiqueta/valor."],
+				["settings", "Ajustes (índice)", "Grupos planos con hairline en vez de sombras apiladas."],
+				["settings-appearance", "Ajustes · Apariencia", "Muestrario de acento y controles sobre el sistema nuevo."],
+				["interest-taps", "Interest · Toques", "Filas y estados de no visto."],
+				["right-now", "Right Now", "Tarjetas y etiquetas de caducidad."],
+				["map", "Mapa", "Controles y HUD sobre el sistema nuevo (contenido del mapa en refactor por otro proceso)."],
+				["albums", "Álbumes guardados", "Rejilla y tarjetas de portada."],
+				["settings-account", "Ajustes · Cuenta", "Filas con switch y avisos."],
+				["settings-phrases", "Ajustes · Frases", "Lista con acciones por fila."],
+				["settings-translation", "Ajustes · Traducción", "Proveedores e idiomas."],
+				["settings-app", "Ajustes · App", "Grupos y versión."],
+			];
+
+			let theme = "dark";
+
+			function render() {
+				document.getElementById("screens").innerHTML = SCREENS.map(
+					([id, title, note]) => `
+					<section class="screen">
+						<h2>${title}</h2>
+						<p>${note}</p>
+						<div class="pair">
+							<figure>
+								<figcaption><span class="tag">antes</span></figcaption>
+								<img src="captures/before/dark/phone/${id}.png" alt="${title} antes" loading="lazy" />
+							</figure>
+							<figure>
+								<figcaption><span class="tag">después</span></figcaption>
+								<img src="captures/after/${theme}/phone/${id}.png" alt="${title} después" loading="lazy" />
+							</figure>
+						</div>
+					</section>`,
+				).join("");
+			}
+
+			document.addEventListener("click", (event) => {
+				const button = event.target.closest("button[data-theme]");
+				if (!button) return;
+				theme = button.dataset.theme;
+				document.querySelectorAll("button[data-theme]").forEach((each) => {
+					each.setAttribute("aria-pressed", String(each.dataset.theme === theme));
+				});
+				document.getElementById("theme-label").textContent =
+					theme === "dark" ? "después en oscuro" : "después en claro";
+				render();
+			});
+
+			render();
+		</script>
+	</body>
+</html>

@@ -32,7 +32,11 @@ export default defineConfig(async ({ command }) => ({
 		hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
 		watch: {
 			// 3. tell Vite to ignore watching `src-tauri`
-			ignored: ["**/src-tauri/**"],
+			// Los editores que escriben de forma atómica dejan directorios
+			// `.<fichero>.<pid>.<uuid>.tmpdir/` dentro de src; el watcher de
+			// Node los abre justo cuando desaparecen y el proceso muere con
+			// EBUSY. Ignorarlos evita ese cierre del servidor de desarrollo.
+			ignored: ["**/src-tauri/**", "**/*.tmpdir/**"],
 		},
 		fs: {
 			allow: [

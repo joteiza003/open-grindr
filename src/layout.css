@@ -6,59 +6,130 @@
 @custom-variant hover (&:hover:where([data-hover-pointer] *));
 @custom-variant can-hover (&:where([data-hover-pointer] *));
 
+/* ── Tokens «Lumen» ───────────────────────────────────────────────────────
+   Los nombres heredados (--background, --card, --primary, --border, --input,
+   --ring, --radius-grid, --nav-height…) se conservan: los usan las 241
+   primitivas de components/ui, los skins y los e2e. Solo cambia su valor y se
+   añaden los roles nuevos. Ver design/01-fundamentos.md. */
 :root {
-	--radius: 1rem;
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.205 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: oklch(86.521% 0.17664 90.372);
-	--primary-foreground: oklch(0.421 0.095 57.708);
-	--secondary: oklch(0.274 0.006 286.033);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(86.521% 0.17664 90.372);
-	--accent-foreground: oklch(0.421 0.095 57.708);
-	--destructive: oklch(0.704 0.191 22.216);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: oklch(0.556 0 0);
+	/* Radio base (la escala vive en @theme inline) */
+	--radius: 14px;
+
+	/* Superficies — tema oscuro por defecto */
+	--bg-canvas: oklch(0.145 0.006 265);
+	--bg-surface: oklch(0.185 0.007 265);
+	--bg-raised: oklch(0.235 0.008 265);
+	--bg-overlay: oklch(0.26 0.009 265);
+	--bg-inset: oklch(0.125 0.005 265);
+	--bg-glass: color-mix(in oklch, var(--bg-canvas) 72%, transparent);
+
+	/* Texto */
+	--text-primary: oklch(0.97 0.003 265);
+	--text-secondary: oklch(0.8 0.008 265);
+	--text-tertiary: oklch(0.68 0.008 265);
+
+	/* Bordes */
+	--border-subtle: oklch(1 0 0 / 8%);
+	--border-strong: oklch(1 0 0 / 16%);
+
+	/* Acento — cada preset define tono y croma; cada tema, la luminosidad */
+	--accent-h: 85;
+	--accent-c: 0.17;
+	--accent-l: 0.82;
+	--accent: oklch(var(--accent-l) var(--accent-c) var(--accent-h));
+	--accent-text: oklch(0.84 var(--accent-c) var(--accent-h));
+	--accent-soft: color-mix(in oklch, var(--accent) 16%, transparent);
+	--accent-border: color-mix(in oklch, var(--accent) 45%, transparent);
+	--text-on-accent: oklch(0.19 0.03 var(--accent-h));
+
+	/* Estados */
+	--state-hover: oklch(1 0 0 / 6%);
+	--state-pressed: oklch(1 0 0 / 10%);
+	--state-disabled: 38%;
+	--scrim-overlay: oklch(0 0 0 / 45%);
+
+	/* Sistema */
+	--success: oklch(0.75 0.15 155);
+	--success-soft: color-mix(in oklch, var(--success) 14%, transparent);
+	--success-text: oklch(0.84 0.14 155);
+	--warning: oklch(0.82 0.15 80);
+	--warning-soft: color-mix(in oklch, var(--warning) 14%, transparent);
+	--warning-text: oklch(0.88 0.13 80);
+	--danger: oklch(0.68 0.19 22);
+	--danger-soft: color-mix(in oklch, var(--danger) 14%, transparent);
+	--danger-text: oklch(0.8 0.16 22);
+	--info: oklch(0.75 0.12 240);
+	--info-soft: color-mix(in oklch, var(--info) 14%, transparent);
+	--info-text: oklch(0.84 0.11 240);
+
+	/* Elevación — en oscuro la jerarquía la da el borde; esto solo confirma */
+	--elevation-1: 0 1px 2px oklch(0 0 0 / 40%);
+	--elevation-2: 0 4px 16px -4px oklch(0 0 0 / 50%);
+	--elevation-3: 0 -8px 32px -8px oklch(0 0 0 / 55%);
+	--elevation-4: 0 24px 64px -16px oklch(0 0 0 / 60%);
+
+	/* Movimiento */
+	--duration-1: 100ms;
+	--duration-2: 160ms;
+	--duration-3: 240ms;
+	--duration-4: 320ms;
+	--ease-exit: cubic-bezier(0.4, 0, 1, 1);
+
+	/* ── Alias heredados ─────────────────────────────────────────────────── */
+	--background: var(--bg-canvas);
+	--foreground: var(--text-primary);
+	--card: var(--bg-surface);
+	--card-foreground: var(--text-primary);
+	--popover: var(--bg-overlay);
+	--popover-foreground: var(--text-primary);
+	--primary: var(--accent);
+	--primary-foreground: var(--text-on-accent);
+	--secondary: var(--bg-raised);
+	--secondary-foreground: var(--text-primary);
+	--muted: var(--bg-inset);
+	--muted-foreground: var(--text-secondary);
+	--accent-foreground: var(--text-on-accent);
+	--destructive: var(--danger);
+	--border: var(--border-subtle);
+	--input: var(--border-strong);
+	--ring: var(--accent);
 	--chart-1: oklch(0.905 0.182 98.111);
 	--chart-2: oklch(86.521% 0.17664 90.372);
 	--chart-3: oklch(0.681 0.162 75.834);
 	--chart-4: oklch(0.554 0.135 66.442);
 	--chart-5: oklch(0.476 0.114 61.907);
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: oklch(86.521% 0.17664 90.372);
-	--sidebar-primary-foreground: oklch(0.987 0.026 102.212);
-	--sidebar-accent: oklch(0.269 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: oklch(0.556 0 0);
-	--message-bubble-in: oklch(0.7882 0.1455 228.36);
-	--message-bubble-out: oklch(0.8618 0.1973 89.76);
-	--message-bubble-in-foreground: oklch(0 0 0);
-	--message-bubble-out-foreground: oklch(0 0 0);
+	--sidebar: var(--bg-surface);
+	--sidebar-foreground: var(--text-primary);
+	--sidebar-primary: var(--accent);
+	--sidebar-primary-foreground: var(--text-on-accent);
+	--sidebar-accent: var(--bg-raised);
+	--sidebar-accent-foreground: var(--text-primary);
+	--sidebar-border: var(--border-subtle);
+	--sidebar-ring: var(--accent);
+
+	/* Burbujas de chat — valores por defecto; el usuario puede cambiarlos */
+	--message-bubble-in: var(--bg-raised);
+	--message-bubble-out: oklch(0.84 0.16 88);
+	--message-bubble-in-foreground: oklch(0.96 0.003 265);
+	--message-bubble-out-foreground: oklch(0.2 0.03 85);
+
 	--stack-scrim: 0.8;
 	--stack-edge: -1px 0 0 oklch(1 0 0 / 10%);
 	--list-rail: 117px;
-	/* Experience / design-system tokens. Keep component tokens below backward-compatible. */
-	--surface-0: var(--background);
-	--surface-1: var(--card);
-	--surface-2: var(--popover);
-	--surface-3: color-mix(in oklch, var(--popover) 86%, white 14%);
-	--surface-glass: color-mix(in oklch, var(--background) 72%, transparent);
+
+	/* ── Tokens de experiencia (compatibilidad) ──────────────────────────── */
+	--surface-0: var(--bg-canvas);
+	--surface-1: var(--bg-surface);
+	--surface-2: var(--bg-overlay);
+	--surface-3: var(--bg-raised);
+	--surface-glass: var(--bg-glass);
 	--content-max: 1600px;
 	--nav-height: 72px;
 	--panel-gap: 0.75rem;
 	--control-height: 2.75rem;
-	--motion-fast: 120ms;
-	--motion-normal: 180ms;
-	--motion-slow: 280ms;
+	--motion-fast: var(--duration-1);
+	--motion-normal: var(--duration-2);
+	--motion-slow: var(--duration-3);
 	--ease-standard: cubic-bezier(0.2, 0, 0, 1);
 	--safe-area-top: 0px;
 	--safe-area-bottom: 0px;
@@ -69,6 +140,35 @@
 @theme inline {
 	--font-sans: "IBM Plex Sans Variable", sans-serif;
 	--font-heading: "IBM Plex Sans Variable", sans-serif;
+
+	/* Escala tipográfica cerrada: tamaño / interlínea / tracking */
+	--text-display: 34px;
+	--text-display--line-height: 40px;
+	--text-display--letter-spacing: -0.02em;
+	--text-title-1: 28px;
+	--text-title-1--line-height: 34px;
+	--text-title-1--letter-spacing: -0.02em;
+	--text-title-2: 22px;
+	--text-title-2--line-height: 28px;
+	--text-title-2--letter-spacing: -0.01em;
+	--text-title-3: 18px;
+	--text-title-3--line-height: 24px;
+	--text-title-3--letter-spacing: -0.01em;
+	--text-body-lg: 16px;
+	--text-body-lg--line-height: 24px;
+	--text-body: 15px;
+	--text-body--line-height: 22px;
+	--text-label: 13px;
+	--text-label--line-height: 18px;
+	--text-label--letter-spacing: 0.01em;
+	--text-caption: 12px;
+	--text-caption--line-height: 16px;
+	--text-caption--letter-spacing: 0.01em;
+	--text-overline: 11px;
+	--text-overline--line-height: 14px;
+	--text-overline--letter-spacing: 0.08em;
+
+	/* Colores heredados */
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -104,20 +204,54 @@
 	--color-message-bubble-out: var(--message-bubble-out);
 	--color-message-bubble-in-foreground: var(--message-bubble-in-foreground);
 	--color-message-bubble-out-foreground: var(--message-bubble-out-foreground);
-	--radius-sm: calc(var(--radius) * 0.6);
-	--radius-md: calc(var(--radius) * 0.8);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) * 1.4);
-	--radius-2xl: calc(var(--radius) * 1.8);
-	--radius-3xl: calc(var(--radius) * 2.2);
-	--radius-4xl: calc(var(--radius) * 2.6);
+
+	/* Colores nuevos */
+	--color-canvas: var(--bg-canvas);
+	--color-surface: var(--bg-surface);
+	--color-raised: var(--bg-raised);
+	--color-overlay: var(--bg-overlay);
+	--color-inset: var(--bg-inset);
+	--color-glass: var(--bg-glass);
+	--color-accent-soft: var(--accent-soft);
+	--color-accent-border: var(--accent-border);
+	--color-accent-text: var(--accent-text);
+	--color-on-accent: var(--text-on-accent);
+	--color-success: var(--success);
+	--color-success-soft: var(--success-soft);
+	--color-success-text: var(--success-text);
+	--color-warning: var(--warning);
+	--color-warning-soft: var(--warning-soft);
+	--color-warning-text: var(--warning-text);
+	--color-danger: var(--danger);
+	--color-danger-soft: var(--danger-soft);
+	--color-danger-text: var(--danger-text);
+	--color-info: var(--info);
+	--color-info-soft: var(--info-soft);
+	--color-info-text: var(--info-text);
+
+	/* Radios explícitos: una sola escala en toda la app */
+	--radius-xs: 6px;
+	--radius-sm: 10px;
+	--radius-md: 14px;
+	--radius-lg: 18px;
+	--radius-xl: 24px;
+	--radius-2xl: 28px;
+	--radius-3xl: 32px;
+	--radius-4xl: 36px;
+	--radius-full: 999px;
+
+	/* Elevación */
+	--shadow-e1: var(--elevation-1);
+	--shadow-e2: var(--elevation-2);
+	--shadow-e3: var(--elevation-3);
+	--shadow-e4: var(--elevation-4);
 
 	--container-row: 9rem;
 
 	--text-2xs: 0.6875rem; /* 11px */
 	--text-3xs: 0.625rem; /* 10px */
 
-	--spacing-avatar: 37.5px;
+	--spacing-avatar: 40px;
 	--spacing-list-rail: var(--list-rail);
 }
 
@@ -135,11 +269,11 @@
 }
 
 @theme {
-	--radius-grid: 17px;
+	--radius-grid: 18px;
 
-	--radius-composer: 19px;
+	--radius-composer: 18px;
 
-	--radius-chat-panel: 27px;
+	--radius-chat-panel: 24px;
 
 	--spacing-count-badge: 5.5px;
 
@@ -185,6 +319,9 @@ body {
 	-webkit-user-select: none;
 	--nav-height: 4rem;
 	--slider-thumb-size: 1.5rem;
+	/* Altura táctil de un control de formulario (44 px). Los botones no la
+	   usan: tienen su propia escala (sm 36 / md 44 / lg 52). */
+	--control-height: 2.75rem;
 	--selection-bar-height: 4.75rem;
 	--content-pb: calc(var(--nav-height) + var(--safe-area-bottom));
 	--screen-safe: calc(
@@ -831,66 +968,37 @@ a {
 }
 
 /* ── Appearance personalization ──────────────────────────────────────────
-   Accent presets keyed by data-accent on <html>; keep keys in sync with
-   src/lib/appearance/accents.ts. "amber" is the default and matches the base
-   :root tokens above, so it needs no block here. Each preset recolors the
-   accent/primary token family; foregrounds are a dark neutral that reads on
-   every preset. Chat bubble colors are intentionally left untouched. */
+   Cada preset define solo tono y croma (--accent-h / --accent-c); la
+   luminosidad la fija el tema, de modo que --text-on-accent siempre cumple
+   contraste. "amber" es el de :root y no necesita bloque. Mantener las claves
+   en sync con src/lib/appearance/accents.ts. Las burbujas de chat no se tocan. */
 :root[data-accent="blue"] {
-	--primary: oklch(0.72 0.15 250);
-	--accent: oklch(0.72 0.15 250);
-	--sidebar-primary: oklch(0.72 0.15 250);
-	--primary-foreground: oklch(0.22 0 0);
-	--accent-foreground: oklch(0.22 0 0);
-	--sidebar-primary-foreground: oklch(0.22 0 0);
+	--accent-h: 250;
+	--accent-c: 0.15;
 }
 :root[data-accent="teal"] {
-	--primary: oklch(0.8 0.13 190);
-	--accent: oklch(0.8 0.13 190);
-	--sidebar-primary: oklch(0.8 0.13 190);
-	--primary-foreground: oklch(0.22 0 0);
-	--accent-foreground: oklch(0.22 0 0);
-	--sidebar-primary-foreground: oklch(0.22 0 0);
+	--accent-h: 190;
+	--accent-c: 0.13;
 }
 :root[data-accent="green"] {
-	--primary: oklch(0.8 0.17 145);
-	--accent: oklch(0.8 0.17 145);
-	--sidebar-primary: oklch(0.8 0.17 145);
-	--primary-foreground: oklch(0.22 0 0);
-	--accent-foreground: oklch(0.22 0 0);
-	--sidebar-primary-foreground: oklch(0.22 0 0);
+	--accent-h: 150;
+	--accent-c: 0.16;
 }
 :root[data-accent="violet"] {
-	--primary: oklch(0.72 0.16 300);
-	--accent: oklch(0.72 0.16 300);
-	--sidebar-primary: oklch(0.72 0.16 300);
-	--primary-foreground: oklch(0.98 0 0);
-	--accent-foreground: oklch(0.98 0 0);
-	--sidebar-primary-foreground: oklch(0.98 0 0);
+	--accent-h: 300;
+	--accent-c: 0.16;
 }
 :root[data-accent="pink"] {
-	--primary: oklch(0.78 0.16 350);
-	--accent: oklch(0.78 0.16 350);
-	--sidebar-primary: oklch(0.78 0.16 350);
-	--primary-foreground: oklch(0.22 0 0);
-	--accent-foreground: oklch(0.22 0 0);
-	--sidebar-primary-foreground: oklch(0.22 0 0);
+	--accent-h: 350;
+	--accent-c: 0.16;
 }
 :root[data-accent="orange"] {
-	--primary: oklch(0.78 0.17 55);
-	--accent: oklch(0.78 0.17 55);
-	--sidebar-primary: oklch(0.78 0.17 55);
-	--primary-foreground: oklch(0.22 0 0);
-	--accent-foreground: oklch(0.22 0 0);
-	--sidebar-primary-foreground: oklch(0.22 0 0);
+	--accent-h: 55;
+	--accent-c: 0.17;
 }
 :root[data-accent="red"] {
-	--primary: oklch(0.7 0.19 25);
-	--accent: oklch(0.7 0.19 25);
-	--sidebar-primary: oklch(0.7 0.19 25);
-	--primary-foreground: oklch(0.98 0 0);
-	--accent-foreground: oklch(0.98 0 0);
-	--sidebar-primary-foreground: oklch(0.98 0 0);
+	--accent-h: 25;
+	--accent-c: 0.18;
 }
 
 /* Compact density: tighten the global spacing unit so paddings/gaps scale
@@ -955,7 +1063,9 @@ a {
 :root[data-chat-style="whatsapp"]
 	[data-slot="conversations-scroller"]
 	.after\:rounded-xl::after,
-:root[data-chat-style="whatsapp"] [data-slot="conversation-row"] .*:rounded-xl,
+:root[data-chat-style="whatsapp"]
+	[data-slot="conversation-row"]
+	[class*="rounded-xl"],
 :root[data-chat-style="whatsapp"] [data-slot="conversation-row"] .rounded-xl {
 	border-radius: 999px !important;
 }
@@ -992,26 +1102,69 @@ a {
 	color: var(--wa-green);
 }
 
-/* —— Open Grind Midnight — default premium material —— */
+/* —— Look «Midnight»: heredero del material anterior — cálido y profundo ——
+   No es el aspecto por defecto; se elige como preset de apariencia. */
 :root[data-look="midnight"] {
-	--background: oklch(0.16 0.01 85);
-	--card: oklch(0.21 0.012 80);
-	--popover: oklch(0.23 0.014 80);
-	--surface-glass: color-mix(in oklch, var(--background) 68%, transparent);
+	--bg-canvas: oklch(0.16 0.01 85);
+	--bg-surface: oklch(0.21 0.012 80);
+	--bg-raised: oklch(0.25 0.013 80);
+	--bg-overlay: oklch(0.23 0.014 80);
+	--bg-inset: oklch(0.135 0.009 82);
+	--bg-glass: color-mix(in oklch, var(--bg-canvas) 68%, transparent);
+	--text-primary: oklch(0.97 0.004 85);
+	--text-secondary: oklch(0.8 0.01 85);
 	--font-heading: "IBM Plex Sans Variable", sans-serif;
 }
 
+/* ── Tema claro — misma jerarquía y mismos roles, no un parche ─────────── */
 :root[data-theme="light"] {
-	--background: oklch(0.96 0.015 85);
-	--foreground: oklch(0.22 0.02 70);
-	--card: oklch(0.99 0.01 85);
-	--card-foreground: oklch(0.22 0.02 70);
-	--popover: oklch(0.99 0.01 85);
-	--popover-foreground: oklch(0.22 0.02 70);
-	--muted: oklch(0.93 0.015 85);
-	--muted-foreground: oklch(0.45 0.02 70);
-	--border: oklch(0.3 0.02 70 / 14%);
-	--input: oklch(0.3 0.02 70 / 12%);
+	--bg-canvas: oklch(0.985 0.003 265);
+	--bg-surface: oklch(1 0 0);
+	--bg-raised: oklch(0.972 0.004 265);
+	--bg-overlay: oklch(1 0 0);
+	--bg-inset: oklch(0.955 0.004 265);
+	--bg-glass: color-mix(in oklch, var(--bg-canvas) 78%, transparent);
+
+	--text-primary: oklch(0.24 0.01 265);
+	--text-secondary: oklch(0.46 0.01 265);
+	--text-tertiary: oklch(0.54 0.01 265);
+
+	--border-subtle: oklch(0.24 0.01 265 / 10%);
+	--border-strong: oklch(0.24 0.01 265 / 18%);
+
+	/* El acento baja de luminosidad para que el relleno siga llevando texto
+	   oscuro y --accent-text supere 4.5:1 sobre el lienzo blanco. */
+	--accent-l: 0.78;
+	--accent-text: oklch(0.48 var(--accent-c) var(--accent-h));
+	--text-on-accent: oklch(0.21 0.03 var(--accent-h));
+
+	--state-hover: oklch(0.24 0.01 265 / 5%);
+	--state-pressed: oklch(0.24 0.01 265 / 9%);
+	--scrim-overlay: oklch(0.25 0.01 265 / 40%);
+
+	--success: oklch(0.52 0.14 155);
+	--success-text: oklch(0.48 0.13 155);
+	--warning: oklch(0.6 0.14 70);
+	--warning-text: oklch(0.52 0.13 70);
+	--danger: oklch(0.5 0.19 25);
+	--danger-text: oklch(0.48 0.18 25);
+	--info: oklch(0.52 0.13 245);
+	--info-text: oklch(0.48 0.12 245);
+
+	/* En claro la jerarquía la da la sombra (dos capas: contacto + ambiente) */
+	--elevation-1:
+		0 1px 2px oklch(0.25 0.02 265 / 6%),
+		0 1px 1px oklch(0.25 0.02 265 / 4%);
+	--elevation-2: 0 4px 12px -2px oklch(0.25 0.02 265 / 10%);
+	--elevation-3: 0 -6px 24px -6px oklch(0.25 0.02 265 / 14%);
+	--elevation-4: 0 24px 48px -12px oklch(0.25 0.02 265 / 18%);
+
+	--message-bubble-in: oklch(0.94 0.004 265);
+	--message-bubble-in-foreground: oklch(0.24 0.01 265);
+	--message-bubble-out: oklch(0.9 0.11 88);
+	--message-bubble-out-foreground: oklch(0.24 0.04 85);
+
+	--stack-edge: -1px 0 0 oklch(0.24 0.01 265 / 12%);
 	color-scheme: light;
 }
 
@@ -1128,14 +1281,418 @@ body.og-grain::before {
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cg fill='%23ffffff' fill-opacity='0.035'%3E%3Ccircle cx='8' cy='8' r='1'/%3E%3Ccircle cx='28' cy='22' r='1'/%3E%3Ccircle cx='48' cy='12' r='1'/%3E%3Ccircle cx='18' cy='42' r='1'/%3E%3Ccircle cx='40' cy='48' r='1'/%3E%3C/g%3E%3C/svg%3E");
 }
 
+/* Lavado radial del acento: solo en el look «Midnight». En el resto de looks
+   el lienzo es plano, que es lo que da el aire depurado. */
 .og-midnight-wash {
+	background: transparent;
+}
+
+:root[data-look="midnight"] .og-midnight-wash {
 	background:
 		radial-gradient(
 			120% 80% at 50% 0%,
 			color-mix(in oklch, var(--accent) 12%, transparent),
 			transparent 55%
 		),
-		var(--background);
+		var(--bg-canvas);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Capa «Lumen» — acabado sobre los slots y clases que YA existen.
+   Sin cambios de lógica ni de estructura: solo radio, color, borde, sombra,
+   tipografía y ritmo. Van sin @layer a propósito, para que ganen a las
+   utilidades de Tailwind (que sí van en capa) sin tocar cada componente.
+   Ver design/02-componentes.md.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* — Barra inferior: una sola píldora, activo con fondo suave de acento ---- */
+.app-nav-island {
+	border-radius: var(--radius-full);
+	border: 1px solid var(--border-subtle);
+	background: var(--bg-glass);
+	box-shadow: var(--elevation-2);
+	backdrop-filter: var(--bd-rail);
+	-webkit-backdrop-filter: var(--bd-rail);
+}
+
+:root[data-backdrop-blur="off"] .app-nav-island {
+	background: color-mix(in oklch, var(--bg-canvas) 94%, transparent);
+}
+
+.app-nav-island a[data-active="true"] {
+	background: var(--accent-soft);
+	color: var(--text-primary);
+}
+
+/* — Rejilla de fotos: separación y lectura de la distancia ---------------- */
+.photo-grid {
+	gap: 4px;
+}
+
+.photo-grid-detailed {
+	gap: 10px;
+}
+
+.profile-card-distance {
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0;
+	color: oklch(1 0 0 / 92%);
+}
+
+/* — Chat ----------------------------------------------------------------- */
+[data-slot="conversations-header"] {
+	background: color-mix(in oklch, var(--bg-canvas) 78%, transparent);
+	border-bottom: 1px solid var(--border-subtle);
+	backdrop-filter: var(--bd-panel);
+	-webkit-backdrop-filter: var(--bd-panel);
+}
+
+[data-slot="message-bubble"] {
+	border-radius: var(--radius-lg);
+}
+
+[data-slot="message-composer"] .rounded-composer {
+	border-radius: var(--radius-lg);
+	border: 1px solid var(--border-subtle);
+	background: var(--bg-surface);
+	box-shadow: var(--elevation-1);
+}
+
+/* — Ajustes: grupos planos con hairline, sin sombras apiladas ------------- */
+.og-settings-group {
+	border-radius: var(--radius-lg);
+	border-color: var(--border-subtle);
+	background: var(--bg-surface);
+	box-shadow: none;
+}
+
+/* — Avisos flotantes: superficie neutra en lugar del acento -------------- */
+.toast[data-styled="true"] {
+	border-radius: var(--radius-md) !important;
+	border: 1px solid var(--border-subtle) !important;
+	background-color: var(--bg-overlay) !important;
+	color: var(--text-primary) !important;
+	box-shadow: var(--elevation-2) !important;
+}
+
+/* — Detalles globales ----------------------------------------------------- */
+::selection {
+	background: var(--accent-soft);
+}
+
+
+/* — Tarjetas de la rejilla: chips y distancia legibles sobre cualquier foto — */
+.media-chip {
+	border-radius: var(--radius-xs);
+	border: 1px solid var(--border-subtle);
+	background: color-mix(in oklch, var(--bg-canvas) 58%, transparent);
+}
+
+.media-pill {
+	border-radius: var(--radius-xs);
+	border: 1px solid var(--border-subtle);
+	background: color-mix(in oklch, var(--bg-canvas) 62%, transparent);
+	backdrop-filter: var(--bd-chip);
+	-webkit-backdrop-filter: var(--bd-chip);
+}
+
+.profile-card-distance {
+	padding: 1px 6px;
+	border-radius: var(--radius-xs);
+	background: color-mix(in oklch, black 42%, transparent);
+	text-shadow: none;
+}
+
+
+/* Un grupo de ajustes es una sola tarjeta: sin huecos y con hairline entre filas */
+.og-settings-group {
+	gap: 0;
+}
+
+.og-settings-group > * + * {
+	border-top: 1px solid var(--border-subtle) !important;
+}
+
+
+/* Encabezado de sección en las subpáginas de ajustes: etiqueta, no titular.
+   Va con !important porque cada página fija su propio `h2` en estilo scoped. */
+[data-slot="subpage-scroller"] h2 {
+	font-size: var(--text-overline) !important;
+	line-height: 1.5 !important;
+	letter-spacing: 0.08em !important;
+	font-weight: 600 !important;
+	color: var(--text-tertiary) !important;
+	padding-inline-start: 0.25rem !important;
+	text-transform: uppercase;
+}
+
+
+/* — Perfil: el nombre siempre se lee sobre la foto, y los datos son chips — */
+[data-slot="profile-hero-overlay"] {
+	background-image: linear-gradient(
+		to top,
+		oklch(0 0 0 / 78%) 0%,
+		oklch(0 0 0 / 42%) 32%,
+		oklch(0 0 0 / 0%) 70%
+	) !important;
+}
+
+[data-slot="profile-status-row"] {
+	color: oklch(1 0 0 / 82%);
+	font-variant-numeric: tabular-nums;
+}
+
+[data-slot="profile-fact-pills"] > * {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-xs);
+	background: var(--bg-inset);
+	padding: 3px 8px;
+}
+
+/* — Looks de fábrica: el material que cada preset aporta de más -----------
+   El tema, el acento y la densidad los fija la preferencia al elegir el look
+   (`src/lib/appearance/looks.ts`); aquí va solo el tratamiento de superficie.
+   «Midnight» vive arriba, junto al material cálido original; «Lumen» es el
+   :root y no necesita bloque. Ver design/04-implementacion.md §3. */
+:root[data-look="porcelain"][data-theme="light"] {
+	--bg-canvas: oklch(0.99 0.002 265);
+	--bg-inset: oklch(0.965 0.003 265);
+	/* Bordes de 1 px muy finos: el brillo hace el resto. */
+	--border-subtle: oklch(0.35 0.02 265 / 7%);
+	--border-strong: oklch(0.35 0.02 265 / 13%);
+	--elevation-1: 0 1px 2px oklch(0.3 0.02 265 / 5%);
+	--elevation-2: 0 6px 16px -4px oklch(0.3 0.02 265 / 9%);
+	--elevation-3: 0 -6px 24px -8px oklch(0.3 0.02 265 / 11%);
+	--elevation-4: 0 24px 48px -16px oklch(0.3 0.02 265 / 14%);
+}
+
+:root[data-look="slate"][data-theme="dark"] {
+	--bg-canvas: oklch(0.175 0.008 250);
+	--bg-surface: oklch(0.215 0.009 250);
+	--bg-raised: oklch(0.25 0.01 250);
+	--bg-overlay: oklch(0.235 0.009 250);
+	--bg-inset: oklch(0.15 0.008 250);
+	--text-primary: oklch(0.96 0.003 250);
+	--text-secondary: oklch(0.79 0.008 250);
+	--border-subtle: oklch(0.95 0.01 250 / 10%);
+	--border-strong: oklch(0.95 0.01 250 / 18%);
+	/* Profesional y plano: el borde dice el plano, la sombra solo lo confirma. */
+	--elevation-1: 0 1px 0 oklch(0 0 0 / 22%);
+	--elevation-2: 0 2px 8px -2px oklch(0 0 0 / 32%);
+	--elevation-3: 0 -1px 0 oklch(0 0 0 / 30%);
+	--elevation-4: 0 16px 40px -16px oklch(0 0 0 / 55%);
+}
+
+:root[data-look="slate"][data-theme="light"] {
+	--bg-inset: oklch(0.955 0.003 250);
+	--border-subtle: oklch(0.3 0.01 250 / 9%);
+	--border-strong: oklch(0.3 0.01 250 / 16%);
+}
+
+/* Grano del look «Midnight»: sutil, al 3 %. */
+:root[data-look="midnight"] body.og-grain::before {
+	opacity: 0.03;
+}
+
+/* ══ Oleada 3 — primitivas restantes ══════════════════════════════════════
+   Segmentados, sliders, menús y barra de comandos. Mismo criterio que el resto
+   de la capa: acabado sobre los slots que ya existen, sin tocar la lógica ni
+   la estructura. Ver design/02-componentes.md §1.2, §2.3, §3.5 y §4.5. */
+
+/* — Segmentado: contenedor hundido y activo con acento suave --------------
+   Solo en las subpáginas de ajustes: en la bandeja estos mismos slots son
+   chips sueltos con su propia piel (botones `secondary`). */
+[data-slot="subpage-scroller"] [data-slot="toggle-group"] {
+	gap: 2px;
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-md);
+	background: var(--bg-inset);
+	padding: 2px;
+}
+
+[data-slot="subpage-scroller"] [data-slot="toggle-group-item"] {
+	border: 1px solid transparent;
+	border-radius: var(--radius-sm);
+	box-shadow: none;
+}
+
+[data-slot="subpage-scroller"]
+	[data-slot="toggle-group-item"][data-state="on"] {
+	border-color: var(--accent-border);
+	background: var(--accent-soft);
+	color: var(--text-primary);
+}
+
+/* — Slider: pista fina, tramo de acento y pulgar de 24 con anillo ---------- */
+[data-slot="slider-track"] {
+	border-radius: var(--radius-full);
+	background: var(--bg-inset);
+}
+
+[data-slot="slider-track"][data-orientation="horizontal"],
+[data-slot="slider-track"][data-orientation="horizontal"]
+	[data-slot="slider-range"] {
+	height: 4px;
+}
+
+[data-slot="slider-track"][data-orientation="vertical"],
+[data-slot="slider-track"][data-orientation="vertical"]
+	[data-slot="slider-range"] {
+	width: 4px;
+}
+
+[data-slot="slider-range"] {
+	border-radius: var(--radius-full);
+	background: var(--accent);
+}
+
+[data-slot="slider-thumb"] {
+	height: var(--slider-thumb-size);
+	width: var(--slider-thumb-size);
+	border-radius: var(--radius-full);
+	background: var(--accent);
+	box-shadow:
+		0 0 0 2px var(--bg-surface),
+		var(--elevation-1);
+}
+
+/* El anillo sustituye a los `ring-*` de hover/foco del primitivo. */
+[data-slot="slider-thumb"]:is(:hover, :focus-visible) {
+	box-shadow:
+		0 0 0 2px var(--bg-surface),
+		0 0 0 5px var(--accent-soft);
+}
+
+[data-slot="slider-thumb"]:focus-visible {
+	outline: 2px solid var(--ring);
+	outline-offset: 2px;
+}
+
+/* — Menús, popover y menú contextual: fila de 40, superficie de overlay --- */
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"],
+[data-slot="context-menu-content"],
+[data-slot="context-menu-sub-content"],
+[data-slot="menubar-content"],
+[data-slot="menubar-sub-content"] {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--bg-overlay);
+	padding: 6px;
+	box-shadow: var(--elevation-2);
+}
+
+[data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-checkbox-item"],
+[data-slot="dropdown-menu-radio-item"],
+[data-slot="context-menu-item"],
+[data-slot="context-menu-checkbox-item"],
+[data-slot="context-menu-radio-item"],
+[data-slot="menubar-item"],
+[data-slot="menubar-checkbox-item"],
+[data-slot="menubar-radio-item"] {
+	min-height: 2.5rem;
+	border-radius: var(--radius-sm);
+	padding-inline: 10px;
+	font-size: var(--text-label);
+	font-weight: 500;
+}
+
+[data-slot="dropdown-menu-item"]:not([data-variant="destructive"]):is(
+		:focus,
+		[data-highlighted]
+	),
+[data-slot="context-menu-item"]:not([data-variant="destructive"]):is(
+		:focus,
+		[data-highlighted]
+	),
+[data-slot="menubar-item"]:not([data-variant="destructive"]):is(
+		:focus,
+		[data-highlighted]
+	) {
+	background: var(--accent-soft);
+	color: var(--text-primary);
+}
+
+[data-slot="dropdown-menu-separator"],
+[data-slot="context-menu-separator"],
+[data-slot="menubar-separator"] {
+	margin-block: 6px;
+	background: var(--border-subtle);
+}
+
+[data-slot="dropdown-menu-label"],
+[data-slot="dropdown-menu-group-heading"],
+[data-slot="context-menu-label"],
+[data-slot="context-menu-group-heading"],
+[data-slot="menubar-label"],
+[data-slot="menubar-group-heading"] {
+	font-size: var(--text-overline);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--text-tertiary);
+}
+
+[data-slot="dropdown-menu-shortcut"],
+[data-slot="context-menu-shortcut"],
+[data-slot="menubar-shortcut"] {
+	font-size: var(--text-caption);
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.04em;
+	color: var(--text-tertiary);
+}
+
+/* — Barra de comandos: hoja centrada, campo de 48 y filas de 44 ----------- */
+[data-slot="command"] {
+	border-radius: var(--radius-xl);
+	background: var(--bg-overlay);
+}
+
+[data-slot="command-input-wrapper"] {
+	padding: 6px;
+}
+
+[data-slot="command-input-wrapper"] [data-slot="input-group"] {
+	height: 3rem;
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-subtle);
+	background: var(--bg-inset);
+}
+
+[data-slot="command-item"] {
+	min-height: 2.75rem;
+	border-radius: var(--radius-sm);
+	padding-inline: 12px;
+	font-size: var(--text-label);
+}
+
+[data-slot="command-item"][data-selected="true"] {
+	background: var(--accent-soft);
+	color: var(--text-primary);
+}
+
+[data-slot="command-shortcut"],
+[cmdk-group-heading] {
+	font-size: var(--text-caption);
+	letter-spacing: 0.04em;
+	color: var(--text-tertiary);
+}
+
+[cmdk-group-heading] {
+	font-size: var(--text-overline);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+/* — Altura táctil de los campos: 44 px (§2.1) -----------------------------
+   Solo los controles de texto; el compositor del chat se excluye a propósito,
+   porque crece con el contenido y su holgura ya la fija --content-pb. */
+[data-slot="input"]:not(:where([data-slot="message-composer"] *)),
+[data-slot="input-group-control"]:not(
+		:where([data-slot="message-composer"] *)
+	),
+[data-slot="combobox-input"] {
+	min-height: var(--control-height);
 }
 
 @supports not (
@@ -1199,3 +1756,4 @@ body.og-grain::before {
 		background-color: rgba(0, 0, 0, 0.62);
 	}
 }
+

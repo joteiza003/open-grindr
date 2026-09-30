@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import { onDestroy, tick } from "svelte";
@@ -175,34 +175,38 @@
 		data-fixed-header
 		data-slot="conversations-header"
 	>
-		<button
-			type="button"
-			class={[
-				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-				{
-					"bg-primary text-primary-foreground": tab === "chats",
-					"bg-muted text-muted-foreground": tab !== "chats",
-				},
-			]}
-			aria-pressed={tab === "chats"}
-			onclick={() => (tab = "chats")}
+		<div
+			class="flex flex-1 items-center gap-0.5 rounded-md bg-inset p-0.5"
 		>
-			{t("chat.chats")}
-		</button>
-		<button
-			type="button"
-			class={[
-				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-				{
-					"bg-primary text-primary-foreground": tab === "albums",
-					"bg-muted text-muted-foreground": tab !== "albums",
-				},
-			]}
-			aria-pressed={tab === "albums"}
-			onclick={() => (tab = "albums")}
-		>
-			{t("chat.albums")}
-		</button>
+			<button
+				type="button"
+				class={[
+					"flex-1 rounded-sm px-3 py-1.5 text-label font-medium transition-colors",
+					{
+						"bg-surface text-foreground shadow-e1": tab === "chats",
+						"text-secondary": tab !== "chats",
+					},
+				]}
+				aria-pressed={tab === "chats"}
+				onclick={() => (tab = "chats")}
+			>
+				{t("chat.chats")}
+			</button>
+			<button
+				type="button"
+				class={[
+					"flex-1 rounded-sm px-3 py-1.5 text-label font-medium transition-colors",
+					{
+						"bg-surface text-foreground shadow-e1": tab === "albums",
+						"text-secondary": tab !== "albums",
+					},
+				]}
+				aria-pressed={tab === "albums"}
+				onclick={() => (tab = "albums")}
+			>
+				{t("chat.albums")}
+			</button>
+		</div>
 	</div>
 	<div class="relative flex min-h-0 flex-1 flex-col">
 		{#if tab === "albums"}

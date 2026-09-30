@@ -28,7 +28,7 @@
 </script>
 
 <section
-	class="pointer-events-auto mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-2xl backdrop-blur-xl"
+	class="pointer-events-auto mx-auto w-full max-w-xl overflow-hidden rounded-3xl border border-border/80 bg-card/95 shadow-2xl"
 	aria-label={t("map.markerAria")}
 >
 	<!-- Header -->

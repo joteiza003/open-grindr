@@ -170,7 +170,7 @@ describe("Conversation preview line", () => {
 			1,
 		);
 
-		expect(descriptionClass(unread)).toContain("text-white");
+		expect(descriptionClass(unread)).toContain("text-foreground");
 		cleanup();
 
 		drafts.save({ conversationId: CONVERSATION_ID, text: "see you at" });
@@ -179,7 +179,7 @@ describe("Conversation preview line", () => {
 			1,
 		);
 
-		expect(descriptionClass(drafted)).not.toContain("text-white");
+		expect(descriptionClass(drafted)).not.toContain("text-foreground");
 	});
 
 	it("ignores a draft belonging to another conversation", () => {

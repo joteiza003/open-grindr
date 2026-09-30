@@ -15,7 +15,10 @@
 <Button
 	variant="secondary"
 	{onclick}
-	class={{ "bg-white text-popover hover:bg-neutral-200": active }}
+	class={{
+		"border-(--accent-border) bg-(--accent-soft) text-(--text-primary) hover:bg-(--accent-soft)":
+			active,
+	}}
 >
 	{@render children()}
 </Button>

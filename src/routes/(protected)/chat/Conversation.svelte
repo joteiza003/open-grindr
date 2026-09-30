@@ -107,7 +107,8 @@
 				class={[
 					"wrap-anywhere",
 					{
-						"font-medium text-white":
+						// text-white dejaba la previsualización invisible en tema claro
+						"font-medium text-foreground":
 							draft === "" &&
 							conversation.data.unreadCount > 0 &&
 							!conversation.data.muted,
