@@ -34,8 +34,8 @@
 				>Install push notifications add-on</AlertDialog.Title
 			>
 			<AlertDialog.Description class="text-wrap">
-				To enable the fast mode, download and install {ADDON} add-on for Open
-				Grind. It includes Google's proprietary Firebase library and needs
+				To enable the fast mode, download and install {ADDON} add-on for Euskal
+				Grindr. It includes Google's proprietary Firebase library and needs
 				Google Play services or microG, so it's not installed by default.
 				{#if installedFromFdroid()}
 					This add-on bypasses F-Droid's checks.

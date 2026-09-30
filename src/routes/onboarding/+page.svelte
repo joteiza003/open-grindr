@@ -3,6 +3,8 @@
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { setPreferences } from "$lib/app-data/preferences.svelte";
+	import icon from "$lib/assets/app-logo.png";
+	import { APP_NAME, APP_SUBTITLE } from "$lib/brand";
 	import { Button } from "$lib/components/ui/button";
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import { Label } from "$lib/components/ui/label";
@@ -14,7 +16,6 @@
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
 	import { saveAutomaticChecks } from "$lib/updates/update-settings.svelte";
 	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
-	import icon from "../../../contrib/logo/app-icon.svg";
 
 	let checkAutomatically = $state(true);
 	let addToAppsMenu = $state(true);
@@ -32,7 +33,7 @@
 			if (addToAppsMenu && offerAppsMenu()) {
 				await setDesktopEntryInstalled(true).catch((error: unknown) =>
 					showErrorToast({
-						label: "Couldn't add Grindr + to your apps",
+						label: "Couldn't add Euskal Grindr to your apps",
 						error,
 					}),
 				);
@@ -54,12 +55,13 @@
 	<div
 		class="flex flex-1 flex-col items-center justify-center gap-6 text-center"
 	>
-		<img src={icon} alt="" class="size-28" />
+		<img src={icon} alt="" class="size-28 rounded-3xl" />
 		<div class="flex flex-col gap-1">
-			<h1 class="font-heading text-display font-semibold">Grindr +</h1>
+			<h1 class="font-heading text-display font-semibold">{APP_NAME}</h1>
 			<p class="text-title-2 text-muted-foreground">
 				Unofficial Grindr client
 			</p>
+			<p class="text-body text-muted-foreground">{APP_SUBTITLE}</p>
 		</div>
 		<p class="max-w-[60ch] text-body-lg text-balance text-muted-foreground">
 			Cross-platform, free, libre, ad-free, tracker-free, privacy-centered
@@ -82,7 +84,7 @@
 				{#if offerAppsMenu()}
 					<Label class="flex items-center rounded-xl p-2">
 						<Checkbox bind:checked={addToAppsMenu} />
-						Add Grindr + to your apps menu
+						Add Euskal Grindr to your apps menu
 					</Label>
 				{/if}
 			</div>

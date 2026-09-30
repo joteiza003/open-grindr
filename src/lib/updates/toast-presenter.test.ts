@@ -71,11 +71,11 @@ describe("the up-to-date toast", () => {
 		]);
 	});
 
-	it("names Grindr + for the app itself", () => {
+	it("names Euskal Grindr for the app itself", () => {
 		toastPresenter("app").upToDate();
 
 		expect(toasts.showUpToDate).toHaveBeenCalledExactlyOnceWith(
-			"Grindr + is up to date",
+			"Euskal Grindr is up to date",
 		);
 	});
 });

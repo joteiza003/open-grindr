@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { ArrowBendUpLeftIcon, CheckIcon, DotsThreeIcon } from "phosphor-svelte";
+	import {
+		ArrowBendUpLeftIcon,
+		CheckIcon,
+		DotsThreeIcon,
+	} from "phosphor-svelte";
 	import { untrack } from "svelte";
 	import { expoOut } from "svelte/easing";
 	import type { VirtualElement } from "@floating-ui/dom";
@@ -21,6 +25,7 @@
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import AudioMessage from "./AudioMessage.svelte";
 	import { type MessageRefs, setMessageContext } from "./context";
+	import DiscreetGate from "./DiscreetGate.svelte";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
 	import LocationMessage from "./LocationMessage.svelte";
@@ -280,16 +285,22 @@
 		{#if message.type === "Text"}
 			<TextMessage message={message.body} messageId={message.messageId} />
 		{:else if message.type === "Image"}
-			<ImageMessage message={message.body} />
+			<DiscreetGate kind="photo">
+				<ImageMessage message={message.body} />
+			</DiscreetGate>
 		{:else if message.type === "ExpiringImage"}
-			<ExpiringImageMessage
-				message={message.body}
-				conversationId={message.conversationId}
-				messageId={message.messageId}
-				{isOut}
-			/>
+			<DiscreetGate kind="photo">
+				<ExpiringImageMessage
+					message={message.body}
+					conversationId={message.conversationId}
+					messageId={message.messageId}
+					{isOut}
+				/>
+			</DiscreetGate>
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
-			<AlbumMessage message={message.body} />
+			<DiscreetGate kind="album">
+				<AlbumMessage message={message.body} />
+			</DiscreetGate>
 		{:else if message.type === "Location"}
 			<LocationMessage
 				lat={message.body.lat}
@@ -301,12 +312,14 @@
 				{isOut}
 			/>
 		{:else if message.type === "Video" || message.type === "PrivateVideo"}
-			<VideoMessage
-				message={message.body}
-				conversationId={message.conversationId}
-				messageId={message.messageId}
-				delivered={status !== "pending" && status !== "error"}
-			/>
+			<DiscreetGate kind="video">
+				<VideoMessage
+					message={message.body}
+					conversationId={message.conversationId}
+					messageId={message.messageId}
+					delivered={status !== "pending" && status !== "error"}
+				/>
+			</DiscreetGate>
 		{:else if message.type === "Audio"}
 			<AudioMessage message={message.body} />
 		{:else if message.type === "Unsent"}

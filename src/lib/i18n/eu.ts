@@ -106,7 +106,7 @@ export const eu: Record<MessageKey, string> = {
 	"icon.title": "Ikono diskretua",
 	"icon.intro":
 		"Aldatu hasierako pantailako ikonoa eta izena eguneroko aplikazio batenekin.",
-	"icon.default": "Grindr +",
+	"icon.default": "Euskal Grindr",
 	"icon.calculator": "Kalkulagailua",
 	"icon.notes": "Oharrak",
 	"icon.weather": "Eguraldia",
@@ -242,7 +242,7 @@ export const eu: Record<MessageKey, string> = {
 	"appearance.chatStyle": "Txat estiloa",
 	"appearance.chatStyleHint":
 		"Sarrera-ontzia eta elkarrizketa beste mezularitza baten antzera jarri.",
-	"appearance.styleDefault": "Grindr +",
+	"appearance.styleDefault": "Euskal Grindr",
 	"appearance.styleWhatsapp": "WhatsApp",
 	"appearance.whatsappNote":
 		"WhatsApp estiloak koloreak, dentsitatea, isatsak eta hondoa aldatzen ditu.",
@@ -358,6 +358,32 @@ export const eu: Record<MessageKey, string> = {
 	"map.viewProfile": "Ikusi profila",
 	"map.directions": "Ibilbidea Maps-en",
 	"map.sharedHeading": "Partekatutako kokalekuak",
+	"discreet.title": "Modu diskretua",
+	"discreet.description": "Ezkutatu txateko argazkiak eta bideoak sakatu arte.",
+	"discreet.photo": "Argazkia, sakatu irekitzeko",
+	"discreet.video": "Bideoa, sakatu irekitzeko",
+	"discreet.album": "Albuma, sakatu irekitzeko",
+	"discreet.hide": "Ezkutatu",
+	"browse.viewList": "Zerrenda",
+	"browse.viewTinder": "Aurkitu",
+	"browse.viewLabel": "Arakatzeko ikuspegia",
+	"browse.tinder.radius": "Erradioa",
+	"browse.tinder.radiusAria": "Bilaketa-erradioa",
+	"browse.tinder.empty": "Ez dago profil gehiagorik {distance} barruan",
+	"browse.tinder.emptyHint": "Probatu erradio handiago bat edo berreskuratu baztertutako profilak.",
+	"browse.tinder.reset": "Berreskuratu baztertutakoak",
+	"browse.tinder.reject": "Baztertu",
+	"browse.tinder.accept": "Agurtu",
+	"browse.tinder.favorite": "Gogokoa eta agurtu",
+	"browse.tinder.greetFailed": "Ezin izan da agurra bidali",
+	"browse.tinder.greeted": "Agurra bidali da",
+	"browse.tinder.loading": "Profilak bilatzen…",
+	"browse.tinder.openProfile": "Ireki profila",
+	"browse.list.unread": "{count} irakurri gabe",
+	"filters.min": "Gutx.",
+	"filters.max": "Gehi.",
+	"filters.noMin": "Gutxienekorik ez",
+	"filters.noMax": "Gehienekorik ez",
 	"profile.photos": "Argazkiak",
 	"profileNote.add": "Gehitu oharra",
 	"profileNote.title": "Oharra",
@@ -482,17 +508,17 @@ export const eu: Record<MessageKey, string> = {
 	"credits.android": "Android liburutegiak",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Grindr +",
+	"update.unsupported.foreignSigner": "This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
-		"The installed app isn't signed by Grindr +",
+		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
-		"Grindr + can't tell whether it may update itself",
+		"Euskal Grindr can't tell whether it may update itself",
 	"update.unsupported.noReleaseArtifacts":
 		"No release is published for this platform",
 	"update.unsupported.sandboxed":
 		"The sandbox this app runs in manages its own updates",
 	"update.unsupported.locationNotWritable":
-		"Grindr + can't install the update in its directory",
+		"Euskal Grindr can't install the update in its directory",
 	"update.error.network": "Couldn't reach the release server",
 	"update.error.server": "The release server refused the request",
 	"update.error.malformedIndex":
@@ -509,14 +535,14 @@ export const eu: Record<MessageKey, string> = {
 	"update.error.canceled": "Update canceled",
 	"update.error.nothingStaged": "No update is ready to install",
 	"update.error.needsUnknownSources":
-		"Grindr + needs permission to install updates",
+		"Euskal Grindr needs permission to install updates",
 	"update.error.needsManualInstall":
-		"Quit Grindr +, then drag it onto Applications",
+		"Quit Euskal Grindr, then drag it onto Applications",
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Grindr + doesn't know that component",
+	"update.error.unknownComponent": "Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
-	"update.noRelease.app": "No Grindr + release is published yet",
+	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 };

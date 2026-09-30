@@ -33,7 +33,7 @@ class AppIconPlugin(private val activity: Activity) : Plugin(activity) {
     override fun load(webView: WebView) {
         super.load(webView)
         // The recents screen takes its title from the task, which would still say
-        // "Grindr +" while a discreet icon is active.
+        // "Euskal Grindr" while a discreet icon is active.
         applyTaskDescription(currentIcon())
     }
 

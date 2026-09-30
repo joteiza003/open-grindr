@@ -5,6 +5,7 @@
 	import AlbumsLink from "./AlbumsLink.svelte";
 	import AppearanceSettingsLink from "./AppearanceSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
+	import DiscreetModeSetting from "./DiscreetModeSetting.svelte";
 	import MapLink from "./MapLink.svelte";
 	import PhrasesLink from "./PhrasesLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
@@ -25,6 +26,7 @@
 			<div class="m-auto flex w-full max-w-120 flex-col gap-3">
 				<ProfileLink id={data.ourProfileId} />
 				<AlbumsLink ourProfileId={data.ourProfileId} />
+				<DiscreetModeSetting />
 				<span role="separator"></span>
 				<div class="og-settings-group">
 					<AccountSettingsLink />

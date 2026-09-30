@@ -240,7 +240,7 @@ describe("a missing FCM service", () => {
 		});
 
 		expect(dialog.textContent.replace(/\s+/g, " ")).toContain(
-			"To enable the fast mode, download and install FCM service add-on for Open Grind. It includes Google's proprietary Firebase library and needs Google Play services or microG, so it's not installed by default.",
+			"To enable the fast mode, download and install FCM service add-on for Euskal Grindr. It includes Google's proprietary Firebase library and needs Google Play services or microG, so it's not installed by default.",
 		);
 		expect(checked(slow)).toBe("true");
 		expect(screen.queryByRole("status")).toBeNull();

@@ -10,10 +10,12 @@
 	import { revealedGridScrollTop } from "./grid-reveal";
 	import Grid from "./Grid.svelte";
 	import LocationChooser from "./LocationEmpty.svelte";
+	import TinderDeck from "./TinderDeck.svelte";
 	import TopBar from "./top-bar/TopBar.svelte";
 
 	const preferencesHydrated = hydratePreferences();
 	const geohash = $derived(preferencesSnapshot().geohash);
+	const tinder = $derived(preferencesSnapshot().browse.viewMode === "tinder");
 
 	let gridContainer: HTMLElement | null = $state(null);
 
@@ -33,7 +35,7 @@
 </script>
 
 <svelte:head>
-	<title>Grindr +</title>
+	<title>Euskal Grindr</title>
 </svelte:head>
 {#await preferencesHydrated then}
 	{#if geohash === null}
@@ -43,32 +45,36 @@
 	{:else}
 		<main class="screen-nav-host">
 			<TopBar />
-			<div
-				class="pull-scroller"
-				bind:this={gridContainer}
-				onscroll={() =>
-					(gridState.scrollY = gridContainer?.scrollTop ?? 0)}
-			>
+			{#if tinder}
+				<TinderDeck {geohash} />
+			{:else}
 				<div
-					data-slot="grid-content"
-					class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
+					class="pull-scroller"
+					bind:this={gridContainer}
+					onscroll={() =>
+						(gridState.scrollY = gridContainer?.scrollTop ?? 0)}
 				>
-					<Grid {geohash} />
+					<div
+						data-slot="grid-content"
+						class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
+					>
+						<Grid {geohash} />
+					</div>
 				</div>
-			</div>
-			{#if !gridState.loading && !gridState.error}
-				<DataRefreshControl
+				{#if !gridState.loading && !gridState.error}
+					<DataRefreshControl
+						container={gridContainer}
+						updating={gridState.refreshing}
+						position="top"
+						onrefresh={() =>
+							void gridState.refresh({ keepLoadedPages: false })}
+					/>
+				{/if}
+				<ScrollToTopButton
 					container={gridContainer}
-					updating={gridState.refreshing}
-					position="top"
-					onrefresh={() =>
-						void gridState.refresh({ keepLoadedPages: false })}
+					class="bottom-nav-clear"
 				/>
 			{/if}
-			<ScrollToTopButton
-				container={gridContainer}
-				class="bottom-nav-clear"
-			/>
 		</main>
 	{/if}
 {/await}

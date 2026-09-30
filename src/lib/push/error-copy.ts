@@ -6,11 +6,11 @@ const ADDON = ADDON_NAME[FCM_COMPONENT];
 
 const reasons: Record<PushErrorReason, string | null> = {
 	unsupportedPlatform: "Fast mode only works on Android.",
-	addonUnavailable: `Grindr + couldn't reach the ${ADDON}.`,
+	addonUnavailable: `Euskal Grindr couldn't reach the ${ADDON}.`,
 	addonDisabled: `The ${ADDON} is disabled. Enable it in Android settings.`,
-	addonUntrusted: `The installed ${ADDON} isn't signed by Grindr +. Uninstall it, then install the official one.`,
-	addonRefused: `The ${ADDON} refused this copy of Grindr +.`,
-	untrustedCaller: `The ${ADDON} doesn't recognize this copy of Grindr + as official.`,
+	addonUntrusted: `The installed ${ADDON} isn't signed by Euskal Grindr. Uninstall it, then install the official one.`,
+	addonRefused: `The ${ADDON} refused this copy of Euskal Grindr.`,
+	untrustedCaller: `The ${ADDON} doesn't recognize this copy of Euskal Grindr as official.`,
 	timedOut: `The ${ADDON} didn't answer in time.`,
 	firebaseUnavailable: "This device has no Google Play services or microG.",
 	tokenFailed: "Firebase couldn't register this device.",

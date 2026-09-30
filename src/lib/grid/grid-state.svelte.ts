@@ -27,13 +27,19 @@ import {
 } from "./grid-profiles";
 import { buildCascadeQuery } from "./grid-query";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
+import { rejectedProfileIds } from "./swipe-decisions";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onQueryChange: () => this.retry() });
 	items: GridProfile[] = $state.raw([]);
-	readonly profiles: GridProfile[] = $derived(
-		sortGridProfilesByDistance(dedupeGridProfiles(this.items)),
-	);
+	// Los perfiles rechazados en el modo Tinder se ocultan de toda la rejilla.
+	readonly profiles: GridProfile[] = $derived.by(() => {
+		const hidden = rejectedProfileIds();
+		const all = sortGridProfilesByDistance(dedupeGridProfiles(this.items));
+		return hidden.size === 0
+			? all
+			: all.filter((profile) => !hidden.has(profile.id));
+	});
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);
 	loading = $state(false);

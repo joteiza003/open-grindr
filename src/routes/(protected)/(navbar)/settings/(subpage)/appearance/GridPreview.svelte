@@ -4,7 +4,9 @@
 
 	const browse = $derived(preferencesSnapshot().browse);
 	const cardVariant = $derived(
-		browse.viewMode === "grid" ? "standard" : browse.viewMode,
+		browse.viewMode === "compact" || browse.viewMode === "detailed"
+			? browse.viewMode
+			: "standard",
 	);
 	const cardRadiusVar = $derived(
 		browse.cardRadius !== null ? `${browse.cardRadius}px` : undefined,

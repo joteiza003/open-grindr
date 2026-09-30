@@ -32,7 +32,7 @@
 				return {
 					title: "Age verification required",
 					description:
-						"Grindr requires you to verify your age before continuing. Complete it in the official Grindr app, then sign in again. Grindr + does not bypass age verification.",
+						"Grindr requires you to verify your age before continuing. Complete it in the official Grindr app, then sign in again. Euskal Grindr does not bypass age verification.",
 				};
 			}
 			return {

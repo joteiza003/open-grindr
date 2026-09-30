@@ -14,7 +14,7 @@ import {
 export function toastPresenter(component: ComponentKey): StagePresenter {
 	const subject =
 		component === APP_COMPONENT
-			? "Grindr +"
+			? "Euskal Grindr"
 			: `The ${ADDON_NAME[component]}`;
 	return {
 		show: (stage) => showStage({ component, ...stage }),

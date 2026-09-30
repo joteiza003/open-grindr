@@ -229,7 +229,7 @@ describe("coming back from Android settings", () => {
 		expect(account.setPushSettings).not.toHaveBeenCalled();
 	});
 
-	it("leaves a category Android allowed without Open Grind alone", async () => {
+	it("leaves a category Android allowed without Euskal Grindr alone", async () => {
 		deviceReports(tapsOff(true));
 		const module = await loaded();
 		deviceReports(tapsOff(false));

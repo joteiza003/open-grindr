@@ -30,6 +30,7 @@
 	import { trackHoverPointer } from "$lib/platform/hover-pointer";
 	import { isAndroidPlatform } from "$lib/platform/os";
 	import { installScrollGestureBridge } from "$lib/platform/scroll-gesture";
+	import { dismissSplash } from "$lib/platform/splash";
 	import { reconcileNotifications } from "$lib/push/notifications.svelte";
 	import { startPushWatch } from "$lib/push/watch";
 	import { deviceModels } from "$lib/translate/models.svelte";
@@ -75,7 +76,10 @@
 			.then(() => deviceModels.ensureDefaults())
 			.catch((error: unknown) => {
 				console.error("Failed to hydrate preferences", error);
-			});
+			})
+			.finally(dismissSplash);
+		// Red de seguridad: la pantalla de carga nunca debe quedarse pegada.
+		const splashFailsafe = setTimeout(dismissSplash, 8000);
 		void hydrateProfileMetadata().catch((error: unknown) => {
 			console.error("Failed to hydrate profile metadata", error);
 		});
@@ -83,6 +87,7 @@
 			console.error("Failed to read backdrop compositing", error);
 		});
 		return () => {
+			clearTimeout(splashFailsafe);
 			releaseZoomBlock();
 			releaseNativeMenuBlock();
 			releaseHoverPointer();
@@ -99,7 +104,6 @@
 	import RequestBlockedAlert from "$lib/components/feedback/RequestBlockedAlert.svelte";
 	import SessionErrorAlert from "$lib/components/feedback/SessionErrorAlert.svelte";
 	import FrostFilters from "$lib/components/shared/FrostFilters.svelte";
-	import faviconSvg from "../../contrib/logo/app-icon.svg";
 
 	let { children }: { children?: import("svelte").Snippet } = $props();
 
@@ -155,7 +159,6 @@
 
 <svelte:head>
 	<link rel="icon" href={faviconPng} sizes="any" />
-	<link rel="icon" href={faviconSvg} type="image/svg+xml" />
 </svelte:head>
 <div
 	class={[

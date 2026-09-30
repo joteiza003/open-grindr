@@ -6,6 +6,7 @@
 	} from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
 
+	import { APP_NAME, APP_SUBTITLE } from "$lib/brand";
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import * as Item from "$lib/components/ui/item";
 	import Link from "$lib/components/ui/link/Link.svelte";
@@ -138,6 +139,9 @@
 		{/snippet}
 	</Item.Root>
 </div>
+<p class="px-4 text-center text-xs text-muted-foreground">
+	{APP_NAME} · {APP_SUBTITLE}
+</p>
 
 <style lang="postcss">
 	@reference "$layout";

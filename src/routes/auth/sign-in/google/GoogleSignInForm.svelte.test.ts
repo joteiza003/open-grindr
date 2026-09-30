@@ -130,12 +130,12 @@ describe("GoogleSignInForm", () => {
 
 		expect(api.getInstalledVersion).toHaveBeenCalledWith("google-oauth");
 		expect(textOf(screen.getByText(/Download and install the/))).toBe(
-			"Download and install the Open Grind Google OAuth app to sign in with Google",
+			"Download and install the Euskal Grindr Google OAuth app to sign in with Google",
 		);
 		const releasePage = screen.getByRole("link", {
-			name: "Open Grind Google OAuth app",
+			name: "Euskal Grindr Google OAuth app",
 		});
-		expect(releasePage.textContent).toBe("Open Grind Google OAuth app");
+		expect(releasePage.textContent).toBe("Euskal Grindr Google OAuth app");
 		expect(releasePage).toHaveProperty("href", COMPANION_RELEASES);
 		expect(button("Install")).toHaveProperty("disabled", false);
 		expect(button("Install").getAttribute("aria-busy")).toBe("false");
@@ -185,7 +185,7 @@ describe("GoogleSignInForm", () => {
 		await settled();
 
 		expect(textOf(screen.getByText(/Continue in the/))).toBe(
-			"Continue in the Open Grind Google OAuth app to sign in with Google",
+			"Continue in the Euskal Grindr Google OAuth app to sign in with Google",
 		);
 		expect(button("Continue")).toHaveProperty("disabled", false);
 		expect(callMethodMock).not.toHaveBeenCalled();
@@ -326,7 +326,7 @@ describe("GoogleSignInForm", () => {
 		expect(api.checkForUpdate).not.toHaveBeenCalled();
 	});
 
-	it("sends a build Open Grind didn't sign, such as a Google Play install, to the release page and the pasted token", async () => {
+	it("sends a build Euskal Grindr didn't sign, such as a Google Play install, to the release page and the pasted token", async () => {
 		getUpdateCapability.mockResolvedValue({
 			state: "unsupported",
 			detail: { reason: "foreignSigner" },
@@ -334,7 +334,7 @@ describe("GoogleSignInForm", () => {
 		const { screen, fireEvent } = await opened();
 
 		expect(
-			screen.getByRole("link", { name: "Open Grind Google OAuth app" }),
+			screen.getByRole("link", { name: "Euskal Grindr Google OAuth app" }),
 		).toHaveProperty("href", COMPANION_RELEASES);
 		await fireEvent.click(button("Install"));
 		await settled();
@@ -363,7 +363,7 @@ describe("GoogleSignInForm", () => {
 		await settled();
 
 		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
-			"Couldn't find the Open Grind Google OAuth app on your device. Install it first, or paste the OAuth token manually.",
+			"Couldn't find the Euskal Grindr Google OAuth app on your device. Install it first, or paste the OAuth token manually.",
 		);
 		expect(button("Install")).toBeTruthy();
 
@@ -389,7 +389,7 @@ describe("GoogleSignInForm", () => {
 		await settled();
 
 		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
-			"The Open Grind Google OAuth app is turned off. Turn it on in Android settings, then try again.",
+			"The Euskal Grindr Google OAuth app is turned off. Turn it on in Android settings, then try again.",
 		);
 		expect(button("Continue")).toHaveProperty("disabled", false);
 		expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
@@ -422,7 +422,7 @@ describe("GoogleSignInForm", () => {
 		await fireEvent.click(toPaste);
 
 		const toCompanion = screen.getByRole("button", {
-			name: "use the Open Grind Google OAuth app",
+			name: "use the Euskal Grindr Google OAuth app",
 		});
 		expect(toCompanion.closest('[data-slot="card"]')).toBeNull();
 	});
@@ -510,7 +510,7 @@ describe("GoogleSignInForm", () => {
 		);
 		expect(screen.getByLabelText("Token")).toBeTruthy();
 
-		await fireEvent.click(button("use the Open Grind Google OAuth app"));
+		await fireEvent.click(button("use the Euskal Grindr Google OAuth app"));
 
 		expect(button("Continue")).toBeTruthy();
 		expect(screen.queryByRole("button", { name: "Install" })).toBeNull();
@@ -524,7 +524,7 @@ describe("GoogleSignInForm", () => {
 		expect(screen.getByLabelText("Token")).toBeTruthy();
 		expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
 
-		await fireEvent.click(button("use the Open Grind Google OAuth app"));
+		await fireEvent.click(button("use the Euskal Grindr Google OAuth app"));
 
 		expect(button("Continue")).toBeTruthy();
 	});
@@ -706,13 +706,13 @@ describe("GoogleSignInForm", () => {
 
 		expect(screen.getByLabelText("Token")).toBeTruthy();
 		expect(screen.getAllByRole("listitem").map(textOf)).toEqual([
-			"Install the Open Grind Google OAuth app",
-			"Sign in with Google in the Open Grind Google OAuth app and copy the token",
+			"Install the Euskal Grindr Google OAuth app",
+			"Sign in with Google in the Euskal Grindr Google OAuth app and copy the token",
 			'Return to this screen, paste it and tap "Sign in"',
 		]);
 		expect(screen.queryByRole("button", { name: /^Install/ })).toBeNull();
 
-		await fireEvent.click(button("use the Open Grind Google OAuth app"));
+		await fireEvent.click(button("use the Euskal Grindr Google OAuth app"));
 
 		expect(screen.queryByLabelText("Token")).toBeNull();
 		expect(button("Install")).toBeTruthy();
@@ -725,7 +725,7 @@ describe("GoogleSignInForm", () => {
 		expect(screen.getByLabelText("Token")).toBeTruthy();
 		expect(
 			screen.queryByRole("button", {
-				name: "use the Open Grind Google OAuth app",
+				name: "use the Euskal Grindr Google OAuth app",
 			}),
 		).toBeNull();
 		expect(api.getInstalledVersion).not.toHaveBeenCalled();

@@ -214,14 +214,14 @@ describe("where the Google OAuth app can be installed from here", () => {
 		platform.isAndroidPlatform.mockReturnValue(true);
 	});
 
-	it("is on Android builds signed by Open Grind", async () => {
+	it("is on Android builds signed by Euskal Grindr", async () => {
 		await probedCapability(releaseSigned);
 		const { addonInstallerAvailable } = await import("./addon.svelte");
 
 		expect(addonInstallerAvailable()).toBe(true);
 	});
 
-	it("includes store builds signed by Open Grind", async () => {
+	it("includes store builds signed by Euskal Grindr", async () => {
 		await probedCapability({
 			state: "unsupported",
 			detail: {
@@ -234,7 +234,7 @@ describe("where the Google OAuth app can be installed from here", () => {
 		expect(addonInstallerAvailable()).toBe(true);
 	});
 
-	it("is not on a build Open Grind didn't sign, such as a Google Play install", async () => {
+	it("is not on a build Euskal Grindr didn't sign, such as a Google Play install", async () => {
 		await probedCapability({
 			state: "unsupported",
 			detail: { reason: "foreignSigner" },

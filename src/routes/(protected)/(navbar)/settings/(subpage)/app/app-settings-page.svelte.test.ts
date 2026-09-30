@@ -79,7 +79,7 @@ afterEach(() => {
 });
 
 describe("the Updates section of the app settings on Android", () => {
-	it("offers Google OAuth app updates on a store build signed by Open Grind", async () => {
+	it("offers Google OAuth app updates on a store build signed by Euskal Grindr", async () => {
 		const screen = await opened({
 			state: "unsupported",
 			detail: {

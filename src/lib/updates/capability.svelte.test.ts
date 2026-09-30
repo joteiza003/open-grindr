@@ -176,7 +176,7 @@ describe("the update capability probe", () => {
 		["foreignTarget", undefined, true],
 		["foreignSigner", undefined, false],
 	])(
-		"tells whether Open Grind signed the build when %s decides updates",
+		"tells whether Euskal Grindr signed the build when %s decides updates",
 		async (reason, detail, signed) => {
 			api.getUpdateCapability.mockResolvedValue({
 				state: "unsupported",

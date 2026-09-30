@@ -87,6 +87,55 @@ const SCENES: Scene[] = [
 				.waitFor({ timeout: STEP_TIMEOUT_MS });
 		},
 	},
+	{
+		name: "browse-list",
+		open: async (page) => {
+			await page.goto("/", { timeout: STEP_TIMEOUT_MS });
+			await page.getByRole("button", { name: "List" }).click();
+			await page
+				.locator('[data-slot="grid-list"] a')
+				.first()
+				.waitFor({ timeout: STEP_TIMEOUT_MS });
+		},
+	},
+	{
+		name: "browse-tinder",
+		open: async (page) => {
+			await page.goto("/", { timeout: STEP_TIMEOUT_MS });
+			await page.getByRole("button", { name: "Discover" }).click();
+			await page
+				.locator('[data-slot="tinder-card"]')
+				.waitFor({ timeout: STEP_TIMEOUT_MS });
+		},
+	},
+	{
+		name: "browse-age-filter",
+		open: async (page) => {
+			await page.goto("/", { timeout: STEP_TIMEOUT_MS });
+			await page.getByRole("button", { name: "Grid" }).click();
+			await page.getByRole("button", { name: "Age" }).first().click();
+			await page
+				.getByLabel("Minimum age")
+				.first()
+				.waitFor({ timeout: STEP_TIMEOUT_MS });
+		},
+	},
+	{
+		name: "conversation-discreet",
+		open: async (page) => {
+			await page.goto("/settings", { timeout: STEP_TIMEOUT_MS });
+			await page.getByRole("switch", { name: "Discreet mode" }).click();
+			await page.goto("/chat", { timeout: STEP_TIMEOUT_MS });
+			const rows = page.locator('a[href^="/chat/"]:visible');
+			await rows.nth(1).waitFor({ timeout: 120_000 });
+			const href = await rows.nth(1).getAttribute("href");
+			await page.locator(`a[href="${href}"]:visible`).click();
+			await page
+				.locator('[role="article"]')
+				.first()
+				.waitFor({ timeout: STEP_TIMEOUT_MS });
+		},
+	},
 	{ name: "map", path: "/map", ready: ".leaflet-container" },
 	{ name: "albums", path: "/albums" },
 	{ name: "auth-sign-in", path: "/auth/sign-in" },

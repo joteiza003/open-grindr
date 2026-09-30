@@ -25,19 +25,19 @@ const foreignTarget = {
 describe("copy for an installed package signed by someone else", () => {
 	it("names the app generically for the app itself", () => {
 		expect(unsupportedText({ reason: "foreignTarget" })).toBe(
-			"The installed app isn't signed by Grindr +",
+			"The installed app isn't signed by Euskal Grindr",
 		);
 		expect(
 			updateErrorText(foreignTarget, {
 				fallback: "fallback",
 				component: APP_COMPONENT,
 			}),
-		).toBe("The installed app isn't signed by Grindr +");
+		).toBe("The installed app isn't signed by Euskal Grindr");
 	});
 
 	it("tells the user to uninstall the impostor Google OAuth app", () => {
 		const text =
-			"The installed Google OAuth app isn't signed by Grindr +. Uninstall it to install the official one.";
+			"The installed Google OAuth app isn't signed by Euskal Grindr. Uninstall it to install the official one.";
 
 		expect(
 			unsupportedText(
@@ -61,10 +61,10 @@ describe("copy for an installed package signed by someone else", () => {
 	});
 });
 
-describe("copy for an Grindr + build signed by someone else", () => {
+describe("copy for an Euskal Grindr build signed by someone else", () => {
 	it("blames this build, not the Google OAuth app, when the Google OAuth app cannot be installed", () => {
 		const text =
-			"This copy of Grindr + isn't signed by Grindr +, so it can't install the Google OAuth app";
+			"This copy of Euskal Grindr isn't signed by Euskal Grindr, so it can't install the Google OAuth app";
 
 		expect(
 			unsupportedText(
@@ -82,7 +82,7 @@ describe("copy for an Grindr + build signed by someone else", () => {
 
 	it("keeps the app's own wording", () => {
 		expect(unsupportedText({ reason: "foreignSigner" })).toBe(
-			"This build was not signed by Grindr +",
+			"This build was not signed by Euskal Grindr",
 		);
 	});
 });
@@ -93,7 +93,7 @@ describe("copy for a release index with nothing to install", () => {
 			"No Google OAuth app release is published yet",
 		);
 		expect(noReleaseText({ component: APP_COMPONENT })).toBe(
-			"No Grindr + release is published yet",
+			"No Euskal Grindr release is published yet",
 		);
 	});
 
@@ -178,7 +178,7 @@ describe("copy for a download refused while another one runs", () => {
 		[
 			GOOGLE_OAUTH_COMPONENT,
 			APP_COMPONENT,
-			"Wait for the Grindr + update to finish downloading",
+			"Wait for the Euskal Grindr update to finish downloading",
 		],
 		[
 			APP_COMPONENT,
@@ -232,7 +232,7 @@ describe("the subject line under a problem", () => {
 		"Couldn't update the Google OAuth app",
 		"Failed to verify the Google OAuth app",
 		"No Google OAuth app release is published yet",
-		"The installed Google OAuth app isn't signed by Grindr +. Uninstall it to install the official one.",
+		"The installed Google OAuth app isn't signed by Euskal Grindr. Uninstall it to install the official one.",
 	])("is left out when the title says %s", (title) => {
 		expect(problemBody({ component: GOOGLE_OAUTH_COMPONENT, title })).toBe(
 			undefined,
@@ -267,7 +267,7 @@ describe("copy for the reCAPTCHA helper", () => {
 		expect(
 			unsupportedText({ reason: "foreignTarget" }, { component }),
 		).toBe(
-			"The installed reCAPTCHA helper isn't signed by Grindr +. Uninstall it to install the official one.",
+			"The installed reCAPTCHA helper isn't signed by Euskal Grindr. Uninstall it to install the official one.",
 		);
 		expect(
 			updateErrorText(
@@ -332,7 +332,7 @@ describe("copy for the FCM service", () => {
 		expect(
 			unsupportedText({ reason: "foreignTarget" }, { component }),
 		).toBe(
-			"The installed FCM service isn't signed by Grindr +. Uninstall it to install the official one.",
+			"The installed FCM service isn't signed by Euskal Grindr. Uninstall it to install the official one.",
 		);
 		expect(
 			updateErrorText(

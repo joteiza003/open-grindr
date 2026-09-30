@@ -104,7 +104,7 @@ export const en = {
 	"icon.title": "Discreet app icon",
 	"icon.intro":
 		"Swap the icon and name on your home screen for an everyday app.",
-	"icon.default": "Grindr +",
+	"icon.default": "Euskal Grindr",
 	"icon.calculator": "Calculator",
 	"icon.notes": "Notes",
 	"icon.weather": "Weather",
@@ -238,7 +238,7 @@ export const en = {
 	"appearance.chatStyle": "Chat style",
 	"appearance.chatStyleHint":
 		"Restyle the inbox and the conversation to match another messenger.",
-	"appearance.styleDefault": "Grindr +",
+	"appearance.styleDefault": "Euskal Grindr",
 	"appearance.styleWhatsapp": "WhatsApp",
 	"appearance.whatsappNote":
 		"WhatsApp style sets bubble colors, list density, tails and the empty wallpaper. Your saved colors return when you switch back.",
@@ -362,6 +362,32 @@ export const en = {
 	"map.viewProfile": "View profile",
 	"map.directions": "Directions",
 	"map.sharedHeading": "Shared locations",
+	"discreet.title": "Discreet mode",
+	"discreet.description": "Hide photos and videos in chats until you tap them.",
+	"discreet.photo": "Photo, tap to open",
+	"discreet.video": "Video, tap to open",
+	"discreet.album": "Album, tap to open",
+	"discreet.hide": "Hide",
+	"browse.viewList": "List",
+	"browse.viewTinder": "Discover",
+	"browse.viewLabel": "Browse view",
+	"browse.tinder.radius": "Radius",
+	"browse.tinder.radiusAria": "Search radius",
+	"browse.tinder.empty": "No more profiles within {distance}",
+	"browse.tinder.emptyHint": "Try a bigger radius or bring back the profiles you skipped.",
+	"browse.tinder.reset": "Bring back skipped",
+	"browse.tinder.reject": "Skip",
+	"browse.tinder.accept": "Say hi",
+	"browse.tinder.favorite": "Favorite and say hi",
+	"browse.tinder.greetFailed": "Couldn't send the greeting",
+	"browse.tinder.greeted": "Greeting sent",
+	"browse.tinder.loading": "Finding profiles…",
+	"browse.tinder.openProfile": "Open profile",
+	"browse.list.unread": "{count} unread",
+	"filters.min": "Min",
+	"filters.max": "Max",
+	"filters.noMin": "No min",
+	"filters.noMax": "No max",
 
 	"profile.photos": "Photos",
 	"profileNote.add": "Add note",
@@ -488,17 +514,17 @@ export const en = {
 	"credits.android": "Android libraries",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Grindr +",
+	"update.unsupported.foreignSigner": "This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
-		"The installed app isn't signed by Grindr +",
+		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
-		"Grindr + can't tell whether it may update itself",
+		"Euskal Grindr can't tell whether it may update itself",
 	"update.unsupported.noReleaseArtifacts":
 		"No release is published for this platform",
 	"update.unsupported.sandboxed":
 		"The sandbox this app runs in manages its own updates",
 	"update.unsupported.locationNotWritable":
-		"Grindr + can't install the update in its directory",
+		"Euskal Grindr can't install the update in its directory",
 	"update.error.network": "Couldn't reach the release server",
 	"update.error.server": "The release server refused the request",
 	"update.error.malformedIndex":
@@ -515,15 +541,15 @@ export const en = {
 	"update.error.canceled": "Update canceled",
 	"update.error.nothingStaged": "No update is ready to install",
 	"update.error.needsUnknownSources":
-		"Grindr + needs permission to install updates",
+		"Euskal Grindr needs permission to install updates",
 	"update.error.needsManualInstall":
-		"Quit Grindr +, then drag it onto Applications",
+		"Quit Euskal Grindr, then drag it onto Applications",
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Grindr + doesn't know that component",
+	"update.error.unknownComponent": "Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
-	"update.noRelease.app": "No Grindr + release is published yet",
+	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 } as const;
 

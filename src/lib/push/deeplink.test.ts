@@ -40,7 +40,7 @@ describe("routing a Grindr push deeplink", () => {
 		expect(routeForDeeplink("grindr://conversation?id=")).toBeNull();
 	});
 
-	it("refuses every deeplink Open Grind has no screen for", () => {
+	it("refuses every deeplink Euskal Grindr has no screen for", () => {
 		for (const deeplink of [
 			"grindr://fresh-albums?albumIds=1",
 			"grindr://store",

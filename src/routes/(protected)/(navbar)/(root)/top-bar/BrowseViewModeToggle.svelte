@@ -1,13 +1,20 @@
 <script lang="ts">
-	import { GridFourIcon, RowsIcon, SquaresFourIcon } from "phosphor-svelte";
+	import {
+		GridFourIcon,
+		HeartIcon,
+		ListBulletsIcon,
+		RowsIcon,
+		SquaresFourIcon,
+	} from "phosphor-svelte";
 
 	import {
 		preferencesSnapshot,
 		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
 
-	type ViewMode = "grid" | "compact" | "detailed";
+	type ViewMode = "grid" | "compact" | "detailed" | "list" | "tinder";
 
 	const modes: Array<{
 		value: ViewMode;
@@ -17,6 +24,8 @@
 		{ value: "grid", label: "Grid", Icon: GridFourIcon },
 		{ value: "compact", label: "Compact", Icon: SquaresFourIcon },
 		{ value: "detailed", label: "Detailed", Icon: RowsIcon },
+		{ value: "list", label: t("browse.viewList"), Icon: ListBulletsIcon },
+		{ value: "tinder", label: t("browse.viewTinder"), Icon: HeartIcon },
 	];
 
 	const value = $derived(preferencesSnapshot().browse.viewMode);
@@ -32,7 +41,7 @@
 <div
 	class="flex shrink-0 items-center gap-0.5 rounded-full border border-border/70 bg-background/70 p-0.5 backdrop-filter-(--bd-chip)"
 	role="group"
-	aria-label="Browse view"
+	aria-label={t("browse.viewLabel")}
 >
 	{#each modes as mode (mode.value)}
 		{@const Icon = mode.Icon}

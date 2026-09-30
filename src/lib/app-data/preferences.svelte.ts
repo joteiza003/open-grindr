@@ -62,7 +62,15 @@ const preferencesSchema = z.object({
 		}),
 	browse: z
 		.object({
-			viewMode: z.enum(["grid", "compact", "detailed"]).default("grid"),
+			viewMode: z
+				.enum(["grid", "compact", "detailed", "list", "tinder"])
+				.default("grid"),
+			// Modo Tinder: radio (km) que limita los perfiles de la baraja.
+			tinderRadiusKm: z.number().min(0.1).max(500).default(10),
+			// Perfiles descartados (se ocultan de toda la exploración) y
+			// aceptados en el modo Tinder. Acotados para no crecer sin fin.
+			rejectedProfileIds: z.array(z.int().positive()).max(5000).default([]),
+			acceptedProfileIds: z.array(z.int().positive()).max(5000).default([]),
 			cardDensity: z
 				.enum(["comfortable", "dense"])
 				.default("comfortable"),
@@ -78,6 +86,9 @@ const preferencesSchema = z.object({
 		})
 		.default({
 			viewMode: "grid",
+			tinderRadiusKm: 10,
+			rejectedProfileIds: [],
+			acceptedProfileIds: [],
 			cardDensity: "comfortable",
 			showName: true,
 			showDistance: true,
@@ -91,6 +102,9 @@ const preferencesSchema = z.object({
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
+			// Modo discreto: las fotos/vídeos del chat se ocultan tras un
+			// aviso y solo se abren al pulsarlos.
+			discreetMode: z.boolean().default(false),
 			style: z.enum(["default", "whatsapp"]).default("default"),
 			bubbleOut: bubbleColorSchema.default(DEFAULT_BUBBLE_OUT),
 			bubbleIn: bubbleColorSchema.default(DEFAULT_BUBBLE_IN),
@@ -113,6 +127,7 @@ const preferencesSchema = z.object({
 		.default({
 			density: "comfortable",
 			mediaPreview: true,
+			discreetMode: false,
 			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,

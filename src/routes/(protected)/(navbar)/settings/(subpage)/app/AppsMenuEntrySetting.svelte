@@ -12,7 +12,7 @@
 
 <SwitchField
 	title="Show in apps menu"
-	description="Add Grindr + to your applications list so it appears in your launcher and gets its icon."
+	description="Add Euskal Grindr to your applications list so it appears in your launcher and gets its icon."
 	bind:checked={
 		() => value,
 		(newValue: boolean) => {
@@ -21,8 +21,8 @@
 				.catch((error: unknown) => {
 					showErrorToast({
 						label: newValue
-							? "Couldn't add Grindr + to your apps"
-							: "Couldn't remove Grindr + from your apps",
+							? "Couldn't add Euskal Grindr to your apps"
+							: "Couldn't remove Euskal Grindr from your apps",
 						error,
 					});
 				})

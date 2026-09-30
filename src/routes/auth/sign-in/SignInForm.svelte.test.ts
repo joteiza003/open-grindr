@@ -169,7 +169,7 @@ describe("SignInForm", () => {
 		await settle();
 
 		expect(toastMock.error).toHaveBeenCalledExactlyOnceWith(
-			"The Open Grind Google OAuth app is turned off. Turn it on in Android settings, then try again.",
+			"The Euskal Grindr Google OAuth app is turned off. Turn it on in Android settings, then try again.",
 		);
 		expect(gotoMock).not.toHaveBeenCalled();
 	});

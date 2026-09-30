@@ -224,7 +224,7 @@ describe("reconciling with Android", () => {
 		expect(module.notificationSettings.mode).toBe("fast");
 	});
 
-	it("falls back to Slow mode with a toast when the add-on went away while Open Grind was away", async () => {
+	it("falls back to Slow mode with a toast when the add-on went away while Euskal Grindr was away", async () => {
 		nativeMode("fast");
 		push.addonReady.mockRejectedValue(new Error("uninstalled"));
 		push.pushErrorReason.mockReturnValue("addonUnavailable");
@@ -238,7 +238,7 @@ describe("reconciling with Android", () => {
 			"Couldn't enable the fast mode for push notifications",
 		);
 		expect(toastDetails()).toMatchObject({
-			message: expect.stringMatching(/^Grindr \+ couldn't reach/),
+			message: expect.stringMatching(/^Euskal Grindr couldn't reach/),
 		});
 	});
 
