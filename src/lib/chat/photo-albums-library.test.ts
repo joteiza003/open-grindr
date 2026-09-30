@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import type { DrawerMedia } from "$lib/api/messaging/drawer";
 import {
-	albumsWithRecents,
 	createPhotoAlbum,
 	removePhotoAlbum,
 	resolveAlbumMedia,
@@ -22,24 +21,6 @@ function media(id: number, createdTs = id): DrawerMedia {
 }
 
 describe("virtual photo albums", () => {
-	it("builds Recents from drawer order without copying bytes", () => {
-		const albums = albumsWithRecents({
-			stored: [
-				{
-					id: "viaje",
-					name: "Viaje",
-					coverImageId: "2",
-					imageIds: ["2", "1", "9"],
-					createdAt: "2026-01-01T00:00:00.000Z",
-				},
-			],
-			drawer: [media(1, 10), media(2, 20)],
-		});
-		expect(albums[0]?.id).toBe("album-recents");
-		expect(albums[0]?.imageIds).toEqual(["2", "1"]);
-		expect(albums[1]?.name).toBe("Viaje");
-	});
-
 	it("keeps album order and skips missing images", () => {
 		const album = {
 			id: "viaje",
@@ -91,19 +72,13 @@ describe("photo album editing", () => {
 		});
 	});
 
-	it("upserts in place, appends new ones and ignores the dynamic album", () => {
+	it("upserts in place and appends new albums", () => {
 		const a = createPhotoAlbum({ name: "A", imageIds: ["1"], id: "a" });
 		const b = createPhotoAlbum({ name: "B", imageIds: ["2"], id: "b" });
 		const list = upsertPhotoAlbum(upsertPhotoAlbum([], a), b);
 		expect(list.map((x) => x.id)).toEqual(["a", "b"]);
 		const renamed = upsertPhotoAlbum(list, { ...a, name: "A2" });
 		expect(renamed.map((x) => x.name)).toEqual(["A2", "B"]);
-		const recents = {
-			...a,
-			id: "album-recents",
-			dynamic: "drawer" as const,
-		};
-		expect(upsertPhotoAlbum(list, recents)).toEqual(list);
 	});
 
 	it("removes by id", () => {
