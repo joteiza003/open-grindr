@@ -10,6 +10,7 @@
 	import * as Item from "$lib/components/ui/item";
 	import Link from "$lib/components/ui/link/Link.svelte";
 	import { hapticsAvailable } from "$lib/haptics";
+	import { t } from "$lib/i18n";
 	import { desktopEntryAvailable } from "$lib/platform/desktop-entry.svelte";
 	import { addonInstallerAvailable } from "$lib/updates/addon.svelte";
 	import {
@@ -100,10 +101,13 @@
 	description="Let others know when you've viewed their profile. Your profile view history remains unaffected."
 />
 <h2>Security</h2>
-{@render item({
-	title: "Discreet app icon",
-	unimplemented: { feature: "Discreet app icon", issue: 97 },
-})}
+<Item.Root variant="outline">
+	{#snippet child({ props })}
+		<a href="/settings/app/icon" {...props}>
+			{@render rowContent({ title: t("icon.title") })}
+		</a>
+	{/snippet}
+</Item.Root>
 {@render item({ title: "PIN", unimplemented: { feature: "PIN", issue: 50 } })}
 {#if updatesSelfManaged() || updatesUnsupportedReason() !== null || addonInstallerAvailable()}
 	<h2>Updates</h2>

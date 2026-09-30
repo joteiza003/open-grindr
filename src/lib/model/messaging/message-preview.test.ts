@@ -152,7 +152,6 @@ describe("quoteLabel", () => {
 
 	it.each([
 		["Unsent", "Unsent message"],
-		["Audio", "Voice message"],
 		["Giphy", "GIF"],
 		["Location", "Location"],
 		["NonExpiringVideo", "Video"],
@@ -160,6 +159,11 @@ describe("quoteLabel", () => {
 	])("names a %s quote rather than rendering nothing", (type, expected) => {
 		expect(previewLabel(preview(type))).toBeNull();
 		expect(quoteLabel(preview(type))).toBe(expected);
+	});
+
+	it("labels a voice message in the inbox as well as in a quote", () => {
+		expect(previewLabel(preview("Audio"))).toBe("Voice message");
+		expect(quoteLabel(preview("Audio"))).toBe("Voice message");
 	});
 
 	it("defers to the inbox wording for a type the preview already names", () => {

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const download = vi.hoisted(() => vi.fn());
 const write = vi.hoisted(() => vi.fn());
 const upsert = vi.hoisted(() => vi.fn());
+const removeFiles = vi.hoisted(() => vi.fn());
 const proxy = vi.hoisted(() =>
 	vi.fn((url: string | null | undefined, options?: { as?: string }) =>
 		typeof url === "string"
@@ -19,6 +20,7 @@ vi.mock("./saved-album-library", () => ({
 	downloadMediaBytes: download,
 	mediaFileName: (storageId: string, key: string) =>
 		`album-media__${storageId}__${key}.bin`,
+	removeMediaFiles: removeFiles,
 	upsertSavedAlbum: upsert,
 	writeMediaFile: write,
 }));

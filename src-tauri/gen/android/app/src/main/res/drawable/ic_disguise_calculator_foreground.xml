@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+	android:width="108dp"
+	android:height="108dp"
+	android:viewportWidth="108"
+	android:viewportHeight="108">
+	<!-- Body -->
+	<path
+		android:fillColor="#ECEFF1"
+		android:pathData="M34,22 h40 a4,4 0 0 1 4,4 v56 a4,4 0 0 1 -4,4 h-40 a4,4 0 0 1 -4,-4 v-56 a4,4 0 0 1 4,-4 z" />
+	<!-- Display -->
+	<path
+		android:fillColor="#37474F"
+		android:pathData="M35,27 h38 v16 h-38 z" />
+	<!-- Number keys -->
+	<path
+		android:fillColor="#B0BEC5"
+		android:pathData="M35,48 h10 v9 h-10 z M49,48 h10 v9 h-10 z M35,61 h10 v9 h-10 z M49,61 h10 v9 h-10 z M35,74 h10 v9 h-10 z M49,74 h10 v9 h-10 z" />
+	<!-- Operator keys -->
+	<path
+		android:fillColor="#FF9800"
+		android:pathData="M63,48 h10 v9 h-10 z M63,61 h10 v9 h-10 z M63,74 h10 v9 h-10 z" />
+</vector>

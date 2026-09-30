@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<!-- Names shown under the alternative launcher icons. -->
+	<string name="disguise_calculator">Calculator</string>
+	<string name="disguise_notes">Notes</string>
+	<string name="disguise_weather">Weather</string>
+	<string name="disguise_clock">Clock</string>
+</resources>

@@ -1,5 +1,6 @@
 pub mod api;
 mod app_data;
+mod app_icon;
 mod app_settings;
 mod appearance;
 mod appimage;
@@ -22,6 +23,7 @@ mod storage;
 mod translate;
 mod upload;
 mod video;
+mod voice;
 
 use std::sync::OnceLock;
 
@@ -172,9 +174,11 @@ pub fn run() {
         .plugin(api::google_oauth::plugin())
         .plugin(api::facebook_oauth::plugin())
         .plugin(api::update::plugin())
+        .plugin(app_icon::plugin())
         .plugin(app_settings::plugin())
         .plugin(media_picker::plugin())
         .plugin(translate::plugin())
+        .plugin(voice::plugin())
         .manage(AppState {
             client: OnceLock::new(),
         })
@@ -217,6 +221,13 @@ pub fn run() {
             upload::bytes::upload_media,
             upload::inspect::inspect_media_file,
             upload::file::upload_media_file,
+            upload::file::upload_voice_message,
+            voice::voice_available,
+            voice::voice_ensure_microphone,
+            voice::voice_start,
+            voice::voice_level,
+            voice::voice_stop,
+            voice::voice_cancel,
             api::ws::ws_connect,
             api::ws::ws_reconnect,
             api::ws::ws_send,
@@ -243,6 +254,9 @@ pub fn run() {
             api::update::commands::updater_open_install_permission_settings,
             api::update::commands::updater_discard,
             app_settings::open_app_settings,
+            app_icon::app_icon_available,
+            app_icon::app_icon_current,
+            app_icon::app_icon_set,
             media_picker::pick_android_media,
             translate::translate_available,
             translate::translate_identify,

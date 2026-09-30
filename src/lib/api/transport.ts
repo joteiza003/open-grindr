@@ -200,6 +200,38 @@ export async function uploadFileRest(
 	}
 }
 
+export async function uploadVoiceRest(options: {
+	/** Base64 AAC from the native recorder. */
+	content: string;
+	lengthMs: number;
+	profileId: number;
+}) {
+	const requestInfo = {
+		method: "POST",
+		path:
+			"/v5/chat/media/upload?takenOnGrindr=false&length=" +
+			options.lengthMs,
+	};
+	try {
+		const outcome = uploadOutcomeSchema.parse(
+			await invoke("upload_voice_message", {
+				content: options.content,
+				lengthMs: options.lengthMs,
+				profileId: String(options.profileId),
+			}),
+		);
+		return {
+			response: decodeRestResponse({
+				encoded: outcome.response,
+				requestInfo,
+			}),
+			sha256: outcome.sha256,
+		};
+	} catch (error) {
+		throw restInvokeError({ error, requestInfo });
+	}
+}
+
 export async function fetchRest(
 	path: string,
 	options: {

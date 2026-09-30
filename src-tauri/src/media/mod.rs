@@ -19,7 +19,7 @@ use std::sync::Arc;
 
 use grindr::MediaFetcher;
 use tauri::async_runtime::JoinHandle;
-use tauri::http::{header, Method, Request, Response, StatusCode};
+use tauri::http::{header, HeaderValue, Method, Request, Response, StatusCode};
 use tauri::{AppHandle, Runtime, UriSchemeContext, UriSchemeResponder};
 use tokio::sync::{Mutex, Semaphore};
 
@@ -121,6 +121,35 @@ impl MediaProxy {
 	}
 }
 
+/// The origins the app's own pages are served from (Android and Windows use an
+/// http host, macOS and Linux a custom scheme). Media is embedded with plain
+/// elements, which need no CORS, but saving an album to the library reads the
+/// bytes with `fetch`, which does: it is answered for these origins only.
+fn allowed_origin(origin: &str) -> Option<&'static str> {
+	[
+		"http://tauri.localhost",
+		"https://tauri.localhost",
+		"tauri://localhost",
+	]
+	.into_iter()
+	.find(|allowed| *allowed == origin)
+}
+
+fn allow_origin(response: &mut Response<Vec<u8>>, origin: &'static str) {
+	let headers = response.headers_mut();
+	headers.insert(
+		header::ACCESS_CONTROL_ALLOW_ORIGIN,
+		HeaderValue::from_static(origin),
+	);
+	headers.append(header::VARY, HeaderValue::from_static("Origin"));
+	// Without this a page can't read Content-Range, which is how it knows a
+	// ranged download is complete.
+	headers.insert(
+		header::ACCESS_CONTROL_EXPOSE_HEADERS,
+		HeaderValue::from_static("content-length, content-range, content-type"),
+	);
+}
+
 pub fn handle<R: Runtime>(
 	context: UriSchemeContext<'_, R>,
 	request: Request<Vec<u8>>,
@@ -130,6 +159,11 @@ pub fn handle<R: Runtime>(
 	let is_head = request.method() == Method::HEAD;
 	let allowed_method = is_head || request.method() == Method::GET;
 	let target = decode_target(request.uri().path());
+	let origin = request
+		.headers()
+		.get(header::ORIGIN)
+		.and_then(|value| value.to_str().ok())
+		.and_then(allowed_origin);
 	let range = request
 		.headers()
 		.get(header::RANGE)
@@ -137,11 +171,14 @@ pub fn handle<R: Runtime>(
 		.map(str::to_owned);
 
 	tauri::async_runtime::spawn(async move {
-		let response = if allowed_method {
+		let mut response = if allowed_method {
 			serve(&app, target, range, is_head).await
 		} else {
 			refused(StatusCode::METHOD_NOT_ALLOWED)
 		};
+		if let Some(origin) = origin {
+			allow_origin(&mut response, origin);
+		}
 		responder.respond(response);
 	});
 }
@@ -183,6 +220,49 @@ async fn serve_by<R: Runtime>(
 
 #[cfg(test)]
 mod tests {
+	#[test]
+	fn only_the_apps_own_origins_may_read_media_with_fetch() {
+		for own in [
+			"http://tauri.localhost",
+			"https://tauri.localhost",
+			"tauri://localhost",
+		] {
+			assert_eq!(allowed_origin(own), Some(own));
+		}
+		for other in [
+			"https://evil.example",
+			"http://tauri.localhost.evil.example",
+			"http://localhost:1420",
+			"null",
+			"",
+		] {
+			assert_eq!(allowed_origin(other), None, "{other}");
+		}
+	}
+
+	#[test]
+	fn an_allowed_origin_can_read_the_range_headers() {
+		let mut response = Response::builder()
+			.status(StatusCode::PARTIAL_CONTENT)
+			.body(Vec::new())
+			.unwrap();
+
+		allow_origin(&mut response, "http://tauri.localhost");
+
+		let headers = response.headers();
+		assert_eq!(
+			headers.get(header::ACCESS_CONTROL_ALLOW_ORIGIN).unwrap(),
+			"http://tauri.localhost"
+		);
+		assert_eq!(headers.get(header::VARY).unwrap(), "Origin");
+		assert!(headers
+			.get(header::ACCESS_CONTROL_EXPOSE_HEADERS)
+			.unwrap()
+			.to_str()
+			.unwrap()
+			.contains("content-range"));
+	}
+
 	use std::sync::OnceLock;
 
 	use tauri::test::{mock_builder, mock_context, noop_assets, MockRuntime};

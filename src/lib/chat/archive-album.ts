@@ -9,6 +9,7 @@ import type { AlbumMessage } from "$lib/model/messaging/messages";
 import {
 	downloadMediaBytes,
 	mediaFileName,
+	removeMediaFiles,
 	upsertSavedAlbum,
 	writeMediaFile,
 } from "./saved-album-library";
@@ -59,6 +60,12 @@ export async function saveAlbumToLibrary({
 		content ?? (await getAlbumContent(body.albumId)).content;
 	const storageId = crypto.randomUUID();
 
+	const written: string[] = [];
+	const write = async (path: string, bytes: Uint8Array) => {
+		written.push(path);
+		await writeMediaFile(path, bytes);
+	};
+
 	const items: SavedAlbum["items"] = [];
 	const failures: string[] = [];
 	for (const slide of slides) {
@@ -79,7 +86,7 @@ export async function saveAlbumToLibrary({
 				String(slide.contentId),
 				slide.contentType,
 			);
-			await writeMediaFile(localPath, bytes);
+			await write(localPath, bytes);
 		} catch (error) {
 			console.error("[album-library] media save failed", error);
 			failures.push(
@@ -98,7 +105,7 @@ export async function saveAlbumToLibrary({
 				`${slide.contentId}_thumb`,
 				"image/jpeg",
 			);
-			await writeMediaFile(thumbnailPath, thumbBytes);
+			await write(thumbnailPath, thumbBytes);
 		} catch (error) {
 			console.error("[album-library] thumbnail save failed", error);
 		}
@@ -112,6 +119,7 @@ export async function saveAlbumToLibrary({
 	}
 
 	if (items.length === 0) {
+		await removeMediaFiles(written);
 		throw new Error(
 			slides.length === 0
 				? "This album has no media to save"
@@ -125,7 +133,7 @@ export async function saveAlbumToLibrary({
 		try {
 			const coverBytes = await downloadMediaBytes(proxiedCover);
 			coverPath = mediaFileName(storageId, "cover", "image/jpeg");
-			await writeMediaFile(coverPath, coverBytes);
+			await write(coverPath, coverBytes);
 		} catch (error) {
 			console.error("[album-library] cover save failed", error);
 		}
@@ -156,6 +164,12 @@ export async function saveAlbumToLibrary({
 		hidden: false,
 	};
 
-	await upsertSavedAlbum(record);
+	try {
+		await upsertSavedAlbum(record);
+	} catch (error) {
+		// Nothing references these files, so don't leave them behind.
+		await removeMediaFiles(written);
+		throw error;
+	}
 	return record;
 }

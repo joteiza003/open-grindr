@@ -67,6 +67,7 @@ export function previewLabel(
 	if (text !== null) return text;
 	if ((preview.albumId ?? null) !== null) return "Album";
 	if (preview.type === "ExpiringImage") return "Expiring image";
+	if (preview.type === "Audio") return "Voice message";
 	if (EXPIRING_VIDEO_TYPES.has(preview.type)) return "Expiring video";
 	if ((preview.imageHash ?? null) !== null || preview.type === "Image") {
 		return "Photo";

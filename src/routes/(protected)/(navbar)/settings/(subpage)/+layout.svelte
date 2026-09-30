@@ -31,6 +31,10 @@
 			back: "/settings/albums",
 		},
 		[`${base}/app`]: { title: "App Settings", back: "/settings" },
+		[`${base}/app/icon`]: {
+			title: () => t("icon.title"),
+			back: "/settings/app",
+		},
 		[`${base}/app/notifications`]: {
 			title: "Notifications",
 			back: "/settings/app",

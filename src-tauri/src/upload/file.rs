@@ -4,6 +4,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::sync::Arc;
 use std::time::SystemTime;
 
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use grindr::{Bytes, Session};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -24,9 +25,13 @@ use crate::video::strip::{self, Patch};
 
 const MAX_PHOTO_BYTES: u64 = 64 * 1024 * 1024;
 const VIDEO_MP4: &str = "video/mp4";
+const AUDIO_AAC: &str = "audio/aac";
+const MAX_VOICE_BYTES: usize = 16 * 1024 * 1024;
 
 const NOT_MEDIA: &str = "That file is not a photo or a video";
 const VIDEO_UNREADABLE: &str = "That video's format can't be read";
+const VOICE_UNREADABLE: &str = "That recording can't be read";
+const NOT_AAC: &str = "That recording is not AAC audio";
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -355,6 +360,81 @@ pub async fn upload_media_file(
 		sha256: outgoing.sha256.resolve(),
 		body_size: outgoing.body_size,
 	})
+}
+
+/// Every frame of an ADTS AAC stream starts with a 12-bit sync word.
+fn is_adts(bytes: &[u8]) -> bool {
+	bytes.len() > 7 && bytes[0] == 0xFF && bytes[1] & 0xF0 == 0xF0
+}
+
+/// Uploads a voice recording (base64 AAC from the native recorder) as chat media.
+#[tauri::command]
+pub async fn upload_voice_message(
+	app: tauri::AppHandle,
+	state: tauri::State<'_, AppState>,
+	upload_lock: tauri::State<'_, UploadLock>,
+	content: String,
+	length_ms: u64,
+	profile_id: String,
+) -> Result<UploadOutcome, AppError> {
+	let client = state.client()?;
+	let bytes = STANDARD
+		.decode(content)
+		.map_err(|_| AppError::Media(VOICE_UNREADABLE.to_owned()))?;
+	if !is_adts(&bytes) {
+		return Err(AppError::Media(NOT_AAC.to_owned()));
+	}
+	let path =
+		format!("/v5/chat/media/upload?takenOnGrindr=false&length={length_ms}");
+	let method = rest::parse_method("POST")?;
+	let _one_at_a_time = upload_lock.0.lock().await;
+	let _background = TransferHold::media_upload(&app);
+
+	let prepared = prepare_body(WholePart {
+		framing: Framing::raw(AUDIO_AAC),
+		content: Bytes::from(bytes),
+		max_body_size: MAX_VOICE_BYTES as u64,
+	})?;
+
+	let mut sessions = client.session_receiver();
+	if !signed_in_as(&sessions.borrow(), &profile_id) {
+		return Err(AppError::SessionCleared);
+	}
+	let send = client
+		.request(method, &path)
+		.bytes(&prepared.content_type, prepared.body)
+		.send();
+	let raw = unless_session_changes(Race {
+		sessions: &mut sessions,
+		profile_id: &profile_id,
+		send,
+	})
+	.await?
+	.map_err(|error| AppError::from_client_error(error, client))?;
+
+	Ok(UploadOutcome {
+		response: encode_response(&RawResponse {
+			status: raw.status,
+			body: raw.body,
+		})?,
+		sha256: Some(prepared.sha256),
+		body_size: prepared.body_size,
+	})
+}
+
+#[cfg(test)]
+mod voice_tests {
+	use super::is_adts;
+
+	#[test]
+	fn only_an_adts_stream_counts_as_aac() {
+		let frame = [0xFF, 0xF1, 0x50, 0x80, 0x02, 0x1F, 0xFC, 0x21];
+
+		assert!(is_adts(&frame));
+		assert!(!is_adts(&frame[..7]));
+		assert!(!is_adts(b"RIFF....WAVEfmt "));
+		assert!(!is_adts(&[0xFF, 0x0F, 0, 0, 0, 0, 0, 0]));
+	}
 }
 
 #[cfg(test)]
