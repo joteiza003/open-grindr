@@ -40,6 +40,11 @@ export const mapMarkerSchema = z.object({
 	longitude: z.number().gte(-180).lte(180),
 	title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
 	createdAt: z.string().min(1),
+	/** Linked profile when this pin was created by triangulation */
+	profileId: z.number().int().positive().optional(),
+	/** Public media hash for the profile thumbnail on the map pin */
+	mediaHash: z.string().optional(),
+	displayName: z.string().max(80).optional(),
 });
 
 export const mapElementsFileSchema = z.object({

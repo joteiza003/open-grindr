@@ -39,10 +39,14 @@
 	import {
 		clusterIcon,
 		placePinIcon,
+		profilePinIcon,
 		selectedPlacePinIcon,
 		sharedPinIcon,
 		userPinIcon,
 	} from "$lib/map/map-icons";
+	import { openExternalLink } from "$lib/platform/link-opener";
+	import { profileMediaUrl } from "$lib/util/media";
+	import { goto } from "$app/navigation";
 	import { decodeGeohash } from "$lib/model/geohash";
 	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
@@ -257,9 +261,21 @@
 >
 	<header class="flex items-center gap-2 px-4 pt-3 pb-2">
 		<a
-			href="/settings"
+			href="/"
 			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
 			aria-label={t("common.back")}
+			onclick={(event) => {
+				if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+					return;
+				const canBack =
+					(window.navigation && "canGoBack" in window.navigation
+						? Boolean((window.navigation as { canGoBack?: boolean }).canGoBack)
+						: false) || history.length > 1;
+				if (canBack) {
+					event.preventDefault();
+					history.back();
+				}
+			}}
 		>
 			<CaretLeftIcon class="size-5" />
 		</a>
@@ -332,11 +348,18 @@
 						<Marker
 							latLng={[marker.latitude, marker.longitude]}
 							options={{
-								icon:
-									marker.id === overlays.selectedMarkerId
+								icon: marker.mediaHash
+									? profilePinIcon(
+											profileMediaUrl({
+												mediaHash: marker.mediaHash,
+												size: "thumb",
+											}),
+											marker.id === overlays.selectedMarkerId,
+										)
+									: marker.id === overlays.selectedMarkerId
 										? selectedPlacePinIcon
 										: placePinIcon,
-								title: marker.title,
+								title: marker.displayName ?? marker.title,
 								zIndexOffset:
 									marker.id === overlays.selectedMarkerId
 										? 700
@@ -356,7 +379,7 @@
 						>
 							{#if marker.id === overlays.selectedMarkerId}
 								<Popup>
-									<strong>{marker.title}</strong>
+									<strong>{marker.displayName ?? marker.title}</strong>
 								</Popup>
 							{/if}
 						</Marker>
@@ -473,6 +496,18 @@
 			{selectedMarker}
 			onPickMarker={pickClusteredMarker}
 			onConfirmDelete={confirmDelete}
+			onOpenProfile={(id) => void goto(`/profile/${id}`)}
+			onOpenDirections={(marker) => {
+				const dest = `${marker.latitude},${marker.longitude}`;
+				const origin =
+					customLocation != null
+						? `${customLocation.lat},${customLocation.lon}`
+						: null;
+				const url = origin
+					? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=walking`
+					: `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking`;
+				openExternalLink(url);
+			}}
 		/>
 	</div>
 </main>

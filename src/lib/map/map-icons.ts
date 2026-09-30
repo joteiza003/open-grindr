@@ -61,3 +61,21 @@ export function dotIcon(color: string) {
 		className: "",
 	});
 }
+
+
+/** Circular avatar pin for triangulated (or profile-linked) markers. */
+export function profilePinIcon(photoUrl: string | null | undefined, selected = false) {
+	const size = selected ? 44 : 36;
+	const ring = selected ? "#ffba20" : "#ffffff";
+	const ringW = selected ? 3 : 2;
+	const img =
+		photoUrl && photoUrl.length > 0
+			? `<img src="${photoUrl.replace(/"/g, "&quot;")}" alt="" style="width:100%;height:100%;object-fit:cover;display:block" />`
+			: `<div style="width:100%;height:100%;background:#3f3f46;display:grid;place-items:center;color:#a1a1aa;font:700 14px/1 sans-serif">?</div>`;
+	return divIcon({
+		html: `<div style="width:${size}px;height:${size}px;border-radius:999px;overflow:hidden;border:${ringW}px solid ${ring};box-shadow:0 4px 14px rgb(0 0 0 / 45%);background:#171717">${img}</div>`,
+		iconAnchor: [size / 2, size / 2],
+		iconSize: [size, size],
+		className: "",
+	});
+}

@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { CircleIcon, MapPinIcon, TrashIcon, XIcon } from "phosphor-svelte";
+	import { CircleIcon, MapPinIcon, NavigationArrowIcon, TrashIcon, XIcon } from "phosphor-svelte";
+	import { goto } from "$app/navigation";
 
 	import CircleEditor from "$lib/components/map-elements/CircleEditor.svelte";
 	import MarkerEditor from "$lib/components/map-elements/MarkerEditor.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import Button from "$lib/components/ui/button/button.svelte";
+	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import { t } from "$lib/i18n";
 	import { currentLocale } from "$lib/i18n/t";
 	import { formatDistanceKm } from "$lib/map/geographic";
@@ -24,6 +26,8 @@
 		onPickMarker,
 		onPickCircle,
 		onConfirmDelete,
+		onOpenProfile,
+		onOpenDirections,
 	}: {
 		overlays: MapElementsState;
 		modeHint?: string | null;
@@ -36,6 +40,8 @@
 		onPickMarker: (marker: MapMarker) => void;
 		onPickCircle: (circle: MapCircle) => void;
 		onConfirmDelete: () => void | Promise<void>;
+		onOpenProfile?: (profileId: number) => void;
+		onOpenDirections?: (marker: MapMarker) => void;
 	} = $props();
 
 	const locale = $derived(currentLocale());
@@ -114,8 +120,14 @@
 						class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
 						onclick={() => onPickMarker(marker)}
 					>
-						<MapPinIcon class="size-4 shrink-0" weight="fill" />
-						<span class="truncate">{marker.title}</span>
+						{#if marker.mediaHash}
+							<span class="size-8 shrink-0 overflow-hidden rounded-full">
+								<UserAvatar mediaHash={marker.mediaHash} class="size-8" size="md" />
+							</span>
+						{:else}
+							<MapPinIcon class="size-4 shrink-0" />
+						{/if}
+						<span class="truncate">{marker.displayName ?? marker.title}</span>
 					</button>
 				{/each}
 			</div>
@@ -182,8 +194,14 @@
 							class="flex w-full items-center gap-2 rounded-xl px-2 py-2 text-left text-sm hover:bg-muted/60"
 							onclick={() => onPickMarker(marker)}
 						>
-							<MapPinIcon class="size-4 shrink-0" weight="fill" />
-							<span class="truncate">{marker.title}</span>
+							{#if marker.mediaHash}
+								<span class="size-8 shrink-0 overflow-hidden rounded-full">
+									<UserAvatar mediaHash={marker.mediaHash} class="size-8" size="md" />
+								</span>
+							{:else}
+								<MapPinIcon class="size-4 shrink-0" weight="fill" />
+							{/if}
+							<span class="truncate">{marker.displayName ?? marker.title}</span>
 						</button>
 					{/each}
 				{/if}
@@ -201,17 +219,68 @@
 		<section
 			class="pointer-events-auto mx-auto flex w-full max-w-xl items-center gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-2xl"
 		>
-			<MapPinIcon class="size-5 shrink-0" weight="fill" />
+			{#if selectedMarker.mediaHash || selectedMarker.profileId}
+				<button
+					type="button"
+					class="size-12 shrink-0 overflow-hidden rounded-full ring-2 ring-border"
+					onclick={() => {
+						if (selectedMarker.profileId) {
+							(onOpenProfile ?? ((id: number) => void goto(`/profile/${id}`)))(
+								selectedMarker.profileId,
+							);
+						}
+					}}
+				>
+					<UserAvatar
+						mediaHash={selectedMarker.mediaHash ?? null}
+						class="size-12"
+						size="md"
+					/>
+				</button>
+			{:else}
+				<MapPinIcon class="size-5 shrink-0" weight="fill" />
+			{/if}
 			<div class="min-w-0 flex-1">
 				<h2 class="truncate text-sm font-semibold">
-					{selectedMarker.title}
+					{selectedMarker.displayName ?? selectedMarker.title}
 				</h2>
 				<p class="truncate text-xs text-muted-foreground">
 					{selectedMarker.latitude.toFixed(4)}, {selectedMarker.longitude.toFixed(
 						4,
 					)}
 				</p>
+				<div class="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+					{#if selectedMarker.profileId}
+						<button
+							type="button"
+							class="text-xs font-medium text-primary"
+							onclick={() => {
+								(onOpenProfile ?? ((id: number) => void goto(`/profile/${id}`)))(
+									selectedMarker.profileId!,
+								);
+							}}
+						>
+							Ver perfil
+						</button>
+					{/if}
+					<button
+						type="button"
+						class="text-xs font-medium text-primary"
+						onclick={() => onOpenDirections?.(selectedMarker)}
+					>
+						Ruta en Maps
+					</button>
+				</div>
 			</div>
+			<Button
+				variant="secondary"
+				size="icon"
+				aria-label="Ruta en Google Maps"
+				title="Ruta en Google Maps"
+				onclick={() => onOpenDirections?.(selectedMarker)}
+			>
+				<NavigationArrowIcon class="size-4" weight="fill" />
+			</Button>
 			<Button
 				variant="ghost"
 				size="sm"

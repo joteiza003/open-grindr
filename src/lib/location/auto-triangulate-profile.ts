@@ -16,12 +16,16 @@ import {
 	preferencesSnapshot,
 	setPreferences,
 } from "$lib/app-data/preferences.svelte";
-import { destinationPoint } from "$lib/map/geographic";
 import { addMarker } from "$lib/map/map-elements-library";
+import { destinationPoint } from "$lib/map/geographic";
 import { decodeGeohash, encodeGeohash } from "$lib/model/geohash";
 import { autoLocation } from "./auto-location";
 import type { Coordinates } from "./location-request.svelte";
-import { type Measurement, robustTrilateration } from "./trilateration";
+import {
+	type Measurement,
+	type TrilaterationResult,
+	robustTrilateration,
+} from "./trilateration";
 
 /** Baseline distance between observer positions (metres). */
 const BASELINE_M = 1_200;
@@ -52,9 +56,7 @@ function sleep(ms: number): Promise<void> {
 	return new Promise((r) => setTimeout(r, ms));
 }
 
-function observerPositions(
-	home: Coordinates,
-): [Coordinates, Coordinates, Coordinates] {
+function observerPositions(home: Coordinates): [Coordinates, Coordinates, Coordinates] {
 	const a = home;
 	const b = destinationPoint(
 		{ latitude: home.lat, longitude: home.lon },
@@ -85,7 +87,11 @@ async function measureDistanceAt({
 }: {
 	profileId: number;
 	position: Coordinates;
-}): Promise<number> {
+}): Promise<{
+	distance: number;
+	mediaHash: string | null;
+	resolvedName: string | null;
+}> {
 	const geohash = encodeGeohash(position);
 	await setServerAndLocalLocation(geohash);
 	const profile = await refreshProfile(profileId);
@@ -95,7 +101,15 @@ async function measureDistanceAt({
 			"El perfil no devolvió distancia en esta posición (puede estar oculto o fuera de rango).",
 		);
 	}
-	return distance;
+	const mediaHash =
+		profile.profileImageMediaHash ??
+		profile.medias?.[0]?.mediaHash ??
+		null;
+	return {
+		distance,
+		mediaHash: typeof mediaHash === "string" ? mediaHash : null,
+		resolvedName: profile.displayName ?? null,
+	};
 }
 
 /**
@@ -112,9 +126,7 @@ export async function autoTriangulateProfile({
 }): Promise<AutoTriangulateResult> {
 	const homeGeohash = preferencesSnapshot().geohash;
 	if (!homeGeohash) {
-		throw new Error(
-			"No hay ubicación activa. Configura tu posición primero.",
-		);
+		throw new Error("No hay ubicación activa. Configura tu posición primero.");
 	}
 
 	const homeDecoded = decodeGeohash(homeGeohash);
@@ -127,27 +139,30 @@ export async function autoTriangulateProfile({
 
 	const measurements: Measurement[] = [];
 	let restoreError: unknown = null;
+	let mediaHash: string | null = null;
+	let resolvedName: string | null = displayName ?? null;
 
 	try {
 		for (let i = 0; i < positions.length; i++) {
 			onProgress?.({ step: "measuring", index: i + 1, total });
 			const position = positions[i]!;
-			const distance = await measureDistanceAt({ profileId, position });
-			measurements.push({ position, distance });
+			const sample = await measureDistanceAt({ profileId, position });
+			measurements.push({ position, distance: sample.distance });
+			if (sample.mediaHash) mediaHash = sample.mediaHash;
+			if (sample.resolvedName) resolvedName = sample.resolvedName;
 		}
 
 		onProgress?.({ step: "computing" });
 		const result = robustTrilateration(measurements);
 		if (!result) {
-			throw new Error(
-				"No se pudo calcular la posición (geometría inválida).",
-			);
+			throw new Error("No se pudo calcular la posición (geometría inválida).");
 		}
 
-		const title =
-			displayName && displayName.trim().length > 0
-				? `△ ${displayName.trim()}`
-				: `△ Perfil #${profileId}`;
+		const label =
+			resolvedName && resolvedName.trim().length > 0
+				? resolvedName.trim()
+				: `Perfil #${profileId}`;
+		const title = `△ ${label}`.slice(0, 80);
 
 		const markerId = `triangulated-${profileId}-${Date.now()}`;
 		const marker = {
@@ -156,6 +171,9 @@ export async function autoTriangulateProfile({
 			longitude: result.point.lon,
 			title,
 			createdAt: new Date().toISOString(),
+			profileId,
+			mediaHash: mediaHash ?? undefined,
+			displayName: label,
 		};
 		await addMarker(marker);
 
@@ -172,10 +190,7 @@ export async function autoTriangulateProfile({
 			await setServerAndLocalLocation(homeGeohash);
 		} catch (error) {
 			restoreError = error;
-			console.error(
-				"Failed to restore home location after triangulation",
-				error,
-			);
+			console.error("Failed to restore home location after triangulation", error);
 		}
 		autoLocation.resume();
 		if (restoreError) {
