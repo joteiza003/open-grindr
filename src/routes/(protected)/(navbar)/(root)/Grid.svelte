@@ -4,7 +4,6 @@
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { virtualGrid } from "$lib/util/virtual-grid.svelte";
-	import type { GridProfile } from "$lib/grid/grid";
 	import EmptyGrid from "./EmptyGrid.svelte";
 	import GridCellSkeleton from "./GridCellSkeleton.svelte";
 	import GridProfileMiniCard from "./GridProfileMiniCard.svelte";
@@ -14,25 +13,6 @@
 	let { geohash }: { geohash: string } = $props();
 
 	let gridElement: HTMLElement | null = $state(null);
-
-	// Grindr's cascade can return profiles shuffled (especially once filters are
-	// applied), interleaving near and far. Sort by distance in the presentation
-	// layer for a stable, closest-first order without touching gridState, the
-	// API, or virtualization. Unresolved "lazy" profiles carry no distance yet,
-	// so they sort to the end until they resolve; the sort is stable, so equal
-	// distances keep the server's original order.
-	function gridDistance(profile: GridProfile): number {
-		return profile.type === "rendered" && profile.distance !== null
-			? profile.distance
-			: Number.POSITIVE_INFINITY;
-	}
-
-	// gridState.profiles is already de-duplicated; we only reorder it.
-	const gridProfiles = $derived(
-		[...gridState.profiles].sort(
-			(a, b) => gridDistance(a) - gridDistance(b),
-		),
-	);
 
 	const browsePreferences = $derived(preferencesSnapshot().browse);
 
@@ -60,16 +40,16 @@
 	);
 	const view = virtualGrid({
 		grid: () => gridElement,
-		count: () => gridProfiles.length + pendingSkeletons,
+		count: () => gridState.profiles.length + pendingSkeletons,
 	});
 	const visibleProfiles = $derived(
-		gridProfiles.slice(view.startIndex, view.endIndex),
+		gridState.profiles.slice(view.startIndex, view.endIndex),
 	);
 	const visibleSkeletons = $derived(
 		Math.max(
 			0,
 			view.endIndex -
-				Math.max(view.startIndex, gridProfiles.length),
+				Math.max(view.startIndex, gridState.profiles.length),
 		),
 	);
 
@@ -97,11 +77,11 @@
 		data-rows-above={view.hasRowsAbove || undefined}
 		data-rows-below={view.hasRowsBelow || undefined}
 	>
-		{#if gridState.loading && gridProfiles.length === 0}
+		{#if gridState.loading && gridState.profiles.length === 0}
 			{#each Array.from({ length: PAGE_SKELETONS })}
 				<GridCellSkeleton />
 			{/each}
-		{:else if gridState.error && gridProfiles.length === 0}
+		{:else if gridState.error && gridState.profiles.length === 0}
 			<div class="col-span-full flex p-4">
 				<ApiErrorDisplay
 					error={gridState.error}
@@ -110,7 +90,7 @@
 				/>
 			</div>
 		{:else}
-			{#if gridProfiles.length === 0}
+			{#if gridState.profiles.length === 0}
 				<EmptyGrid />
 			{/if}
 			{#each visibleProfiles as item (item.id)}

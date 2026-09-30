@@ -24,6 +24,12 @@ export type SavableAlbumSlide = {
 	contentId: number;
 	contentType: string;
 	url: string;
+	/**
+	 * The original https URL. Saving reads the whole file, so it goes through the
+	 * buffering image fetcher: the video fetcher streams to a media element on
+	 * Android and cannot be downloaded with `fetch`.
+	 */
+	sourceUrl?: string;
 	thumbUrl: string;
 };
 
@@ -49,20 +55,24 @@ export async function saveAlbumToLibrary({
 	profileSnapshot: SavedAlbumProfileSnapshot;
 	content?: SavableAlbumSlide[];
 }): Promise<SavedAlbum> {
-	const slides = content ?? (await getAlbumContent(body.albumId)).content;
+	const slides: SavableAlbumSlide[] =
+		content ?? (await getAlbumContent(body.albumId)).content;
 	const storageId = crypto.randomUUID();
 
 	const items: SavedAlbum["items"] = [];
+	const failures: string[] = [];
 	for (const slide of slides) {
-		if (!slide.url) continue;
-		const kind = slide.contentType.startsWith("video/") ? "video" : "image";
+		if (!slide.url) {
+			failures.push(`#${slide.contentId}: no url`);
+			continue;
+		}
 
 		// One slide that fails to download must not lose the whole album; save
 		// the rest and let the empty-album check below decide if nothing landed.
 		let localPath: string;
 		try {
 			const bytes = await downloadMediaBytes(
-				proxyMediaUrl(slide.url, { as: kind }),
+				proxyMediaUrl(slide.sourceUrl ?? slide.url, { as: "image" }),
 			);
 			localPath = mediaFileName(
 				storageId,
@@ -72,6 +82,9 @@ export async function saveAlbumToLibrary({
 			await writeMediaFile(localPath, bytes);
 		} catch (error) {
 			console.error("[album-library] media save failed", error);
+			failures.push(
+				`#${slide.contentId}: ${error instanceof Error ? error.message : String(error)}`,
+			);
 			continue;
 		}
 
@@ -99,7 +112,11 @@ export async function saveAlbumToLibrary({
 	}
 
 	if (items.length === 0) {
-		throw new Error("This album has no downloadable media");
+		throw new Error(
+			slides.length === 0
+				? "This album has no media to save"
+				: `This album has no downloadable media (${failures.join("; ")})`,
+		);
 	}
 
 	let coverPath: string | null = null;

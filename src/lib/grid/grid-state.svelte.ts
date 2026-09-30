@@ -20,14 +20,20 @@ import {
 	resolveLazyProfile,
 	setCachedProfile,
 } from "./grid";
-import { dedupeGridProfiles, indexProfilesById } from "./grid-profiles";
+import {
+	dedupeGridProfiles,
+	indexProfilesById,
+	sortGridProfilesByDistance,
+} from "./grid-profiles";
 import { buildCascadeQuery } from "./grid-query";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onQueryChange: () => this.retry() });
 	items: GridProfile[] = $state.raw([]);
-	readonly profiles: GridProfile[] = $derived(dedupeGridProfiles(this.items));
+	readonly profiles: GridProfile[] = $derived(
+		sortGridProfilesByDistance(dedupeGridProfiles(this.items)),
+	);
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);
 	loading = $state(false);

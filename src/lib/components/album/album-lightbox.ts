@@ -23,7 +23,10 @@ import { hasNoPlaysLeft, isVideoContent } from "./album";
 import NoPlaysLeftSlide from "./NoPlaysLeftSlide.svelte";
 
 export type AlbumSlide = AlbumContentResponse["content"][number] &
-	MediaDimensions;
+	MediaDimensions & {
+		/** The original https URL, before it was turned into a proxied one. */
+		sourceUrl: string;
+	};
 
 const SLIDES_TTL_MS = 10 * 60 * 1000;
 const UNMEASURED: MediaDimensions = { width: 1080, height: 1080 };
@@ -65,7 +68,7 @@ export async function loadAlbumSlides(albumId: number): Promise<AlbumSlide[]> {
 					? measureVideo(url)
 					: measureImage(measurable)
 			).catch(() => UNMEASURED);
-			return { ...slide, url, coverUrl, ...size };
+			return { ...slide, sourceUrl: slide.url, url, coverUrl, ...size };
 		}),
 	);
 	const forgottenMeanwhile =

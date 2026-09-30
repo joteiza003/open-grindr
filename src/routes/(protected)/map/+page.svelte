@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "leaflet/dist/leaflet.css";
+	import { goto } from "$app/navigation";
 	import {
 		DomEvent,
 		type Map as LeafletMap,
@@ -27,6 +28,7 @@
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
 	import MapCircleLayer from "$lib/components/map-elements/MapCircleLayer.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
+	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
 	import { currentLocale } from "$lib/i18n/t";
@@ -44,10 +46,9 @@
 		sharedPinIcon,
 		userPinIcon,
 	} from "$lib/map/map-icons";
+	import { decodeGeohash } from "$lib/model/geohash";
 	import { openExternalLink } from "$lib/platform/link-opener";
 	import { profileMediaUrl } from "$lib/util/media";
-	import { goto } from "$app/navigation";
-	import { decodeGeohash } from "$lib/model/geohash";
 	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 
@@ -260,25 +261,13 @@
 	class="relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
 	<header class="flex items-center gap-2 px-4 pt-3 pb-2">
-		<a
+		<BackLink
 			href="/"
+			label={t("common.back")}
 			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
-			aria-label={t("common.back")}
-			onclick={(event) => {
-				if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-					return;
-				const canBack =
-					(window.navigation && "canGoBack" in window.navigation
-						? Boolean((window.navigation as { canGoBack?: boolean }).canGoBack)
-						: false) || history.length > 1;
-				if (canBack) {
-					event.preventDefault();
-					history.back();
-				}
-			}}
 		>
 			<CaretLeftIcon class="size-5" />
-		</a>
+		</BackLink>
 		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">
 			{t("map.title")}
 		</h1>
@@ -354,7 +343,8 @@
 												mediaHash: marker.mediaHash,
 												size: "thumb",
 											}),
-											marker.id === overlays.selectedMarkerId,
+											marker.id ===
+												overlays.selectedMarkerId,
 										)
 									: marker.id === overlays.selectedMarkerId
 										? selectedPlacePinIcon
@@ -379,7 +369,10 @@
 						>
 							{#if marker.id === overlays.selectedMarkerId}
 								<Popup>
-									<strong>{marker.displayName ?? marker.title}</strong>
+									<strong
+										>{marker.displayName ??
+											marker.title}</strong
+									>
 								</Popup>
 							{/if}
 						</Marker>
@@ -500,7 +493,7 @@
 			onOpenDirections={(marker) => {
 				const dest = `${marker.latitude},${marker.longitude}`;
 				const origin =
-					customLocation != null
+					customLocation !== null
 						? `${customLocation.lat},${customLocation.lon}`
 						: null;
 				const url = origin
