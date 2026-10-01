@@ -1,4 +1,5 @@
 import { enFeatures } from "./en.features";
+import { enMore } from "./en.more";
 
 export const en = {
 	"nav.browse": "Browse",
@@ -561,6 +562,7 @@ export const en = {
 	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 	...enFeatures,
+	...enMore,
 } as const;
 
 export type MessageKey = keyof typeof en;

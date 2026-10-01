@@ -1,14 +1,18 @@
 <script lang="ts">
-	import { ArrowLeftIcon } from "phosphor-svelte";
+	import { ArrowLeftIcon, MagnifyingGlassIcon } from "phosphor-svelte";
 
 	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
+	import { Button } from "$lib/components/ui/button";
 	import { Skeleton } from "$lib/components/ui/skeleton";
+	import { t } from "$lib/i18n";
 	import { topChrome } from "$lib/util/screen-chrome.svelte";
+	import ChatSearchDialog from "../../ChatSearchDialog.svelte";
 	import { getConversationState } from "../conversation-state.svelte";
 	import ConversationNavBarProfile from "./ConversationNavBarProfile.svelte";
 
 	const conversationState = $derived(getConversationState()());
+	let searchOpen = $state(false);
 </script>
 
 <ProgressiveBlur
@@ -29,6 +33,19 @@
 	</BackLink>
 	{#if conversationState.profile !== null}
 		<ConversationNavBarProfile profile={conversationState.profile} />
+		<Button
+			variant="ghost"
+			size="icon"
+			class="me-3 shrink-0"
+			aria-label={t("search.titleChat")}
+			onclick={() => (searchOpen = true)}
+		>
+			<MagnifyingGlassIcon size={24} />
+		</Button>
+		<ChatSearchDialog
+			bind:open={searchOpen}
+			conversationId={conversationState.conversationId}
+		/>
 	{:else if conversationState.error}
 		<span class="flex-1">Failed to load conversation</span>
 	{:else}

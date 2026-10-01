@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { StarIcon } from "phosphor-svelte";
+	import { MagnifyingGlassIcon, StarIcon } from "phosphor-svelte";
 
 	import QuickFilterButton from "$lib/components/filters/QuickFilterButton.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
-	import { buttonVariants } from "$lib/components/ui/button";
+	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
+	import { t } from "$lib/i18n";
 	import { topChrome } from "$lib/util/screen-chrome.svelte";
 	import type { ConversationFilters } from "$lib/chat/conversation-filters.svelte";
 	import type { ConversationFilterValues } from "$lib/model/messaging/conversation-filters";
+	import ChatSearchDialog from "../ChatSearchDialog.svelte";
 	import DistanceQuickFilter from "./DistanceQuickFilter.svelte";
 	import PositionQuickFilter from "./PositionQuickFilter.svelte";
 
@@ -30,6 +32,7 @@
 	const values = $derived(filters.value);
 
 	let open = $state({ distance: false, position: false });
+	let searchOpen = $state(false);
 </script>
 
 <ProgressiveBlur
@@ -42,6 +45,15 @@
 	{inert}
 	{@attach !inert && topChrome}
 >
+	<Button
+		variant="secondary"
+		class="h-9"
+		aria-label={t("search.title")}
+		onclick={() => (searchOpen = true)}
+	>
+		<MagnifyingGlassIcon weight="bold" />
+	</Button>
+	<ChatSearchDialog bind:open={searchOpen} />
 	<ToggleGroup.Root
 		type="multiple"
 		variant="default"

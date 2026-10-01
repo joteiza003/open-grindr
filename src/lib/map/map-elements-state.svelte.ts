@@ -104,7 +104,10 @@ export class MapElementsState {
 	}
 
 	selectMarker(id: string): void {
-		if (this.mode === "ADD_MARKER" || this.mode === "MARKER_CONFIGURATION") {
+		if (
+			this.mode === "ADD_MARKER" ||
+			this.mode === "MARKER_CONFIGURATION"
+		) {
 			return;
 		}
 		this.mode = "SELECTED_MARKER";
@@ -123,6 +126,12 @@ export class MapElementsState {
 		this.clearSelection();
 	}
 
+	async deleteAllMarkers(): Promise<void> {
+		this.markers = [];
+		await this.#persist();
+		this.clearSelection();
+	}
+
 	resetInteraction(): void {
 		this.mode = "NORMAL";
 		this.markerDraft = null;
@@ -131,9 +140,6 @@ export class MapElementsState {
 	}
 
 	async #persist(): Promise<void> {
-		await this.#backend.save({
-			version: 1,
-			markers: this.markers,
-		});
+		await this.#backend.save({ version: 1, markers: this.markers });
 	}
 }

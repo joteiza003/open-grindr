@@ -157,12 +157,43 @@
 		overlays.mode === "ADD_MARKER" ? t("map.tapMarker") : null,
 	);
 
-	let pendingLocationId = $state<string | null>(null);
+	type PendingDelete =
+		| { kind: "location"; id: string }
+		| { kind: "marker"; id: string }
+		| { kind: "all-locations" }
+		| { kind: "all-markers" };
 
-	function requestDeleteLocation(location: SavedLocation) {
-		pendingLocationId = location.localId;
+	// Qué se va a borrar al confirmar; sin nada, es el marcador seleccionado.
+	let pending = $state<PendingDelete | null>(null);
+
+	function requestDelete(next: PendingDelete) {
+		pending = next;
 		confirmOpen = true;
 	}
+
+	function requestDeleteLocation(location: SavedLocation) {
+		requestDelete({ kind: "location", id: location.localId });
+	}
+
+	const confirmTexts = $derived.by(() => {
+		if (pending?.kind === "all-locations") {
+			return {
+				title: t("map.deleteAllTitle"),
+				body: t("map.deleteAllLocationsBody", {
+					n: library.locations.length,
+				}),
+			};
+		}
+		if (pending?.kind === "all-markers") {
+			return {
+				title: t("map.deleteAllTitle"),
+				body: t("map.deleteAllMarkersBody", {
+					n: overlays.markers.length,
+				}),
+			};
+		}
+		return { title: t("map.deleteTitle"), body: t("map.deleteBody") };
+	});
 
 	function pickListedLocation(location: SavedLocation) {
 		listOpen = false;
@@ -170,10 +201,16 @@
 	}
 
 	async function confirmDelete(): Promise<void> {
-		const locationId = pendingLocationId;
+		const target = pending;
 		try {
-			if (locationId) {
-				await library.remove(locationId);
+			if (target?.kind === "location") {
+				await library.remove(target.id);
+			} else if (target?.kind === "marker") {
+				await overlays.deleteMarker(target.id);
+			} else if (target?.kind === "all-locations") {
+				await library.removeAll();
+			} else if (target?.kind === "all-markers") {
+				await overlays.deleteAllMarkers();
 			} else if (selectedMarker) {
 				await overlays.deleteMarker(selectedMarker.id);
 			}
@@ -186,7 +223,7 @@
 	}
 
 	$effect(() => {
-		if (!confirmOpen) pendingLocationId = null;
+		if (!confirmOpen) pending = null;
 		if (overlays.mode !== "NORMAL") listOpen = false;
 	});
 
@@ -476,6 +513,14 @@
 			{locationLabel}
 			onPickLocation={pickListedLocation}
 			onDeleteLocation={requestDeleteLocation}
+			onDeleteMarker={(marker) =>
+				requestDelete({ kind: "marker", id: marker.id })}
+			onDeleteAll={(kind) =>
+				requestDelete({
+					kind: kind === "markers" ? "all-markers" : "all-locations",
+				})}
+			confirmTitle={confirmTexts.title}
+			confirmBody={confirmTexts.body}
 			{modeHint}
 			{empty}
 			bind:openCluster

@@ -7,6 +7,7 @@
 	import AppSettingsLink from "./AppSettingsLink.svelte";
 	import DiscreetModeSetting from "./DiscreetModeSetting.svelte";
 	import MapLink from "./MapLink.svelte";
+	import NavigationLink from "./NavigationLink.svelte";
 	import PhrasesLink from "./PhrasesLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SavedAlbumsLink from "./SavedAlbumsLink.svelte";
@@ -34,6 +35,7 @@
 					<AppearanceSettingsLink />
 					<MapLink />
 					<SavedAlbumsLink />
+					<NavigationLink />
 					<PhrasesLink />
 					<StatsLink />
 					<TranslationLink />

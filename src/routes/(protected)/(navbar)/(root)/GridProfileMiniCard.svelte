@@ -21,6 +21,8 @@
 		showDistance = true,
 		showAge = true,
 		showOnlineStatus = true,
+		showFavoriteBadge = true,
+		showChatBadge = true,
 		nameStyle = "solid",
 	}: {
 		id: number;
@@ -38,6 +40,8 @@
 		showDistance?: boolean;
 		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		showFavoriteBadge?: boolean;
+		showChatBadge?: boolean;
 		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
 
@@ -72,6 +76,8 @@
 	{showDistance}
 	{showAge}
 	{showOnlineStatus}
+	{showFavoriteBadge}
+	{showChatBadge}
 	{nameStyle}
 	href="/profile/{id}"
 	onclick={openInPager}

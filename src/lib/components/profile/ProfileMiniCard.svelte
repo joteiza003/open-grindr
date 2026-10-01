@@ -33,6 +33,8 @@
 		showDistance = true,
 		showAge = true,
 		showOnlineStatus = true,
+		showFavoriteBadge = true,
+		showChatBadge = true,
 		nameStyle = "solid",
 	}: {
 		mediaHash?: string | null;
@@ -56,10 +58,14 @@
 		showDistance?: boolean;
 		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		showFavoriteBadge?: boolean;
+		showChatBadge?: boolean;
 		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
 
 	const nameVisible = $derived(showName && nameStyle !== "none");
+	const favoriteShown = $derived(isFavorite && showFavoriteBadge);
+	const chatShown = $derived(hadRecentChat && showChatBadge);
 	const longPress = $derived(
 		onLongPress ? longPressHandlers(onLongPress) : {},
 	);
@@ -88,11 +94,11 @@
 			<DistanceFormatted {distance} />
 		</span>
 	{/if}
-	{#if isFavorite || hadRecentChat}
+	{#if favoriteShown || chatShown}
 		<div
 			class="absolute inset-s-2 top-2 z-1 flex w-1/6 flex-col items-center gap-1"
 		>
-			{#if isFavorite}
+			{#if favoriteShown}
 				<div
 					class="relative flex aspect-square h-auto w-full media-chip"
 				>
@@ -109,7 +115,7 @@
 					<span class="sr-only">Favorite</span>
 				</div>
 			{/if}
-			{#if hadRecentChat}
+			{#if chatShown}
 				<div
 					class="relative flex aspect-square h-auto w-full media-chip"
 				>
@@ -119,7 +125,7 @@
 						class="-inset-px"
 						photoClass={[
 							"-inset-s-2",
-							isFavorite
+							favoriteShown
 								? "top-[calc(-0.75rem-100cqw/6)]"
 								: "-top-2",
 						]}

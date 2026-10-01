@@ -32,8 +32,8 @@
 	import ProfileNoteButton from "./profile-note/ProfileNoteButton.svelte";
 	import type { ProfileState } from "./profile-state.svelte";
 	import ProfileSection from "./ProfileSection.svelte";
+	import ProfileSummary from "./ProfileSummary.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
-	import SexualPosition from "./SexualPosition.svelte";
 	import TriangulateButton from "./TriangulateButton.svelte";
 
 	let { profileState }: { profileState: ProfileState } = $props();
@@ -93,23 +93,20 @@
 			{ "pb-24": ourProfile, "pb-40": !ourProfile },
 		]}
 	>
-
-		{#if sexualPosition !== null || height !== null || weight !== null || bodyType !== null}
+		<ProfileSummary
+			age={profile.age}
+			showAge={profile.showAge}
+			distance={profile.showDistance ? profile.distance : null}
+			{sexualPosition}
+			{lookingFor}
+		/>
+		{#if height !== null || weight !== null || bodyType !== null}
 			<div class="flex flex-wrap gap-2" data-slot="profile-fact-pills">
-				{#if sexualPosition !== null && sexualPosition !== undefined}
-					<div
-						class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs"
-					>
-						<SexualPosition {sexualPosition} />
-					</div>
-				{/if}
-				{#if height !== null || weight !== null || bodyType !== null}
-					<div
-						class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs"
-					>
-						<Height {height} {weight} {bodyType} />
-					</div>
-				{/if}
+				<div
+					class="rounded-full border border-border/70 bg-card px-3 py-1.5 text-sm shadow-xs"
+				>
+					<Height {height} {weight} {bodyType} />
+				</div>
 			</div>
 		{/if}
 		<ProfileTags tags={profileTags} />

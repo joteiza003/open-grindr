@@ -113,6 +113,14 @@
 							isVisiting={item.isVisiting}
 							hadRecentChat={item.hasChattedInLast24Hrs}
 							variant={cardVariant}
+							age={item.age ?? null}
+							showName={browsePreferences.showName}
+							showDistance={browsePreferences.showDistance}
+							showAge={browsePreferences.showAge}
+							showOnlineStatus={browsePreferences.showOnlineStatus}
+							nameStyle={browsePreferences.nameStyle}
+							showFavoriteBadge={browsePreferences.showFavoriteBadge}
+							showChatBadge={browsePreferences.showChatBadge}
 							medias={item.profilePhotosHashes?.map(
 								(mediaHash) => ({ mediaHash }),
 							) ?? []}

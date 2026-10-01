@@ -1,21 +1,27 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import BellIcon from "phosphor-svelte/lib/BellIcon";
 	import ChatCircleIcon from "phosphor-svelte/lib/ChatCircleIcon";
 	import DiceFiveIcon from "phosphor-svelte/lib/DiceFiveIcon";
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
+	import LightningIcon from "phosphor-svelte/lib/LightningIcon";
 	import { untrack } from "svelte";
+	import type { Component } from "svelte";
 
 	import { getProfile } from "$lib/api/users/profiles";
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
 	import BrokenUserAvatar from "$lib/components/profile/BrokenUserAvatar.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Badge } from "$lib/components/ui/badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
+	import { savedFilters } from "$lib/grid/saved-filters-state.svelte";
 	import { t } from "$lib/i18n";
 	import { getTapsState } from "$lib/interest/taps-state.svelte";
+	import { type NavTabId, normalizeNavTabs } from "$lib/model/nav-tabs";
 	import { traverseBackTo } from "$lib/util/history";
 	import { isWithin } from "$lib/util/pathname";
 	import { isPlainClick } from "$lib/util/plain-click";
@@ -34,6 +40,66 @@
 
 	const taps = untrack(() => getTapsState(ourProfileId));
 	const hasUnseenTaps = $derived(taps.hasUnseen);
+
+	// Hay novedades en Notificaciones: chats sin leer o filtros guardados con gente nueva.
+	const hasNews = $derived(hasUnread || savedFilters.totalNew > 0);
+
+	type TabDefinition = {
+		href: string;
+		landsOn?: string;
+		isActive: (routeId: string | null) => boolean;
+		icon: Component<{ weight?: "fill" }>;
+		label: () => string;
+		badge?: () => boolean;
+	};
+
+	const tabs: Record<NavTabId, TabDefinition> = {
+		browse: {
+			href: "/",
+			isActive: (id) => id === "/(protected)/(navbar)/(root)",
+			icon: DotsNineIcon,
+			label: () => t("nav.browse"),
+		},
+		carrousel: {
+			href: "/carrousel",
+			isActive: (id) => id === "/(protected)/(navbar)/carrousel",
+			icon: DiceFiveIcon,
+			label: () => t("nav.carrousel"),
+		},
+		rightNow: {
+			href: "/right-now",
+			isActive: (id) => id === "/(protected)/(navbar)/right-now",
+			icon: LightningIcon,
+			label: () => t("nav.rightNow"),
+		},
+		interest: {
+			href: "/interest",
+			landsOn: "/interest/taps",
+			isActive: (id) =>
+				id?.startsWith("/(protected)/(navbar)/interest") ?? false,
+			icon: FireIcon,
+			label: () => t("nav.interest"),
+			badge: () => hasUnseenTaps,
+		},
+		chat: {
+			href: "/chat",
+			isActive: (id) => id === "/(protected)/chat",
+			icon: ChatCircleIcon,
+			label: () => t("nav.inbox"),
+			badge: () => hasUnread,
+		},
+		notifications: {
+			href: "/notifications",
+			isActive: (id) => id === "/(protected)/(navbar)/notifications",
+			icon: BellIcon,
+			label: () => t("nav.notifications"),
+			badge: () => hasNews,
+		},
+	};
+
+	const visibleTabs = $derived(
+		normalizeNavTabs(preferencesSnapshot().navTabs),
+	);
 
 	function tabNavigation({
 		href,
@@ -75,67 +141,28 @@
 			"app-nav-island links shrink-0 [&>a>svg]:size-5!",
 		]}
 	>
-		<a
-			href="/"
-			aria-current={page.route.id === "/(protected)/(navbar)/(root)"
-				? "page"
-				: undefined}
-			data-active={page.route.id === "/(protected)/(navbar)/(root)"}
-			onclick={tabNavigation({ href: "/" })}
-		>
-			<DotsNineIcon weight="fill" />
-			{t("nav.browse")}
-		</a>
-		<a
-			href="/carrousel"
-			aria-current={page.route.id === "/(protected)/(navbar)/carrousel"
-				? "page"
-				: undefined}
-			data-active={page.route.id === "/(protected)/(navbar)/carrousel"}
-			onclick={tabNavigation({ href: "/carrousel" })}
-		>
-			<DiceFiveIcon weight="fill" />
-			{t("nav.carrousel")}
-		</a>
-		<a
-			href="/interest"
-			aria-current={page.route.id?.startsWith(
-				"/(protected)/(navbar)/interest",
-			)
-				? "page"
-				: undefined}
-			data-active={page.route.id?.startsWith(
-				"/(protected)/(navbar)/interest",
-			)}
-			onclick={tabNavigation({
-				href: "/interest",
-				landsOn: "/interest/taps",
-			})}
-		>
-			<FireIcon weight="fill" />
-			{t("nav.interest")}
-			{#if hasUnseenTaps}
-				<Badge
-					class="app-nav-badge-live absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
-				/>
-			{/if}
-		</a>
-		<a
-			href="/chat"
-			aria-current={page.route.id === "/(protected)/chat"
-				? "page"
-				: undefined}
-			data-active={page.route.id === "/(protected)/chat"}
-			onclick={tabNavigation({ href: "/chat" })}
-		>
-			<ChatCircleIcon weight="fill" />
-			{t("nav.inbox")}
-			{#if hasUnread}
-				<Badge
-					class="app-nav-badge-live absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
-				/>
-			{/if}
-		</a>
+		{#each visibleTabs as id (id)}
+			{@const tab = tabs[id]}
+			{@const active = tab.isActive(page.route.id)}
+			<a
+				href={tab.href}
+				aria-current={active ? "page" : undefined}
+				data-active={active}
+				data-tab={id}
+				onclick={tabNavigation({
+					href: tab.href,
+					landsOn: tab.landsOn,
+				})}
+			>
+				<tab.icon weight="fill" />
+				{tab.label()}
+				{#if tab.badge?.()}
+					<Badge
+						class="app-nav-badge-live absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
+					/>
+				{/if}
+			</a>
+		{/each}
 	</div>
 	<a
 		href="/settings"
@@ -168,7 +195,7 @@
 	@reference "$layout";
 
 	.links a {
-		@apply relative inline-flex h-[calc(100%-1px)] min-w-16 flex-1 flex-col items-center justify-center gap-1 rounded-full border border-transparent! px-3 py-1.5 text-overline uppercase whitespace-nowrap text-foreground/55 transition-colors duration-200 ease-out group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:bg-(--accent-soft) data-active:font-semibold data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5;
+		@apply relative inline-flex h-[calc(100%-1px)] min-w-16 flex-1 flex-col items-center justify-center gap-1 rounded-full border border-transparent! px-3 py-1.5 text-overline whitespace-nowrap text-foreground/55 uppercase transition-colors duration-200 ease-out group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:bg-(--accent-soft) data-active:font-semibold data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5;
 	}
 
 	.app-nav-profile {

@@ -14,6 +14,7 @@
 
 	const preferencesHydrated = hydratePreferences();
 	const geohash = $derived(preferencesSnapshot().geohash);
+	const oneHand = $derived(preferencesSnapshot().oneHandMode);
 
 	let gridContainer: HTMLElement | null = $state(null);
 
@@ -51,7 +52,16 @@
 			>
 				<div
 					data-slot="grid-content"
-					class="@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pt-header-clear-17 pb-nav-clear"
+					class={[
+						"@container/photo-grid flex min-h-overscrollable flex-col gap-4 px-4 pb-nav-clear",
+						{
+							"pt-fixed-header": oneHand,
+							"pt-header-clear-17": !oneHand,
+						},
+					]}
+					style:padding-bottom={oneHand
+						? "calc(0.5rem + var(--content-pb) + var(--bar-content-gap) + 4.5rem)"
+						: undefined}
 				>
 					<Grid {geohash} />
 				</div>

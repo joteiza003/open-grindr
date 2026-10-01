@@ -9,6 +9,7 @@
 		TrashIcon,
 	} from "phosphor-svelte";
 
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import FavoriteStar from "$lib/components/profile/FavoriteStar.svelte";
 	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
@@ -24,6 +25,7 @@
 	import { firedByTouch } from "$lib/platform/touch-origin";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
+	import SwipeRow from "./SwipeRow.svelte";
 
 	let {
 		conversation,
@@ -71,6 +73,17 @@
 			conversationIds: [conversationId],
 			muted: !conversation.data.muted,
 		});
+	}
+
+	const swipeActions = $derived({
+		left: preferencesSnapshot().chat.swipeLeft,
+		right: preferencesSnapshot().chat.swipeRight,
+	});
+
+	function onSwipe(action: "pin" | "mute" | "delete") {
+		if (action === "pin") togglePinned();
+		else if (action === "mute") toggleMuted();
+		else onRequestDelete?.();
 	}
 
 	function toggleSelected() {
@@ -187,7 +200,9 @@
 			oncontextmenu={(event) => (pressedByTouch = firedByTouch(event))}
 		>
 			<div data-slot="conversation-row">
-				{@render row()}
+				<SwipeRow actions={swipeActions} onAction={onSwipe}>
+					{@render row()}
+				</SwipeRow>
 			</div>
 		</ContextMenu.Trigger>
 		{#if contextMenuUsed}

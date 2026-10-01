@@ -12,6 +12,7 @@ import {
 import { DEFAULT_LOOK, lookSchema } from "$lib/appearance/looks";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
+import { swipeActionSchema } from "$lib/chat/swipe-actions";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
 import {
@@ -20,6 +21,11 @@ import {
 } from "$lib/model/browse/grid/saved-filters";
 import { geohashSchema } from "$lib/model/geohash";
 import { albumExpirationTypeSchema } from "$lib/model/messaging/albums";
+import { DEFAULT_NAV_TABS, normalizeNavTabs } from "$lib/model/nav-tabs";
+import {
+	DEFAULT_NOTIFICATION_MODULES,
+	normalizeNotificationModules,
+} from "$lib/model/notification-modules";
 import { unitSystemSchema } from "$lib/util/units";
 import {
 	existsAppDataFile,
@@ -49,6 +55,20 @@ const preferencesSchema = z.object({
 		.default([])
 		.catch([]),
 	notificationsEnabled: z.boolean().default(false),
+	// Barra de navegación: pestañas visibles, en orden.
+	navTabs: z
+		.array(z.unknown())
+		.default([...DEFAULT_NAV_TABS])
+		.transform(normalizeNavTabs)
+		.catch([...DEFAULT_NAV_TABS]),
+	// Pestaña Notificaciones: módulos visibles, en orden.
+	notificationModules: z
+		.array(z.unknown())
+		.default([...DEFAULT_NOTIFICATION_MODULES])
+		.transform(normalizeNotificationModules)
+		.catch([...DEFAULT_NOTIFICATION_MODULES]),
+	// Modo una mano: la barra de controles de la cuadrícula baja al pulgar.
+	oneHandMode: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
@@ -95,6 +115,9 @@ const preferencesSchema = z.object({
 			showDistance: z.boolean().default(true),
 			showAge: z.boolean().default(true),
 			showOnlineStatus: z.boolean().default(true),
+			// Insignias de la tarjeta: estrella de favorito y chat reciente.
+			showFavoriteBadge: z.boolean().default(true),
+			showChatBadge: z.boolean().default(true),
 			nameStyle: z.enum(["solid", "gradient", "none"]).default("solid"),
 			// null = use the design default (keeps the tuned grid + its e2e
 			// corner test untouched); a number overrides it in pixels.
@@ -111,6 +134,8 @@ const preferencesSchema = z.object({
 			showDistance: true,
 			showAge: true,
 			showOnlineStatus: true,
+			showFavoriteBadge: true,
+			showChatBadge: true,
 			nameStyle: "solid",
 			cardRadius: null,
 			cardGap: null,
@@ -122,6 +147,9 @@ const preferencesSchema = z.object({
 			// Modo discreto: las fotos/vídeos del chat se ocultan tras un
 			// aviso y solo se abren al pulsarlos.
 			discreetMode: z.boolean().default(false),
+			// Acciones al deslizar una conversación en la lista (solo táctil).
+			swipeRight: swipeActionSchema.default("pin").catch("pin"),
+			swipeLeft: swipeActionSchema.default("mute").catch("mute"),
 			// Caducidad con la que se comparten los álbumes desde ahora.
 			albumExpiration: albumExpirationTypeSchema
 				.default("INDEFINITE")
@@ -150,6 +178,8 @@ const preferencesSchema = z.object({
 			mediaPreview: true,
 			discreetMode: false,
 			albumExpiration: "INDEFINITE",
+			swipeRight: "pin",
+			swipeLeft: "mute",
 			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,

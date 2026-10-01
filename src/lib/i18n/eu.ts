@@ -1,5 +1,6 @@
 import type { MessageKey } from "./en";
 import { euFeatures } from "./eu.features";
+import { euMore } from "./eu.more";
 
 export const eu: Record<MessageKey, string> = {
 	"nav.browse": "Arakatu",
@@ -554,4 +555,5 @@ export const eu: Record<MessageKey, string> = {
 	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 	...euFeatures,
+	...euMore,
 };

@@ -25,6 +25,10 @@
 		locationLabel = () => "",
 		onPickLocation,
 		onDeleteLocation,
+		onDeleteMarker,
+		onDeleteAll,
+		confirmTitle = t("map.deleteTitle"),
+		confirmBody = t("map.deleteBody"),
 		onPickMarker,
 		onConfirmDelete,
 		onOpenProfile,
@@ -41,6 +45,10 @@
 		locationLabel?: (location: SavedLocation) => string;
 		onPickLocation?: (location: SavedLocation) => void;
 		onDeleteLocation?: (location: SavedLocation) => void;
+		onDeleteMarker?: (marker: MapMarker) => void;
+		onDeleteAll?: (kind: "markers" | "locations") => void;
+		confirmTitle?: string;
+		confirmBody?: string;
 		onPickMarker: (marker: MapMarker) => void;
 		onConfirmDelete: () => void | Promise<void>;
 		onOpenProfile?: (profileId: number) => void;
@@ -192,49 +200,85 @@
 				{/if}
 
 				{#if overlays.markers.length > 0}
-					<p
-						class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
-					>
-						{t("map.markersHeading")}
-					</p>
-					{#each overlays.markers as marker (marker.id)}
-						<button
-							type="button"
-							class="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-colors hover:bg-muted/70 active:bg-muted"
-							onclick={() => onPickMarker(marker)}
+					<div class="flex items-center justify-between pe-1">
+						<p
+							class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
 						>
-							{#if marker.mediaHash}
-								<span
-									class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
-								>
-									<UserAvatar
-										mediaHash={marker.mediaHash}
-										class="size-9"
-										size="md"
-									/>
-								</span>
-							{:else}
-								<span
-									class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"
-								>
-									<MapPinIcon class="size-4" weight="fill" />
-								</span>
-							{/if}
-							<span
-								class="min-w-0 flex-1 truncate text-sm font-medium"
+							{t("map.markersHeading")}
+						</p>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 text-xs text-destructive hover:text-destructive"
+							onclick={() => onDeleteAll?.("markers")}
+						>
+							{t("map.deleteAll")}
+						</Button>
+					</div>
+					{#each overlays.markers as marker (marker.id)}
+						<div
+							class="flex w-full items-center gap-1 rounded-2xl px-3 py-0.5 transition-colors hover:bg-muted/70"
+						>
+							<button
+								type="button"
+								class="flex min-w-0 flex-1 items-center gap-3 py-2 text-left active:opacity-70"
+								onclick={() => onPickMarker(marker)}
 							>
-								{marker.displayName ?? marker.title}
-							</span>
-						</button>
+								{#if marker.mediaHash}
+									<span
+										class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+									>
+										<UserAvatar
+											mediaHash={marker.mediaHash}
+											class="size-9"
+											size="md"
+										/>
+									</span>
+								{:else}
+									<span
+										class="grid size-9 shrink-0 place-items-center rounded-full bg-muted text-muted-foreground"
+									>
+										<MapPinIcon
+											class="size-4"
+											weight="fill"
+										/>
+									</span>
+								{/if}
+								<span
+									class="min-w-0 flex-1 truncate text-sm font-medium"
+								>
+									{marker.displayName ?? marker.title}
+								</span>
+							</button>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="size-9 shrink-0 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+								aria-label={t("map.deleteAria")}
+								onclick={() => onDeleteMarker?.(marker)}
+							>
+								<TrashIcon class="size-4" />
+							</Button>
+						</div>
 					{/each}
 				{/if}
 
 				{#if locations.length > 0}
-					<p
-						class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
-					>
-						{t("map.sharedHeading")}
-					</p>
+					<div class="flex items-center justify-between pe-1">
+						<p
+							class="px-3 pt-2 pb-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase"
+						>
+							{t("map.sharedHeading")}
+						</p>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 text-xs text-destructive hover:text-destructive"
+							onclick={() => onDeleteAll?.("locations")}
+						>
+							{t("map.deleteAll")}
+						</Button>
+					</div>
 					{#each locations as location (location.localId)}
 						<div
 							class="flex w-full items-center gap-1 rounded-2xl px-3 py-1.5 transition-colors hover:bg-muted/70"
@@ -292,9 +336,9 @@
 <AlertDialog.Root bind:open={confirmOpen}>
 	<AlertDialog.Content>
 		<AlertDialog.Header>
-			<AlertDialog.Title>{t("map.deleteTitle")}</AlertDialog.Title>
+			<AlertDialog.Title>{confirmTitle}</AlertDialog.Title>
 			<AlertDialog.Description>
-				{t("map.deleteBody")}
+				{confirmBody}
 			</AlertDialog.Description>
 		</AlertDialog.Header>
 		<AlertDialog.Footer>
