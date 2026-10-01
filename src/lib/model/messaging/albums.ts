@@ -35,6 +35,15 @@ export const albumExpirationTypeSchema = z.enum(
 
 export type AlbumExpirationType = z.infer<typeof albumExpirationTypeSchema>;
 
+/** Opciones que se ofrecen al compartir, de menos a más restrictiva. */
+export const ALBUM_EXPIRATION_OPTIONS = [
+	"INDEFINITE",
+	"ONE_DAY",
+	"ONE_HOUR",
+	"TEN_MINUTES",
+	"ONCE",
+] as const satisfies readonly AlbumExpirationType[];
+
 export const albumExpirationSchema = z.object({
 	expiresAt: unixTimestampMsSchema.nullable(),
 	expirationType: knownValueOrNull({

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { HeartIcon, StarIcon, XIcon } from "phosphor-svelte";
+	import {
+		ArrowCounterClockwiseIcon,
+		HeartIcon,
+		StarIcon,
+		XIcon,
+	} from "phosphor-svelte";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { addFavoriteUser } from "$lib/api/users/favorites";
@@ -15,6 +20,8 @@
 	import UserSilhouette from "$lib/components/profile/UserSilhouette.svelte";
 	import MediaImage from "$lib/components/shared/MediaImage.svelte";
 	import { Button } from "$lib/components/ui/button";
+	import { withFirst } from "$lib/grid/deck-history";
+	import { DeckUndo } from "$lib/grid/deck-undo.svelte";
 	import { greetProfile } from "$lib/grid/greet";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import {
@@ -29,6 +36,7 @@
 		tinderCandidates,
 	} from "$lib/grid/tinder-deck";
 	import { t } from "$lib/i18n";
+	import { usageEvents } from "$lib/stats/event-log";
 	import { profileMediaUrl } from "$lib/util/media";
 	import { formatDistance } from "$lib/util/units";
 
@@ -44,14 +52,18 @@
 	// Orden aleatorio estable y perfiles omitidos solo durante esta sesión.
 	const orderKeys = new Map<number, number>();
 	let skipped = $state<ReadonlySet<number>>(new Set());
+	const deckUndo = new DeckUndo();
 
 	const candidates = $derived(
-		tinderCandidates({
-			profiles: gridState.profiles,
-			radiusKm,
-			decided: new Set([...decidedProfileIds(), ...skipped]),
-			keys: orderKeys,
-		}),
+		withFirst(
+			tinderCandidates({
+				profiles: gridState.profiles,
+				radiusKm,
+				decided: new Set([...decidedProfileIds(), ...skipped]),
+				keys: orderKeys,
+			}),
+			deckUndo.returnedId,
+		),
 	);
 	const current = $derived(candidates[0] ?? null);
 	const upcoming = $derived(candidates[1] ?? null);
@@ -92,10 +104,12 @@
 	});
 
 	let dx = $state(0);
+	let dy = $state(0);
 	let dragging = $state(false);
-	let leaving = $state<"left" | "right" | null>(null);
+	let leaving = $state<"left" | "right" | "up" | null>(null);
 	let busy = $state(false);
 	let startX = 0;
+	let startY = 0;
 	let moved = false;
 
 	const rotation = $derived(
@@ -103,28 +117,69 @@
 			? 18
 			: leaving === "left"
 				? -18
-				: Math.max(-14, Math.min(14, dx / 14)),
+				: leaving === "up"
+					? 0
+					: Math.max(-14, Math.min(14, dx / 14)),
 	);
 	const offset = $derived(
-		leaving === "right" ? 600 : leaving === "left" ? -600 : dx,
+		leaving === "right"
+			? 600
+			: leaving === "left"
+				? -600
+				: leaving === "up"
+					? 0
+					: dx,
 	);
-	const acceptOpacity = $derived(Math.max(0, Math.min(1, dx / 90)));
-	const rejectOpacity = $derived(Math.max(0, Math.min(1, -dx / 90)));
+	const offsetY = $derived(
+		leaving === "up" ? -700 : leaving === null ? dy : 0,
+	);
+	// Un gesto es "arriba" si domina el movimiento vertical hacia arriba.
+	const upwards = $derived(dy < 0 && -dy > Math.abs(dx));
+	const acceptOpacity = $derived(
+		upwards ? 0 : Math.max(0, Math.min(1, dx / 90)),
+	);
+	const rejectOpacity = $derived(
+		upwards ? 0 : Math.max(0, Math.min(1, -dx / 90)),
+	);
+	const skipOpacity = $derived(
+		upwards ? Math.max(0, Math.min(1, -dy / 90)) : 0,
+	);
 
 	function reset() {
 		leaving = null;
 		dx = 0;
+		dy = 0;
 	}
 
 	type Decision = "reject" | "skip" | "like" | "superlike" | "favorite";
 
-	const leave = (direction: "left" | "right") =>
+	const leave = (direction: "left" | "right" | "up") =>
 		new Promise<void>((resolve) => {
 			leaving = direction;
 			setTimeout(resolve, LEAVE_MS);
 		});
 
-	async function decide(decision: Decision): Promise<void> {
+	async function undo(): Promise<void> {
+		if (!deckUndo.canUndo || busy) return;
+		busy = true;
+		try {
+			await deckUndo.undo({
+				restoreSkipped: (id) => {
+					skipped = new Set([...skipped].filter((x) => x !== id));
+				},
+			});
+		} catch (error) {
+			console.error(error);
+			showErrorToast({ label: t("browse.tinder.undoFailed"), error });
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function decide(
+		decision: Decision,
+		via: "button" | "swipe" = "button",
+	): Promise<void> {
 		const profile = current;
 		if (!profile || busy) return;
 		busy = true;
@@ -132,14 +187,18 @@
 			if (decision === "reject") {
 				await leave("left");
 				await rejectProfile(profile.id);
+				deckUndo.remember({ id: profile.id, kind: "reject" });
 			} else if (decision === "skip") {
 				// Omitir no decide nada: el perfil solo se aparta hasta recargar.
-				await leave("left");
+				// Con el botón sale hacia la izquierda; con el gesto, hacia arriba.
+				await leave(via === "swipe" ? "up" : "left");
 				skipped = new Set([...skipped, profile.id]);
+				deckUndo.remember({ id: profile.id, kind: "skip" });
 			} else if (decision === "like") {
 				// Me gusta: se queda visible en la rejilla, sin saludar.
 				await leave("right");
 				await acceptProfile(profile.id);
+				deckUndo.remember({ id: profile.id, kind: "like" });
 			} else {
 				// Con la tarjeta aún visible: si el envío falla, sigue ahí.
 				if (decision === "favorite") {
@@ -152,6 +211,8 @@
 				await greetProfile(profile.id);
 				await leave("right");
 				await acceptProfile(profile.id);
+				// El saludo ya enviado no se puede deshacer: no entra al historial.
+				usageEvents.record({ k: decision, c: profile.id });
 			}
 		} catch (error) {
 			console.error(error);
@@ -174,20 +235,27 @@
 		dragging = true;
 		moved = false;
 		startX = event.clientX;
+		startY = event.clientY;
 	}
 
 	function onPointerMove(event: PointerEvent) {
 		if (!dragging) return;
 		dx = event.clientX - startX;
-		if (Math.abs(dx) > 6) moved = true;
+		// Hacia abajo no hay acción: la tarjeta solo sigue el gesto hacia arriba.
+		dy = Math.min(0, event.clientY - startY);
+		if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
 	}
 
 	function onPointerUp() {
 		if (!dragging) return;
 		dragging = false;
-		if (dx > SWIPE_THRESHOLD_PX) void decide("like");
+		if (upwards && -dy > SWIPE_THRESHOLD_PX) void decide("skip", "swipe");
+		else if (dx > SWIPE_THRESHOLD_PX) void decide("like");
 		else if (dx < -SWIPE_THRESHOLD_PX) void decide("reject");
-		else dx = 0;
+		else {
+			dx = 0;
+			dy = 0;
+		}
 	}
 
 	function openProfile() {
@@ -204,6 +272,9 @@
 		} else if (event.key === "ArrowRight") {
 			event.preventDefault();
 			void decide("like");
+		} else if (event.key === "ArrowUp") {
+			event.preventDefault();
+			void decide("skip", "swipe");
 		} else if (event.key === "Enter") {
 			event.preventDefault();
 			openProfile();
@@ -312,8 +383,8 @@
 					aria-label={current.displayName ??
 						t("browse.tinder.openProfile")}
 					data-slot="tinder-card"
-					class="relative aspect-3/4 max-h-full w-full max-w-sm touch-pan-y overflow-hidden rounded-3xl bg-muted shadow-xl outline-none select-none"
-					style:transform="translateX({offset}px) rotate({rotation}deg)"
+					class="relative aspect-3/4 max-h-full w-full max-w-sm touch-none overflow-hidden rounded-3xl bg-muted shadow-xl outline-none select-none"
+					style:transform="translate({offset}px, {offsetY}px) rotate({rotation}deg)"
 					style:transition={dragging
 						? "none"
 						: leaving
@@ -385,12 +456,30 @@
 					>
 						{t("browse.tinder.reject").toUpperCase()}
 					</span>
+					<span
+						class="pointer-events-none absolute inset-x-0 top-4 mx-auto w-fit rounded-lg border-4 border-slate-300 px-2 py-0.5 text-2xl font-black text-slate-300"
+						style:opacity={skipOpacity}
+						aria-hidden="true"
+					>
+						{t("browse.tinder.skip").toUpperCase()}
+					</span>
 				</div>
 			{/key}
 		{/if}
 	</div>
 
 	<div class="flex shrink-0 items-center justify-center gap-3 pb-1">
+		<Button
+			variant="secondary"
+			size="icon-lg"
+			class="size-11 rounded-full border border-border text-muted-foreground"
+			aria-label={t("browse.tinder.undo")}
+			title={t("browse.tinder.undo")}
+			disabled={!deckUndo.canUndo || busy}
+			onclick={() => void undo()}
+		>
+			<ArrowCounterClockwiseIcon weight="bold" class="size-5" />
+		</Button>
 		<Button
 			variant="secondary"
 			size="icon-lg"
@@ -432,17 +521,6 @@
 			title={t("browse.tinder.superlike")}
 			disabled={current === null || busy}
 			onclick={() => void decide("superlike")}
-		>
-			<HeartIcon weight="fill" class="size-7" />
-		</Button>
-		<Button
-			variant="secondary"
-			size="icon-lg"
-			class="size-14 rounded-full border-2 border-emerald-500/60 text-emerald-500"
-			aria-label={t("browse.tinder.like")}
-			title={t("browse.tinder.like")}
-			disabled={current === null || busy}
-			onclick={() => void decide("like")}
 		>
 			<HeartIcon weight="fill" class="size-7" />
 		</Button>

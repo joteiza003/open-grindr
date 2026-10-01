@@ -1,55 +1,84 @@
 <script lang="ts">
-	import { SlidersHorizontalIcon } from "phosphor-svelte";
+	import { BookmarkSimpleIcon, SlidersHorizontalIcon } from "phosphor-svelte";
 
 	import QuickFilterButton from "$lib/components/filters/QuickFilterButton.svelte";
 	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
 	import { gridState } from "$lib/grid/grid-state.svelte";
+	import { savedFilters } from "$lib/grid/saved-filters-state.svelte";
+	import { t } from "$lib/i18n";
 	import { defaultFilters } from "$lib/model/browse/grid/filters";
 	import AgeQuickFilter from "./AgeQuickFilter.svelte";
 	import PositionQuickFilter from "./PositionQuickFilter.svelte";
+	import SavedFilters from "./SavedFilters.svelte";
 
 	let {
 		openFilters = $bindable(),
 	}: { openFilters: { all: boolean; age: boolean; position: boolean } } =
 		$props();
 
+	let savedOpen = $state(false);
+
 	const TOGGLE_FILTER_KEYS = ["isOnline", "isRightNow", "isFresh"] as const;
 
 	const filters = $derived(gridState.filters.value ?? defaultFilters);
 	const { ageEnabled, positionEnabled } = $derived(filters);
 
-	const activeCount = $derived([
-		filters.isFavorite,
-		filters.isOnline,
-		filters.isRightNow,
-		filters.isFresh,
-		filters.ageEnabled,
-		filters.genderEnabled,
-		filters.tagsEnabled,
-		filters.positionEnabled,
-		filters.photosEnabled,
-		filters.tribesEnabled,
-		filters.bodyTypesEnabled,
-		filters.heightEnabled,
-		filters.weightEnabled,
-		filters.relationshipStatusesEnabled,
-		filters.acceptNSFWPicsEnabled,
-		filters.lookingForEnabled,
-		filters.meetAtEnabled,
-		filters.haventChattedTodayEnabled,
-		filters.healthPracticesEnabled,
-	].filter(Boolean).length);
+	const activeCount = $derived(
+		[
+			filters.isFavorite,
+			filters.isOnline,
+			filters.isRightNow,
+			filters.isFresh,
+			filters.ageEnabled,
+			filters.genderEnabled,
+			filters.tagsEnabled,
+			filters.positionEnabled,
+			filters.photosEnabled,
+			filters.tribesEnabled,
+			filters.bodyTypesEnabled,
+			filters.heightEnabled,
+			filters.weightEnabled,
+			filters.relationshipStatusesEnabled,
+			filters.acceptNSFWPicsEnabled,
+			filters.lookingForEnabled,
+			filters.meetAtEnabled,
+			filters.haventChattedTodayEnabled,
+			filters.healthPracticesEnabled,
+		].filter(Boolean).length,
+	);
 </script>
 
 <Button
 	variant="secondary"
-	aria-label={activeCount ? `All filters, ${activeCount} active` : "All filters"}
+	aria-label={activeCount
+		? `All filters, ${activeCount} active`
+		: "All filters"}
 	onclick={() => (openFilters.all = true)}
 >
 	<SlidersHorizontalIcon />
 	{#if activeCount > 0}
-		<span class="-me-1 flex size-5 items-center justify-center rounded-full bg-primary text-3xs font-semibold text-primary-foreground">{activeCount}</span>
+		<span
+			class="-me-1 flex size-5 items-center justify-center rounded-full bg-primary text-3xs font-semibold text-primary-foreground"
+			>{activeCount}</span
+		>
+	{/if}
+</Button>
+<Button
+	variant="secondary"
+	aria-label={savedFilters.totalNew > 0
+		? t("savedFilters.buttonNew", { n: savedFilters.totalNew })
+		: t("savedFilters.title")}
+	onclick={() => (savedOpen = true)}
+>
+	<BookmarkSimpleIcon
+		weight={savedFilters.items.length > 0 ? "fill" : "regular"}
+	/>
+	{#if savedFilters.totalNew > 0}
+		<span
+			class="-me-1 flex size-5 items-center justify-center rounded-full bg-primary text-3xs font-semibold text-primary-foreground"
+			>{savedFilters.totalNew > 9 ? "9+" : savedFilters.totalNew}</span
+		>
 	{/if}
 </Button>
 <QuickFilterButton active={ageEnabled} onclick={() => (openFilters.age = true)}>
@@ -97,5 +126,6 @@
 	</ToggleGroup.Item>
 </ToggleGroup.Root>
 
+<SavedFilters bind:open={savedOpen} {activeCount} />
 <AgeQuickFilter bind:open={openFilters.age} />
 <PositionQuickFilter bind:open={openFilters.position} />

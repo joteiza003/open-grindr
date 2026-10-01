@@ -193,6 +193,7 @@ describe("composer albums tab", () => {
 		expect(api.shareAlbum).toHaveBeenCalledWith({
 			albumId: UNSHARED_ALBUM,
 			profileIds: [PEER],
+			expirationType: "INDEFINITE",
 		});
 		expect(api.unshareAlbum).not.toHaveBeenCalled();
 	});

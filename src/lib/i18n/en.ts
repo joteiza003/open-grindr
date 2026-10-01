@@ -1,3 +1,5 @@
+import { enFeatures } from "./en.features";
+
 export const en = {
 	"nav.browse": "Browse",
 	"nav.carrousel": "Carrousel",
@@ -338,7 +340,8 @@ export const en = {
 	"map.addMarker": "Add marker",
 	"map.yourLocation": "Your location",
 	"map.customPosition": "Custom position — independent from saved overlays.",
-	"map.empty": "Add a marker on the map. Shared chat locations also appear here. Changing your custom location will not move saved pins.",
+	"map.empty":
+		"Add a marker on the map. Shared chat locations also appear here. Changing your custom location will not move saved pins.",
 	"map.tapMarker": "Tap the map to place the marker.",
 	"map.markers": "markers",
 	"map.deleteTitle": "Delete this item?",
@@ -363,7 +366,8 @@ export const en = {
 	"map.directions": "Directions",
 	"map.sharedHeading": "Shared locations",
 	"discreet.title": "Discreet mode",
-	"discreet.description": "Hide photos and videos in chats until you tap them.",
+	"discreet.description":
+		"Hide photos and videos in chats until you tap them.",
 	"discreet.photo": "Photo, tap to open",
 	"discreet.video": "Video, tap to open",
 	"discreet.album": "Album, tap to open",
@@ -374,7 +378,8 @@ export const en = {
 	"browse.tinder.radius": "Radius",
 	"browse.tinder.radiusAria": "Search radius",
 	"browse.tinder.empty": "No more profiles within {distance}",
-	"browse.tinder.emptyHint": "Try a bigger radius or bring back the profiles you skipped.",
+	"browse.tinder.emptyHint":
+		"Try a bigger radius or bring back the profiles you skipped.",
 	"browse.tinder.reset": "Bring back skipped",
 	"browse.tinder.reject": "Hide",
 	"browse.tinder.skip": "Skip",
@@ -516,7 +521,8 @@ export const en = {
 	"credits.android": "Android libraries",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Euskal Grindr",
+	"update.unsupported.foreignSigner":
+		"This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
 		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
@@ -549,10 +555,12 @@ export const en = {
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Euskal Grindr doesn't know that component",
+	"update.error.unknownComponent":
+		"Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
 	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
+	...enFeatures,
 } as const;
 
 export type MessageKey = keyof typeof en;

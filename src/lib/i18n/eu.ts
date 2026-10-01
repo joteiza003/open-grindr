@@ -1,4 +1,5 @@
 import type { MessageKey } from "./en";
+import { euFeatures } from "./eu.features";
 
 export const eu: Record<MessageKey, string> = {
 	"nav.browse": "Arakatu",
@@ -334,7 +335,8 @@ export const eu: Record<MessageKey, string> = {
 	"map.yourLocation": "Zure kokapena",
 	"map.customPosition":
 		"Kokapen pertsonalizatua — gordetako geruzetatik independentea.",
-	"map.empty": "Gehitu marka bat mapan. Txatetan partekatutako kokalekuak ere hemen agertzen dira. Zure kokaleku pertsonalizatua aldatzeak ez ditu gordetako pinak mugituko.",
+	"map.empty":
+		"Gehitu marka bat mapan. Txatetan partekatutako kokalekuak ere hemen agertzen dira. Zure kokaleku pertsonalizatua aldatzeak ez ditu gordetako pinak mugituko.",
 	"map.tapMarker": "Ukitu mapa markatzailea jartzeko.",
 	"map.markers": "markatzaile",
 	"map.deleteTitle": "Elementu hau ezabatu?",
@@ -359,7 +361,8 @@ export const eu: Record<MessageKey, string> = {
 	"map.directions": "Ibilbidea Maps-en",
 	"map.sharedHeading": "Partekatutako kokalekuak",
 	"discreet.title": "Modu diskretua",
-	"discreet.description": "Ezkutatu txateko argazkiak eta bideoak sakatu arte.",
+	"discreet.description":
+		"Ezkutatu txateko argazkiak eta bideoak sakatu arte.",
 	"discreet.photo": "Argazkia, sakatu irekitzeko",
 	"discreet.video": "Bideoa, sakatu irekitzeko",
 	"discreet.album": "Albuma, sakatu irekitzeko",
@@ -370,7 +373,8 @@ export const eu: Record<MessageKey, string> = {
 	"browse.tinder.radius": "Erradioa",
 	"browse.tinder.radiusAria": "Bilaketa-erradioa",
 	"browse.tinder.empty": "Ez dago profil gehiagorik {distance} barruan",
-	"browse.tinder.emptyHint": "Probatu erradio handiago bat edo berreskuratu baztertutako profilak.",
+	"browse.tinder.emptyHint":
+		"Probatu erradio handiago bat edo berreskuratu baztertutako profilak.",
 	"browse.tinder.reset": "Berreskuratu baztertutakoak",
 	"browse.tinder.reject": "Ezkutatu",
 	"browse.tinder.skip": "Saltatu",
@@ -510,7 +514,8 @@ export const eu: Record<MessageKey, string> = {
 	"credits.android": "Android liburutegiak",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Euskal Grindr",
+	"update.unsupported.foreignSigner":
+		"This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
 		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
@@ -543,8 +548,10 @@ export const eu: Record<MessageKey, string> = {
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Euskal Grindr doesn't know that component",
+	"update.error.unknownComponent":
+		"Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
 	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
+	...euFeatures,
 };

@@ -12,6 +12,7 @@
 	import SavedAlbumsLink from "./SavedAlbumsLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
+	import StatsLink from "./StatsLink.svelte";
 	import TranslationLink from "./TranslationLink.svelte";
 
 	const { data }: import("./$types").PageProps = $props();
@@ -34,6 +35,7 @@
 					<MapLink />
 					<SavedAlbumsLink />
 					<PhrasesLink />
+					<StatsLink />
 					<TranslationLink />
 					<AppSettingsLink />
 				</div>

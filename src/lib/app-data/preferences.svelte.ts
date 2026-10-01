@@ -14,7 +14,12 @@ import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
+import {
+	MAX_SAVED_FILTERS,
+	savedFilterSchema,
+} from "$lib/model/browse/grid/saved-filters";
 import { geohashSchema } from "$lib/model/geohash";
+import { albumExpirationTypeSchema } from "$lib/model/messaging/albums";
 import { unitSystemSchema } from "$lib/util/units";
 import {
 	existsAppDataFile,
@@ -37,6 +42,12 @@ const preferencesSchema = z.object({
 	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	// Filtros con nombre; un fichero con entradas viejas no debe romper el resto.
+	savedFilters: z
+		.array(savedFilterSchema)
+		.max(MAX_SAVED_FILTERS)
+		.default([])
+		.catch([]),
 	notificationsEnabled: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
@@ -69,8 +80,14 @@ const preferencesSchema = z.object({
 			tinderRadiusKm: z.number().min(0.1).max(500).default(10),
 			// Perfiles descartados (se ocultan de toda la exploración) y
 			// aceptados en el modo Tinder. Acotados para no crecer sin fin.
-			rejectedProfileIds: z.array(z.int().positive()).max(5000).default([]),
-			acceptedProfileIds: z.array(z.int().positive()).max(5000).default([]),
+			rejectedProfileIds: z
+				.array(z.int().positive())
+				.max(5000)
+				.default([]),
+			acceptedProfileIds: z
+				.array(z.int().positive())
+				.max(5000)
+				.default([]),
 			cardDensity: z
 				.enum(["comfortable", "dense"])
 				.default("comfortable"),
@@ -105,6 +122,10 @@ const preferencesSchema = z.object({
 			// Modo discreto: las fotos/vídeos del chat se ocultan tras un
 			// aviso y solo se abren al pulsarlos.
 			discreetMode: z.boolean().default(false),
+			// Caducidad con la que se comparten los álbumes desde ahora.
+			albumExpiration: albumExpirationTypeSchema
+				.default("INDEFINITE")
+				.catch("INDEFINITE"),
 			style: z.enum(["default", "whatsapp"]).default("default"),
 			bubbleOut: bubbleColorSchema.default(DEFAULT_BUBBLE_OUT),
 			bubbleIn: bubbleColorSchema.default(DEFAULT_BUBBLE_IN),
@@ -128,6 +149,7 @@ const preferencesSchema = z.object({
 			density: "comfortable",
 			mediaPreview: true,
 			discreetMode: false,
+			albumExpiration: "INDEFINITE",
 			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,
@@ -283,6 +305,7 @@ const accountPreferenceKeys = [
 	"geohash",
 	"gridSearchFilters",
 	"notificationsEnabled",
+	"savedFilters",
 ] as const;
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

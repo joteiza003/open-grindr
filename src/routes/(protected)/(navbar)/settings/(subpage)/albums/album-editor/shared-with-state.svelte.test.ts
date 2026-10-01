@@ -93,6 +93,7 @@ describe("AlbumSharedWith", () => {
 		expect(shareAlbumMock).toHaveBeenCalledWith({
 			albumId: ALBUM_ID,
 			profileIds: [22],
+			expirationType: "INDEFINITE",
 		});
 		expect(shares.count).toBe(2);
 	});

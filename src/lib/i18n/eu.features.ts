@@ -1,0 +1,66 @@
+import type { enFeatures } from "./en.features";
+
+// Textos de las funciones de uso, vista previa, filtros guardados y álbumes.
+export const euFeatures: Record<keyof typeof enFeatures, string> = {
+	"browse.tinder.undo": "Desegin",
+	"browse.tinder.undoFailed": "Ezin izan da desegin",
+	"preview.menu": "Aurrebista",
+	"preview.description": "Aurrebista",
+	"preview.photos": "Argazkiak",
+	"preview.photoN": "{n}. argazkia",
+	"preview.failed": "Ezin izan da profil hau kargatu.",
+	"preview.open": "Ireki profila",
+	"savedFilters.title": "Gordetako iragazkiak",
+	"savedFilters.description":
+		"Gorde bilaketa bat eta ikusi begirada batean zenbat jende berri bat datorren.",
+	"savedFilters.empty":
+		"Oraindik ez duzu iragazkirik gordeta. Aktibatu batzuk eta gorde hemen.",
+	"savedFilters.pending": "Lehen aldiz egiaztatzen…",
+	"savedFilters.new": "{n} berri",
+	"savedFilters.none": "Ezer berririk ez",
+	"savedFilters.delete": "Ezabatu {name}",
+	"savedFilters.checkNote":
+		"Berriak sareta irekitzean zenbatzen dira, 15 minuturo gehienez. Ez da ezer exekutatzen atzeko planoan.",
+	"savedFilters.namePlaceholder": "Uneko iragazkien izena",
+	"savedFilters.saveCurrent": "Gorde uneko iragazkiak",
+	"savedFilters.noActive": "Aktibatu iragazki bat gutxienez gordetzeko.",
+	"savedFilters.failed": "Ezin izan dira gordetako iragazkiak eguneratu",
+	"savedFilters.buttonNew": "Gordetako iragazkiak, {n} berri",
+	"savedFilters.problem.emptyName": "Jarri izena iragazkiari.",
+	"savedFilters.problem.tooMany": "{max} iragazki arte gorde ditzakezu.",
+	"savedFilters.problem.duplicate": "Badaukazu izen hori duen iragazki bat.",
+	"albums.expiry.label": "Sarbidea iraungitzen da",
+	"albums.expiry.hint":
+		"Hemendik aurrera partekatzen dituzun albumei aplikatzen zaie. Noiznahi utz diezaiokezu partekatzeari.",
+	"albums.expiry.INDEFINITE": "Inoiz ez",
+	"albums.expiry.ONE_DAY": "Egun 1",
+	"albums.expiry.ONE_HOUR": "Ordu 1",
+	"albums.expiry.TEN_MINUTES": "10 minutu",
+	"albums.expiry.ONCE": "Behin ikusi",
+	"stats.title": "Nire estatistikak",
+	"stats.period": "Aldia",
+	"stats.lastDays": "Azken {n} egunak",
+	"stats.empty": "Oraindik ez dago jarduerarik erregistratuta",
+	"stats.emptyHint":
+		"Estatistikak hemendik aurrera metatzen dira txateatzen eta arakatzen duzun heinean. Hutsik hasten dira.",
+	"stats.messages": "Mezuak",
+	"stats.sent": "Bidalitako mezuak",
+	"stats.received": "Jasotako mezuak",
+	"stats.started": "Zuk hasitako txatak",
+	"stats.replyRate": "Erantzun-tasa",
+	"stats.replyTime": "Erantzuteko ohiko denbora",
+	"stats.activeTime": "Aplikazioan emandako denbora",
+	"stats.sessions": "{n} saio",
+	"stats.hours": "Jarduera handieneko orduak",
+	"stats.hoursChart": "Mezuak eguneko orduko",
+	"stats.busiest": "Gehien {hour} aldera aritzen zara.",
+	"stats.carrousel": "Karrusela",
+	"stats.carrouselNone": "Ez dago karruseleko erabakirik aldi honetan.",
+	"stats.privacy":
+		"Estatistika hauek gailu honetan soilik kalkulatzen eta gordetzen dira. Ez dira inora bidaltzen eta saioa ixtean ezabatzen dira.",
+	"stats.clear": "Ezabatu nire estatistikak",
+	"stats.clearTitle": "Zure estatistikak ezabatu?",
+	"stats.clearBody":
+		"Gailu honetan erregistratutako jarduera ezabatzen da. Ezin da desegin.",
+	"stats.clearFailed": "Ezin izan dira estatistikak ezabatu",
+};

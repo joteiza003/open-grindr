@@ -20,6 +20,7 @@ pub enum AppDataFile {
 	AlbumLibraryIndex,
 	LocationMapIndex,
 	MapElements,
+	UsageEvents,
 	/// Media saved with an album in the library: `album-media__<id>__<key>.<ext>`.
 	AlbumMedia(String),
 }
@@ -38,6 +39,7 @@ impl AppDataFile {
 			Self::AlbumLibraryIndex => "album-library-index.json",
 			Self::LocationMapIndex => "location-map-index.json",
 			Self::MapElements => "map-elements.json",
+			Self::UsageEvents => "usage-events.json",
 			Self::AlbumMedia(name) => name,
 		}
 	}
@@ -52,6 +54,7 @@ impl AppDataFile {
 			"albumLibraryIndex" => Some(Self::AlbumLibraryIndex),
 			"locationMapIndex" => Some(Self::LocationMapIndex),
 			"mapElements" => Some(Self::MapElements),
+			"usageEvents" => Some(Self::UsageEvents),
 			_ => Self::album_media(raw),
 		}
 	}
@@ -338,6 +341,10 @@ mod tests {
 		assert_eq!(
 			named("mapElements").unwrap().file_name(),
 			"map-elements.json"
+		);
+		assert_eq!(
+			named("usageEvents").unwrap().file_name(),
+			"usage-events.json"
 		);
 		assert_eq!(
 			named("album-media__abc-1__cover.jpg").unwrap(),

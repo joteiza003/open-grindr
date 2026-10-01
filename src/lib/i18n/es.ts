@@ -1,4 +1,5 @@
 import type { MessageKey } from "./en";
+import { esFeatures } from "./es.features";
 
 export const es: Record<MessageKey, string> = {
 	"nav.browse": "Explorar",
@@ -346,7 +347,8 @@ export const es: Record<MessageKey, string> = {
 	"map.yourLocation": "Tu ubicación",
 	"map.customPosition":
 		"Posición personalizada — independiente de las capas guardadas.",
-	"map.empty": "Añade un marcador en el mapa. Las ubicaciones compartidas en chats también aparecen aquí. Cambiar tu ubicación personalizada no mueve los pines guardados.",
+	"map.empty":
+		"Añade un marcador en el mapa. Las ubicaciones compartidas en chats también aparecen aquí. Cambiar tu ubicación personalizada no mueve los pines guardados.",
 	"map.tapMarker": "Toca el mapa para colocar el marcador.",
 	"map.markers": "marcadores",
 	"map.deleteTitle": "¿Eliminar este elemento?",
@@ -371,7 +373,8 @@ export const es: Record<MessageKey, string> = {
 	"map.directions": "Ruta en Maps",
 	"map.sharedHeading": "Ubicaciones compartidas",
 	"discreet.title": "Modo discreto",
-	"discreet.description": "Oculta las fotos y vídeos del chat hasta que los pulses.",
+	"discreet.description":
+		"Oculta las fotos y vídeos del chat hasta que los pulses.",
 	"discreet.photo": "Foto, pulsa para abrir",
 	"discreet.video": "Vídeo, pulsa para abrir",
 	"discreet.album": "Álbum, pulsa para abrir",
@@ -382,7 +385,8 @@ export const es: Record<MessageKey, string> = {
 	"browse.tinder.radius": "Radio",
 	"browse.tinder.radiusAria": "Radio de búsqueda",
 	"browse.tinder.empty": "No hay más perfiles en {distance}",
-	"browse.tinder.emptyHint": "Prueba un radio mayor o recupera los perfiles descartados.",
+	"browse.tinder.emptyHint":
+		"Prueba un radio mayor o recupera los perfiles descartados.",
 	"browse.tinder.reset": "Recuperar descartados",
 	"browse.tinder.reject": "Ocultar",
 	"browse.tinder.skip": "Omitir",
@@ -524,7 +528,8 @@ export const es: Record<MessageKey, string> = {
 	"credits.android": "Bibliotecas Android",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Euskal Grindr",
+	"update.unsupported.foreignSigner":
+		"This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
 		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
@@ -557,8 +562,10 @@ export const es: Record<MessageKey, string> = {
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Euskal Grindr doesn't know that component",
+	"update.error.unknownComponent":
+		"Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
 	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
+	...esFeatures,
 };

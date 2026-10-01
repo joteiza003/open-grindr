@@ -57,6 +57,20 @@ export function acceptProfile(id: number): Promise<void> {
 	}));
 }
 
+/** Deshace un "ocultar": el perfil vuelve a la baraja y a la rejilla. */
+export function unrejectProfile(id: number): Promise<void> {
+	return update((browse) => ({
+		rejectedProfileIds: browse.rejectedProfileIds.filter((x) => x !== id),
+	}));
+}
+
+/** Deshace un "me gusta": el perfil vuelve a la baraja. */
+export function unacceptProfile(id: number): Promise<void> {
+	return update((browse) => ({
+		acceptedProfileIds: browse.acceptedProfileIds.filter((x) => x !== id),
+	}));
+}
+
 /** Vuelve a mostrar todos los perfiles descartados y rehabilita la baraja. */
 export function resetDecisions(): Promise<void> {
 	return update(() => ({ rejectedProfileIds: [], acceptedProfileIds: [] }));

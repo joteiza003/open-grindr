@@ -19,6 +19,7 @@ const nativeFiles = {
 	"album-library-index.json": "albumLibraryIndex",
 	"location-map-index.json": "locationMapIndex",
 	"map-elements.json": "mapElements",
+	"usage-events.json": "usageEvents",
 } as const;
 
 export type AlbumMediaPath = `album-media__${string}`;

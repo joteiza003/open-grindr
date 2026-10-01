@@ -5,6 +5,7 @@ import {
 	shareAlbum,
 	unshareAlbum,
 } from "$lib/api/messaging/albums";
+import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 import { albumShares } from "$lib/chat/album-shares.svelte";
 
 export class AlbumSharedWith {
@@ -64,8 +65,13 @@ export class AlbumSharedWith {
 		this.#generation++;
 		this.#apply({ profileId, shared });
 		try {
-			if (shared) await shareAlbum({ albumId, profileIds: [profileId] });
-			else await unshareAlbum({ albumId, profileIds: [profileId] });
+			if (shared) {
+				await shareAlbum({
+					albumId,
+					profileIds: [profileId],
+					expirationType: preferencesSnapshot().chat.albumExpiration,
+				});
+			} else await unshareAlbum({ albumId, profileIds: [profileId] });
 		} catch (error) {
 			this.#apply({ profileId, shared: wasShared });
 			throw error;

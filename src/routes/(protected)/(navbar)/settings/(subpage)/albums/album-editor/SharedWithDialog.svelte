@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { CheckCircleIcon, ShareNetworkIcon } from "phosphor-svelte";
 
+	import AlbumExpirationPicker from "$lib/components/album/AlbumExpirationPicker.svelte";
 	import ProfileList from "$lib/components/profile-list/ProfileList.svelte";
 	import * as ResponsiveDialog from "$lib/components/ui/responsive-dialog";
 	import type { AlbumSharedWith } from "./shared-with-state.svelte";
@@ -34,6 +35,7 @@
 			dialogClass="-mx-1 px-1"
 			drawerClass="px-4 pb-4"
 		>
+			<AlbumExpirationPicker class="pb-3" />
 			<ProfileList
 				loadIds={() => shares.load()}
 				setOn={({ profileId, on }) =>

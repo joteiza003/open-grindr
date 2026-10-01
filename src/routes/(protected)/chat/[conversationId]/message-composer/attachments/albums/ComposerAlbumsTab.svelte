@@ -3,7 +3,9 @@
 	import { toast } from "svelte-sonner";
 
 	import { getMyAlbums } from "$lib/api/messaging/albums";
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { albumShares } from "$lib/chat/album-shares.svelte";
+	import AlbumExpirationPicker from "$lib/components/album/AlbumExpirationPicker.svelte";
 	import AlbumTile from "$lib/components/album/AlbumTile.svelte";
 	import MediaGrid from "$lib/components/shared/MediaGrid.svelte";
 	import * as Empty from "$lib/components/ui/empty";
@@ -95,7 +97,12 @@
 		profileId: number;
 	}) {
 		shareActions
-			.update({ albumId, profileId, shared: true })
+			.update({
+				albumId,
+				profileId,
+				shared: true,
+				expirationType: preferencesSnapshot().chat.albumExpiration,
+			})
 			.catch((err: unknown) => {
 				console.error(err);
 				toast.error("Couldn't share album");
@@ -139,46 +146,52 @@
 	}
 </script>
 
-<MediaGrid
-	items={albums}
-	key={(album) => album.albumId}
-	empty={albums?.length === 0}
-	{error}
-	onRetry={() => void load()}
-	skeletons={9}
-	{selected}
-	gridClass="[--photo-grid-aspect:3/4]"
->
-	{#snippet emptyState()}
-		<Empty.Root>
-			<Empty.Header>
-				<Empty.Media variant="icon">
-					<FolderOpenIcon weight="fill" />
-				</Empty.Media>
-				<Empty.Title>No albums yet</Empty.Title>
-				<Empty.Description>
-					Albums you create appear here, ready to share.
-				</Empty.Description>
-			</Empty.Header>
-		</Empty.Root>
-	{/snippet}
-	{#snippet tile(album)}
-		{@const isSelected = selected.has(album.albumId)}
-		{@const isIncompatible = !isCompatible(album.albumId)}
-		{@const isSelectable =
-			album.isShareable &&
-			!isIncompatible &&
-			!locked &&
-			shareActions.isResolved(album.albumId)}
-		<AlbumTile
-			{album}
-			selected={isSelected}
-			shared={isShared(album.albumId)}
-			shareLocked={!album.isShareable}
-			dimmed={isIncompatible || locked}
-			disabled={!isSelectable}
-			clickable={isSelectable && (selected.canSelectMore || isSelected)}
-			onclick={() => toggleSelected(album.albumId)}
-		/>
-	{/snippet}
-</MediaGrid>
+<div class="flex flex-col gap-3">
+	{#if mode === "sharing"}
+		<AlbumExpirationPicker class="px-1" />
+	{/if}
+	<MediaGrid
+		items={albums}
+		key={(album) => album.albumId}
+		empty={albums?.length === 0}
+		{error}
+		onRetry={() => void load()}
+		skeletons={9}
+		{selected}
+		gridClass="[--photo-grid-aspect:3/4]"
+	>
+		{#snippet emptyState()}
+			<Empty.Root>
+				<Empty.Header>
+					<Empty.Media variant="icon">
+						<FolderOpenIcon weight="fill" />
+					</Empty.Media>
+					<Empty.Title>No albums yet</Empty.Title>
+					<Empty.Description>
+						Albums you create appear here, ready to share.
+					</Empty.Description>
+				</Empty.Header>
+			</Empty.Root>
+		{/snippet}
+		{#snippet tile(album)}
+			{@const isSelected = selected.has(album.albumId)}
+			{@const isIncompatible = !isCompatible(album.albumId)}
+			{@const isSelectable =
+				album.isShareable &&
+				!isIncompatible &&
+				!locked &&
+				shareActions.isResolved(album.albumId)}
+			<AlbumTile
+				{album}
+				selected={isSelected}
+				shared={isShared(album.albumId)}
+				shareLocked={!album.isShareable}
+				dimmed={isIncompatible || locked}
+				disabled={!isSelectable}
+				clickable={isSelectable &&
+					(selected.canSelectMore || isSelected)}
+				onclick={() => toggleSelected(album.albumId)}
+			/>
+		{/snippet}
+	</MediaGrid>
+</div>

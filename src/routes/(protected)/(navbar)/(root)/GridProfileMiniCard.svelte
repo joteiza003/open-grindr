@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 
+	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
 	import ProfileMiniCard from "$lib/components/profile/ProfileMiniCard.svelte";
 	import { isPlainClick } from "$lib/util/plain-click";
 
@@ -45,6 +46,15 @@
 		event.preventDefault();
 		void goto(`/profile/${id}`, { state: { profileOrigin: "browse" } });
 	}
+
+	function preview() {
+		openProfilePreview(id, {
+			displayName,
+			age,
+			distance,
+			mediaHash: medias?.[0]?.mediaHash ?? null,
+		});
+	}
 </script>
 
 <ProfileMiniCard
@@ -65,4 +75,5 @@
 	{nameStyle}
 	href="/profile/{id}"
 	onclick={openInPager}
+	onLongPress={preview}
 />

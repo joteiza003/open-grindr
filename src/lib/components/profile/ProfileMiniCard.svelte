@@ -9,6 +9,7 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import Frost from "$lib/components/shared/Frost.svelte";
 	import { Badge } from "$lib/components/ui/badge";
+	import { longPressHandlers } from "$lib/util/long-press";
 	import { profileMediaUrl } from "$lib/util/media";
 
 	let {
@@ -24,6 +25,7 @@
 		anonymous = false,
 		href = null,
 		onclick,
+		onLongPress,
 		class: className,
 		overlay,
 		variant = "standard",
@@ -45,6 +47,8 @@
 		anonymous?: boolean;
 		href?: string | null;
 		onclick?: (event: MouseEvent) => void;
+		/** Pulsación larga (táctil) o clic derecho (ratón). */
+		onLongPress?: () => void;
 		class?: import("svelte/elements").ClassValue;
 		overlay?: Snippet<[string | null]>;
 		variant?: "standard" | "compact" | "detailed";
@@ -56,6 +60,9 @@
 	} = $props();
 
 	const nameVisible = $derived(showName && nameStyle !== "none");
+	const longPress = $derived(
+		onLongPress ? longPressHandlers(onLongPress) : {},
+	);
 
 	let loadedMediaHash = $state<string | null>(null);
 	const photo = $derived(
@@ -153,7 +160,8 @@
 						<DisplayName name={displayName} />
 					</span>
 					{#if showAge && age !== null}
-						,&nbsp;<span class="block shrink-0 truncate">{age}</span>
+						,&nbsp;<span class="block shrink-0 truncate">{age}</span
+						>
 					{/if}
 				</span>
 			{:else if nameVisible}
@@ -232,9 +240,10 @@
 	<a
 		{href}
 		{onclick}
+		{...longPress}
 		aria-label={anonymous ? "Profile" : undefined}
 		class={[
-			"@container group profile-card relative flex aspect-square items-end overflow-hidden",
+			"group profile-card @container relative flex aspect-square items-end overflow-hidden",
 			`profile-card-${variant}`,
 			className,
 		]}
@@ -244,7 +253,7 @@
 {:else}
 	<div
 		class={[
-			"@container group profile-card relative flex aspect-square items-end overflow-hidden",
+			"group profile-card @container relative flex aspect-square items-end overflow-hidden",
 			`profile-card-${variant}`,
 			className,
 		]}

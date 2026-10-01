@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import CommandCenterTrigger from "$lib/components/command-center/CommandCenterTrigger.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
+	import { savedFilters } from "$lib/grid/saved-filters-state.svelte";
 	import { topChrome } from "$lib/util/screen-chrome.svelte";
 	import GridFilters from "../GridFilters.svelte";
 	import LocationChange from "../LocationChange.svelte";
@@ -8,6 +10,13 @@
 	import QuickFilters from "./QuickFilters.svelte";
 
 	let openFilters = $state({ all: false, age: false, position: false });
+
+	// Cuenta lo nuevo de los filtros guardados al abrir la rejilla (como mucho
+	// una vez cada 15 minutos; nunca en segundo plano).
+	$effect(() => {
+		const geohash = preferencesSnapshot().geohash;
+		if (geohash) void savedFilters.check({ geohash });
+	});
 </script>
 
 <ProgressiveBlur

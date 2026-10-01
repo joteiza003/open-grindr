@@ -1,0 +1,66 @@
+import type { enFeatures } from "./en.features";
+
+// Textos de las funciones de uso, vista previa, filtros guardados y álbumes.
+export const esFeatures: Record<keyof typeof enFeatures, string> = {
+	"browse.tinder.undo": "Deshacer",
+	"browse.tinder.undoFailed": "No se pudo deshacer",
+	"preview.menu": "Vista previa",
+	"preview.description": "Vista previa",
+	"preview.photos": "Fotos",
+	"preview.photoN": "Foto {n}",
+	"preview.failed": "No se pudo cargar este perfil.",
+	"preview.open": "Abrir perfil",
+	"savedFilters.title": "Filtros guardados",
+	"savedFilters.description":
+		"Guarda una búsqueda y ve de un vistazo cuánta gente nueva encaja.",
+	"savedFilters.empty":
+		"Aún no tienes filtros guardados. Activa algunos filtros y guárdalos aquí.",
+	"savedFilters.pending": "Comprobando por primera vez…",
+	"savedFilters.new": "{n} nuevos",
+	"savedFilters.none": "Nada nuevo",
+	"savedFilters.delete": "Eliminar {name}",
+	"savedFilters.checkNote":
+		"Lo nuevo se cuenta al abrir la cuadrícula, como mucho cada 15 minutos. No se ejecuta nada en segundo plano.",
+	"savedFilters.namePlaceholder": "Nombre para los filtros actuales",
+	"savedFilters.saveCurrent": "Guardar filtros actuales",
+	"savedFilters.noActive": "Activa al menos un filtro para poder guardarlo.",
+	"savedFilters.failed": "No se pudieron actualizar los filtros guardados",
+	"savedFilters.buttonNew": "Filtros guardados, {n} nuevos",
+	"savedFilters.problem.emptyName": "Ponle un nombre al filtro.",
+	"savedFilters.problem.tooMany": "Puedes guardar hasta {max} filtros.",
+	"savedFilters.problem.duplicate": "Ya tienes un filtro con ese nombre.",
+	"albums.expiry.label": "El acceso caduca",
+	"albums.expiry.hint":
+		"Se aplica a los álbumes que compartas desde ahora. Puedes dejar de compartir cuando quieras.",
+	"albums.expiry.INDEFINITE": "Nunca",
+	"albums.expiry.ONE_DAY": "1 día",
+	"albums.expiry.ONE_HOUR": "1 hora",
+	"albums.expiry.TEN_MINUTES": "10 minutos",
+	"albums.expiry.ONCE": "Ver una vez",
+	"stats.title": "Mis estadísticas",
+	"stats.period": "Periodo",
+	"stats.lastDays": "Últimos {n} días",
+	"stats.empty": "Aún no hay actividad registrada",
+	"stats.emptyHint":
+		"Las estadísticas se acumulan desde ahora mientras chateas y exploras. Empiezan vacías.",
+	"stats.messages": "Mensajes",
+	"stats.sent": "Mensajes enviados",
+	"stats.received": "Mensajes recibidos",
+	"stats.started": "Chats que empezaste",
+	"stats.replyRate": "Tasa de respuesta",
+	"stats.replyTime": "Tiempo típico de respuesta",
+	"stats.activeTime": "Tiempo en la app",
+	"stats.sessions": "{n} sesiones",
+	"stats.hours": "Horas de más actividad",
+	"stats.hoursChart": "Mensajes por hora del día",
+	"stats.busiest": "Eres más activo sobre las {hour}.",
+	"stats.carrousel": "Carrusel",
+	"stats.carrouselNone": "Sin decisiones en el carrusel en este periodo.",
+	"stats.privacy":
+		"Estas estadísticas se calculan y guardan solo en este dispositivo. No se envían a ningún sitio y se borran al cerrar sesión.",
+	"stats.clear": "Borrar mis estadísticas",
+	"stats.clearTitle": "¿Borrar tus estadísticas?",
+	"stats.clearBody":
+		"Se borra la actividad registrada en este dispositivo. No se puede deshacer.",
+	"stats.clearFailed": "No se pudieron borrar las estadísticas",
+};

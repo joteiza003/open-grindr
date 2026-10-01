@@ -3,6 +3,7 @@
 	import {
 		BellIcon,
 		BellSimpleSlashIcon,
+		EyeIcon,
 		PushPinIcon,
 		PushPinSlashIcon,
 		TrashIcon,
@@ -10,6 +11,7 @@
 
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import FavoriteStar from "$lib/components/profile/FavoriteStar.svelte";
+	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
 	import ProfileItem from "$lib/components/profile/ProfileItem.svelte";
 	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
 	import SelectionCheck from "$lib/components/shared/SelectionCheck.svelte";
@@ -48,6 +50,14 @@
 
 	let contextMenuUsed = $state(false);
 	let pressedByTouch = false;
+
+	function previewParticipant() {
+		if (!participant) return;
+		openProfilePreview(participant.profileId, {
+			distance: participant.distanceMetres ?? null,
+			mediaHash: participant.primaryMediaHash ?? null,
+		});
+	}
 
 	function togglePinned() {
 		void conversations.setPinned({
@@ -182,6 +192,13 @@
 		</ContextMenu.Trigger>
 		{#if contextMenuUsed}
 			<ContextMenu.Content class="w-48">
+				{#if participant}
+					<ContextMenu.Item onSelect={previewParticipant}>
+						<EyeIcon weight="fill" class="size-5" />
+						{t("preview.menu")}
+					</ContextMenu.Item>
+					<ContextMenu.Separator />
+				{/if}
 				<ContextMenu.Item onSelect={togglePinned}>
 					{#if conversation.data.pinned}
 						<PushPinSlashIcon weight="fill" class="size-5" />
