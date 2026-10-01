@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { BookmarkSimpleIcon, SlidersHorizontalIcon } from "phosphor-svelte";
 
+	import FavoriteListFilterChip from "$lib/components/favorites/FavoriteListFilterChip.svelte";
 	import QuickFilterButton from "$lib/components/filters/QuickFilterButton.svelte";
 	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
@@ -126,6 +127,7 @@
 	</ToggleGroup.Item>
 </ToggleGroup.Root>
 
+<FavoriteListFilterChip />
 <SavedFilters bind:open={savedOpen} {activeCount} />
 <AgeQuickFilter bind:open={openFilters.age} />
 <PositionQuickFilter bind:open={openFilters.position} />

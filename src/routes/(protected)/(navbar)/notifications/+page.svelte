@@ -6,6 +6,7 @@
 	import {
 		hydratePreferences,
 		preferencesSnapshot,
+		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
 	import { getOrCreateConversationsState } from "$lib/chat/conversations-context.svelte";
 	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
@@ -17,7 +18,12 @@
 	import { normalizeNotificationModules } from "$lib/model/notification-modules";
 	import { computeUsageStats } from "$lib/stats/compute";
 	import { usageEvents } from "$lib/stats/event-log";
-	import { formatPercent } from "$lib/stats/format";
+	import { formatHour, formatPercent } from "$lib/stats/format";
+	import {
+		mondayKey,
+		shouldShowWeekly,
+		topConversation,
+	} from "$lib/stats/weekly";
 	import type { UsageEvent } from "$lib/stats/events";
 
 	let { data }: { data: { ourProfileId: number } } = $props();
@@ -55,6 +61,31 @@
 			? null
 			: computeUsageStats(events, { now: Date.now(), days: 7 }),
 	);
+
+	// Resumen de los lunes: se enseña una vez por semana hasta que se oculta.
+	const showWeeklyCard = $derived(
+		weekly !== null &&
+			shouldShowWeekly({
+				now: new Date(),
+				dismissedWeek: preferencesSnapshot().weeklyDismissedWeek,
+				hasData: weekly.hasData,
+			}),
+	);
+	const topChat = $derived.by(() => {
+		if (events === null) return null;
+		const top = topConversation(events, { now: Date.now(), days: 7 });
+		if (top === null) return null;
+		const entry = conversations.entries.find(
+			(item) => item.data.conversationId === top.conversationId,
+		);
+		return { name: entry?.data.name ?? null, sent: top.sent };
+	});
+
+	function dismissWeekly() {
+		setPreferences({ weeklyDismissedWeek: mondayKey(new Date()) }).catch(
+			console.error,
+		);
+	}
 
 	async function openSavedFilter(id: string) {
 		const saved = savedFilters.items.find((item) => item.id === id);
@@ -102,6 +133,64 @@
 							<SlidersHorizontalIcon />
 						</Button>
 					</header>
+
+					{#if showWeeklyCard && weekly}
+						<section
+							class="flex flex-col gap-2 rounded-2xl border border-primary/40 bg-primary/5 p-3"
+							data-slot="weekly-summary"
+						>
+							<div
+								class="flex items-center justify-between gap-2"
+							>
+								<h2 class="text-sm font-semibold">
+									{t("weekly.title")}
+								</h2>
+								<Button
+									variant="ghost"
+									size="sm"
+									onclick={dismissWeekly}
+								>
+									{t("weekly.dismiss")}
+								</Button>
+							</div>
+							<ul class="flex flex-col gap-1 text-sm">
+								<li>
+									{t("weekly.messages", {
+										sent: weekly.sent,
+										received: weekly.received,
+									})}
+								</li>
+								{#if weekly.replyRate !== null}
+									<li>
+										{t("weekly.replyRate", {
+											rate: formatPercent(
+												weekly.replyRate,
+											),
+										})}
+									</li>
+								{/if}
+								{#if topChat}
+									<li>
+										{t("weekly.topChat", {
+											name:
+												topChat.name ??
+												t("search.unknownChat"),
+											n: topChat.sent,
+										})}
+									</li>
+								{/if}
+								{#if weekly.busiestHour !== null}
+									<li>
+										{t("stats.busiest", {
+											hour: formatHour(
+												weekly.busiestHour,
+											),
+										})}
+									</li>
+								{/if}
+							</ul>
+						</section>
+					{/if}
 
 					{#each modules as module (module)}
 						{#if module === "unanswered"}

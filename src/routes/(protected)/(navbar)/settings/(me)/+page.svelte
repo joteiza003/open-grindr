@@ -7,13 +7,16 @@
 	import AppSettingsLink from "./AppSettingsLink.svelte";
 	import DiscreetModeSetting from "./DiscreetModeSetting.svelte";
 	import MapLink from "./MapLink.svelte";
+	import ListsLink from "./ListsLink.svelte";
 	import NavigationLink from "./NavigationLink.svelte";
 	import PhrasesLink from "./PhrasesLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
 	import SavedAlbumsLink from "./SavedAlbumsLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
 	import Socials from "./Socials.svelte";
+	import SilencesLink from "./SilencesLink.svelte";
 	import StatsLink from "./StatsLink.svelte";
+	import WhatsNewLink from "./WhatsNewLink.svelte";
 	import TranslationLink from "./TranslationLink.svelte";
 
 	const { data }: import("./$types").PageProps = $props();
@@ -36,6 +39,9 @@
 					<MapLink />
 					<SavedAlbumsLink />
 					<NavigationLink />
+					<ListsLink />
+					<SilencesLink />
+					<WhatsNewLink />
 					<PhrasesLink />
 					<StatsLink />
 					<TranslationLink />

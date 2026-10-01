@@ -5,9 +5,16 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as Avatar from "$lib/components/ui/avatar";
 	import * as Card from "$lib/components/ui/card";
+	import { typing } from "$lib/chat/typing-state.svelte";
+	import { t } from "$lib/i18n";
 	import type { ConversationProfile } from "../conversation-state.svelte";
 
-	let { profile }: { profile: ConversationProfile } = $props();
+	let {
+		profile,
+		conversationId,
+	}: { profile: ConversationProfile; conversationId: string } = $props();
+
+	const isTyping = $derived(typing.isTyping(conversationId));
 </script>
 
 <a href="/profile/{profile.profileId}" class="flex-1 py-4 ps-0 pe-4">
@@ -29,7 +36,14 @@
 				<ProfileStatusIndicator onlineUntil={profile.onlineUntil} />
 				<DisplayName name={profile.name} class="truncate" />
 			</Card.Title>
-			{#if profile.distance === null}
+			{#if isTyping}
+				<Card.Description
+					data-slot="typing-indicator"
+					class="truncate font-medium text-primary"
+				>
+					{t("chat.typing")}
+				</Card.Description>
+			{:else if profile.distance === null}
 				<Card.Description class="truncate"
 					>Distance unknown</Card.Description
 				>

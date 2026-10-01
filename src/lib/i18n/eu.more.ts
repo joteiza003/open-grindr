@@ -71,7 +71,8 @@ export const euMore: Record<keyof typeof enMore, string> = {
 	"navSettings.title": "Nabigazio-barra",
 	"navSettings.tabs": "Fitxak",
 	"navSettings.tabsHint":
-		"Aukeratu zein fitxa ikusten diren eta zein ordenatan. Gutxienez {min} ikusgai egon behar dira.",
+		"Aukeratu zein fitxa ikusten diren eta zein ordenatan: {min} eta {max} artean. Barra finkoa da; izenburuentzat lekurik ez dagoenean ikonoak soilik erakusten ditu.",
+	"nav.map": "Mapa",
 	"navSettings.moveUp": "Igo {name}",
 	"navSettings.moveDown": "Jaitsi {name}",
 	"navSettings.reset": "Berrezarri fitxa lehenetsiak",

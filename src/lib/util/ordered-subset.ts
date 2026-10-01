@@ -9,11 +9,13 @@ export function normalizeSubset<T extends string>({
 	items,
 	allowed,
 	min,
+	max = Number.POSITIVE_INFINITY,
 	fallback,
 }: {
 	items: readonly unknown[];
 	allowed: readonly T[];
 	min: number;
+	max?: number;
 	fallback: readonly T[];
 }): T[] {
 	const valid = new Set<T>();
@@ -25,7 +27,7 @@ export function normalizeSubset<T extends string>({
 			valid.add(item as T);
 		}
 	}
-	return valid.size >= min ? [...valid] : [...fallback];
+	return valid.size >= min ? [...valid].slice(0, max) : [...fallback];
 }
 
 /** Todos los elementos: primero los visibles (en su orden) y luego los ocultos. */
@@ -54,11 +56,17 @@ export function moveItem<T>(list: readonly T[], item: T, delta: -1 | 1): T[] {
 }
 
 /** Muestra (al final) u oculta un elemento; ocultar no baja del mínimo. */
-export function toggleItem<T>(list: readonly T[], item: T, min: number): T[] {
+export function toggleItem<T>(
+	list: readonly T[],
+	item: T,
+	min: number,
+	max = Number.POSITIVE_INFINITY,
+): T[] {
 	if (list.includes(item)) {
 		return list.length <= min
 			? [...list]
 			: list.filter((entry) => entry !== item);
 	}
-	return [...list, item];
+	// Mostrar uno más no pasa del máximo.
+	return list.length >= max ? [...list] : [...list, item];
 }

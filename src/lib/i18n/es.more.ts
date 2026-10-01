@@ -74,7 +74,8 @@ export const esMore: Record<keyof typeof enMore, string> = {
 	"navSettings.title": "Barra de navegación",
 	"navSettings.tabs": "Pestañas",
 	"navSettings.tabsHint":
-		"Elige qué pestañas se ven y en qué orden. Deben quedar al menos {min} visibles.",
+		"Elige qué pestañas se ven y en qué orden: entre {min} y {max}. La barra es fija; si no hay sitio para los títulos, muestra solo los iconos.",
+	"nav.map": "Mapa",
 	"navSettings.moveUp": "Subir {name}",
 	"navSettings.moveDown": "Bajar {name}",
 	"navSettings.reset": "Restaurar pestañas por defecto",

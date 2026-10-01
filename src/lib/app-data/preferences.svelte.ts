@@ -26,6 +26,12 @@ import {
 	DEFAULT_NOTIFICATION_MODULES,
 	normalizeNotificationModules,
 } from "$lib/model/notification-modules";
+import { starredMessageSchema, MAX_STARRED } from "$lib/chat/starred";
+import { favoriteListSchema, MAX_FAVORITE_LISTS } from "$lib/favorites/lists";
+import {
+	MAX_SILENCES,
+	silenceEntrySchema,
+} from "$lib/safety/temporary-silence";
 import { unitSystemSchema } from "$lib/util/units";
 import {
 	existsAppDataFile,
@@ -67,6 +73,30 @@ const preferencesSchema = z.object({
 		.default([...DEFAULT_NOTIFICATION_MODULES])
 		.transform(normalizeNotificationModules)
 		.catch([...DEFAULT_NOTIFICATION_MODULES]),
+	// Silencios y ocultaciones temporales de perfiles, con su caducidad.
+	temporarySilences: z
+		.array(silenceEntrySchema)
+		.max(MAX_SILENCES)
+		.default([])
+		.catch([]),
+	// Listas propias de favoritos (solo en este dispositivo).
+	favoriteLists: z
+		.array(favoriteListSchema)
+		.max(MAX_FAVORITE_LISTS)
+		.default([])
+		.catch([]),
+	// Lunes (AAAA-MM-DD) del último resumen semanal que se ocultó.
+	weeklyDismissedWeek: z.string().default(""),
+	// Mensajes destacados (referencias locales, con un trozo del texto).
+	starredMessages: z
+		.array(starredMessageSchema)
+		.max(MAX_STARRED)
+		.default([])
+		.catch([]),
+	// Conversaciones donde se activaron las estadísticas del chat.
+	chatStatsEnabled: z.array(z.string()).max(500).default([]).catch([]),
+	// Última tanda de novedades que ya se enseñó (vacío = ninguna).
+	whatsNewSeen: z.string().default(""),
 	// Modo una mano: la barra de controles de la cuadrícula baja al pulgar.
 	oneHandMode: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
@@ -336,6 +366,10 @@ const accountPreferenceKeys = [
 	"gridSearchFilters",
 	"notificationsEnabled",
 	"savedFilters",
+	"temporarySilences",
+	"favoriteLists",
+	"starredMessages",
+	"chatStatsEnabled",
 ] as const;
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

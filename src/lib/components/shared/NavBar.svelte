@@ -7,6 +7,7 @@
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
 	import LightningIcon from "phosphor-svelte/lib/LightningIcon";
+	import MapTrifoldIcon from "phosphor-svelte/lib/MapTrifoldIcon";
 	import { untrack } from "svelte";
 	import type { Component } from "svelte";
 
@@ -17,6 +18,7 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Badge } from "$lib/components/ui/badge";
+	import { navBadge } from "./nav-badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
 	import { savedFilters } from "$lib/grid/saved-filters-state.svelte";
 	import { t } from "$lib/i18n";
@@ -44,13 +46,19 @@
 	// Hay novedades en Notificaciones: chats sin leer o filtros guardados con gente nueva.
 	const hasNews = $derived(hasUnread || savedFilters.totalNew > 0);
 
+	// Conversaciones con mensajes sin leer, para el número de la insignia.
+	const unreadChats = $derived(
+		conversations.entries.filter((entry) => entry.data.unreadCount > 0)
+			.length,
+	);
+
 	type TabDefinition = {
 		href: string;
 		landsOn?: string;
 		isActive: (routeId: string | null) => boolean;
 		icon: Component<{ weight?: "fill" }>;
 		label: () => string;
-		badge?: () => boolean;
+		badge?: () => ReturnType<typeof navBadge>;
 	};
 
 	const tabs: Record<NavTabId, TabDefinition> = {
@@ -79,26 +87,47 @@
 				id?.startsWith("/(protected)/(navbar)/interest") ?? false,
 			icon: FireIcon,
 			label: () => t("nav.interest"),
-			badge: () => hasUnseenTaps,
+			// De los toques solo se sabe si hay alguno sin ver: punto, sin número.
+			badge: () => navBadge({ count: 0, pending: hasUnseenTaps }),
 		},
 		chat: {
 			href: "/chat",
 			isActive: (id) => id === "/(protected)/chat",
 			icon: ChatCircleIcon,
 			label: () => t("nav.inbox"),
-			badge: () => hasUnread,
+			badge: () => navBadge({ count: unreadChats, pending: hasUnread }),
+		},
+		map: {
+			href: "/map",
+			// El mapa es una pantalla completa con su propia cabecera: no muestra la barra.
+			isActive: () => false,
+			icon: MapTrifoldIcon,
+			label: () => t("nav.map"),
 		},
 		notifications: {
 			href: "/notifications",
 			isActive: (id) => id === "/(protected)/(navbar)/notifications",
 			icon: BellIcon,
 			label: () => t("nav.notifications"),
-			badge: () => hasNews,
+			badge: () =>
+				navBadge({
+					count: unreadChats + savedFilters.totalNew,
+					pending: hasNews,
+				}),
 		},
 	};
 
 	const visibleTabs = $derived(
 		normalizeNavTabs(preferencesSnapshot().navTabs),
+	);
+
+	// La barra es fija y no se desplaza: si cada botón tiene sitio para su
+	// título se muestra; si no, quedan solo los iconos.
+	const MIN_LABEL_WIDTH_PX = 76;
+	let islandWidth = $state(0);
+	const showLabels = $derived(
+		islandWidth === 0 ||
+			islandWidth / visibleTabs.length >= MIN_LABEL_WIDTH_PX,
 	);
 
 	function tabNavigation({
@@ -131,35 +160,53 @@
 	aria-label="Main"
 	class="app-nav fixed bottom-0 z-50 w-full pt-2 pb-fixed-nav"
 	bgClass="bg-linear-to-t from-background to-transparent"
-	contentClass="flex gap-2 overflow-auto no-scrollbar px-1 *:first:ms-auto *:last:me-auto"
-	contentScrollIntent="x"
+	contentClass="flex items-center gap-2 px-2"
 	{@attach bottomChrome}
 >
 	<div
 		class={[
 			tabsListVariants({ variant: "default" }),
-			"app-nav-island links shrink-0 [&>a>svg]:size-5!",
+			"app-nav-island links mx-auto max-w-xl min-w-0 flex-1 [&>a>svg]:size-5!",
 		]}
+		bind:clientWidth={islandWidth}
 	>
 		{#each visibleTabs as id (id)}
 			{@const tab = tabs[id]}
 			{@const active = tab.isActive(page.route.id)}
+			{@const badge = tab.badge?.() ?? null}
 			<a
 				href={tab.href}
 				aria-current={active ? "page" : undefined}
 				data-active={active}
 				data-tab={id}
+				aria-label={showLabels ? undefined : tab.label()}
+				title={showLabels ? undefined : tab.label()}
 				onclick={tabNavigation({
 					href: tab.href,
 					landsOn: tab.landsOn,
 				})}
 			>
 				<tab.icon weight="fill" />
-				{tab.label()}
-				{#if tab.badge?.()}
+				{#if showLabels}
+					<span class="max-w-full truncate">{tab.label()}</span>
+				{/if}
+				{#if badge}
 					<Badge
-						class="app-nav-badge-live absolute inset-e-2 top-1 size-2.5 rounded-full p-0"
-					/>
+						data-slot="nav-badge"
+						class={[
+							"app-nav-badge-live absolute inset-e-2 top-1 rounded-full p-0",
+							{
+								"size-2.5": badge.kind === "dot",
+								"h-4 min-w-4 px-1 text-3xs leading-none":
+									badge.kind === "number",
+							},
+						]}
+					>
+						{#if badge.kind === "number"}
+							{badge.label}
+							<span class="sr-only">{t("nav.badgeSr")}</span>
+						{/if}
+					</Badge>
 				{/if}
 			</a>
 		{/each}
@@ -195,7 +242,7 @@
 	@reference "$layout";
 
 	.links a {
-		@apply relative inline-flex h-[calc(100%-1px)] min-w-16 flex-1 flex-col items-center justify-center gap-1 rounded-full border border-transparent! px-3 py-1.5 text-overline whitespace-nowrap text-foreground/55 uppercase transition-colors duration-200 ease-out group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:bg-(--accent-soft) data-active:font-semibold data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5;
+		@apply relative inline-flex h-[calc(100%-1px)] min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-full border border-transparent! px-3 py-1.5 text-overline whitespace-nowrap text-foreground/55 uppercase transition-colors duration-200 ease-out group-data-vertical/tabs:px-3 group-data-vertical/tabs:py-1.5 hover:bg-input/20 focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 dark:text-muted-foreground dark:hover:bg-input/20 data-active:bg-(--accent-soft) data-active:font-semibold data-active:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5;
 	}
 
 	.app-nav-profile {

@@ -11,6 +11,7 @@
 	import { Switch } from "$lib/components/ui/switch";
 	import { t } from "$lib/i18n";
 	import {
+		MAX_NAV_TABS,
 		MIN_NAV_TABS,
 		moveNavTab,
 		type NavTabId,
@@ -40,6 +41,7 @@
 		interest: () => t("nav.interest"),
 		chat: () => t("nav.inbox"),
 		notifications: () => t("nav.notifications"),
+		map: () => t("nav.map"),
 	};
 	const moduleLabels: Record<NotificationModuleId, () => string> = {
 		unanswered: () => t("notifications.unread"),
@@ -60,7 +62,10 @@
 		<section class="flex flex-col gap-2" data-slot="nav-tabs-setting">
 			<h2 class="text-sm font-semibold">{t("navSettings.tabs")}</h2>
 			<p class="text-xs text-muted-foreground">
-				{t("navSettings.tabsHint", { min: MIN_NAV_TABS })}
+				{t("navSettings.tabsHint", {
+					min: MIN_NAV_TABS,
+					max: MAX_NAV_TABS,
+				})}
 			</p>
 			<ul class="flex flex-col gap-1.5">
 				{#each orderedNavTabs(tabs) as entry, index (entry.id)}
@@ -109,7 +114,9 @@
 						<Switch
 							checked={entry.visible}
 							disabled={!preferencesLoaded() ||
-								(entry.visible && tabs.length <= MIN_NAV_TABS)}
+								(entry.visible &&
+									tabs.length <= MIN_NAV_TABS) ||
+								(!entry.visible && tabs.length >= MAX_NAV_TABS)}
 							aria-label={tabLabels[entry.id]()}
 							onCheckedChange={() =>
 								save({ navTabs: toggleNavTab(tabs, entry.id) })}

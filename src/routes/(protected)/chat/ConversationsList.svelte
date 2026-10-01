@@ -3,6 +3,7 @@
 	import { page } from "$app/state";
 	import { onDestroy, tick } from "svelte";
 
+	import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
@@ -64,6 +65,15 @@
 			container.scrollTop = Math.max(0, scrollBefore + delta);
 		}
 	}
+
+	// Con una lista de favoritos elegida solo se ven los chats de sus miembros.
+	const shownEntries = $derived.by(() => {
+		const allowed = favoriteListFilter.allowedIds();
+		if (allowed === null) return conversations.entries;
+		return conversations.entries.filter((entry) =>
+			entry.data.participants.some((p) => allowed.has(p.profileId)),
+		);
+	});
 
 	const selectedEntries = $derived(
 		conversations.entries.filter((entry) =>
@@ -175,9 +185,7 @@
 		data-fixed-header
 		data-slot="conversations-header"
 	>
-		<div
-			class="flex flex-1 items-center gap-0.5 rounded-md bg-inset p-0.5"
-		>
+		<div class="flex flex-1 items-center gap-0.5 rounded-md bg-inset p-0.5">
 			<button
 				type="button"
 				class={[
@@ -197,7 +205,8 @@
 				class={[
 					"flex-1 rounded-sm px-3 py-1.5 text-label font-medium transition-colors",
 					{
-						"bg-surface text-foreground shadow-e1": tab === "albums",
+						"bg-surface text-foreground shadow-e1":
+							tab === "albums",
 						"text-secondary": tab !== "albums",
 					},
 				]}
@@ -245,7 +254,7 @@
 					<div
 						class="flex min-h-overscrollable shrink-0 flex-col gap-0 pb-nav-clear"
 					>
-						{#each conversations.entries as conversation, i (conversation.data.conversationId)}
+						{#each shownEntries as conversation, i (conversation.data.conversationId)}
 							{@const conversationId =
 								conversation.data.conversationId}
 							<LazyConversation

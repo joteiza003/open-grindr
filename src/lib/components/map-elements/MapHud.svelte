@@ -84,7 +84,7 @@
 			<Button
 				variant="ghost"
 				size="icon"
-				class="size-8 shrink-0 rounded-full"
+				class="size-8 shrink-0 rounded-full text-foreground"
 				aria-label={t("map.cancelAria")}
 				onclick={() => overlays.cancelCreation()}
 			>
@@ -127,7 +127,7 @@
 				<Button
 					variant="ghost"
 					size="icon"
-					class="size-8 rounded-full"
+					class="size-8 rounded-full text-foreground"
 					aria-label={t("map.closeCluster")}
 					onclick={() => (openCluster = null)}
 				>
@@ -180,7 +180,7 @@
 				<Button
 					variant="ghost"
 					size="icon"
-					class="size-8 rounded-full"
+					class="size-8 rounded-full text-foreground"
 					aria-label={t("common.close")}
 					onclick={() => (listOpen = false)}
 				>

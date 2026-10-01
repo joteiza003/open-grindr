@@ -21,7 +21,9 @@
 	import MediaImage from "$lib/components/shared/MediaImage.svelte";
 	import { Button } from "$lib/components/ui/button";
 	import { withFirst } from "$lib/grid/deck-history";
+	import { cardMotion } from "$lib/grid/deck-motion";
 	import { DeckUndo } from "$lib/grid/deck-undo.svelte";
+	import { DeckZoom } from "$lib/grid/deck-zoom.svelte";
 	import { greetProfile } from "$lib/grid/greet";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import {
@@ -53,6 +55,8 @@
 	const orderKeys = new Map<number, number>();
 	let skipped = $state<ReadonlySet<number>>(new Set());
 	const deckUndo = new DeckUndo();
+	const zoom = new DeckZoom();
+	let openTimer: ReturnType<typeof setTimeout> | null = null;
 
 	const candidates = $derived(
 		withFirst(
@@ -112,38 +116,7 @@
 	let startY = 0;
 	let moved = false;
 
-	const rotation = $derived(
-		leaving === "right"
-			? 18
-			: leaving === "left"
-				? -18
-				: leaving === "up"
-					? 0
-					: Math.max(-14, Math.min(14, dx / 14)),
-	);
-	const offset = $derived(
-		leaving === "right"
-			? 600
-			: leaving === "left"
-				? -600
-				: leaving === "up"
-					? 0
-					: dx,
-	);
-	const offsetY = $derived(
-		leaving === "up" ? -700 : leaving === null ? dy : 0,
-	);
-	// Un gesto es "arriba" si domina el movimiento vertical hacia arriba.
-	const upwards = $derived(dy < 0 && -dy > Math.abs(dx));
-	const acceptOpacity = $derived(
-		upwards ? 0 : Math.max(0, Math.min(1, dx / 90)),
-	);
-	const rejectOpacity = $derived(
-		upwards ? 0 : Math.max(0, Math.min(1, -dx / 90)),
-	);
-	const skipOpacity = $derived(
-		upwards ? Math.max(0, Math.min(1, -dy / 90)) : 0,
-	);
+	const motion = $derived(cardMotion({ dx, dy, leaving }));
 
 	function reset() {
 		leaving = null;
@@ -227,10 +200,17 @@
 	$effect(() => {
 		void current?.id;
 		reset();
+		zoom.reset();
 	});
 
 	function onPointerDown(event: PointerEvent) {
 		if (busy || event.button > 0) return;
+		// Ampliada, o con dos dedos, la foto se mueve y la tarjeta no se desliza.
+		if (zoom.down(event)) {
+			dragging = false;
+			moved = true;
+			return;
+		}
 		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
 		dragging = true;
 		moved = false;
@@ -239,6 +219,13 @@
 	}
 
 	function onPointerMove(event: PointerEvent) {
+		if (zoom.move(event)) {
+			dragging = false;
+			dx = 0;
+			dy = 0;
+			moved = true;
+			return;
+		}
 		if (!dragging) return;
 		dx = event.clientX - startX;
 		// Hacia abajo no hay acción: la tarjeta solo sigue el gesto hacia arriba.
@@ -246,10 +233,15 @@
 		if (Math.abs(dx) > 6 || Math.abs(dy) > 6) moved = true;
 	}
 
-	function onPointerUp() {
+	function onPointerUp(event: PointerEvent) {
+		if (zoom.up(event)) {
+			dragging = false;
+			return;
+		}
 		if (!dragging) return;
 		dragging = false;
-		if (upwards && -dy > SWIPE_THRESHOLD_PX) void decide("skip", "swipe");
+		if (motion.upwards && -dy > SWIPE_THRESHOLD_PX)
+			void decide("skip", "swipe");
 		else if (dx > SWIPE_THRESHOLD_PX) void decide("like");
 		else if (dx < -SWIPE_THRESHOLD_PX) void decide("reject");
 		else {
@@ -258,11 +250,22 @@
 		}
 	}
 
+	// El toque abre el perfil tras una pausa: si llega un segundo toque es un
+	// doble toque y amplía la foto en vez de abrirlo.
 	function openProfile() {
-		if (moved || !current) return;
-		void goto(`/profile/${current.id}`, {
-			state: { profileOrigin: "browse" },
-		});
+		if (moved || !current || zoom.active) return;
+		const id = current.id;
+		if (openTimer !== null) clearTimeout(openTimer);
+		openTimer = setTimeout(() => {
+			openTimer = null;
+			void goto(`/profile/${id}`, { state: { profileOrigin: "browse" } });
+		}, 260);
+	}
+
+	function onDoubleClick() {
+		if (openTimer !== null) clearTimeout(openTimer);
+		openTimer = null;
+		zoom.toggle();
 	}
 
 	function onKeydown(event: KeyboardEvent) {
@@ -384,7 +387,8 @@
 						t("browse.tinder.openProfile")}
 					data-slot="tinder-card"
 					class="relative aspect-3/4 max-h-full w-full max-w-sm touch-none overflow-hidden rounded-3xl bg-muted shadow-xl outline-none select-none"
-					style:transform="translate({offset}px, {offsetY}px) rotate({rotation}deg)"
+					style:transform="translate({motion.x}px, {motion.y}px)
+					rotate({motion.rotation}deg)"
 					style:transition={dragging
 						? "none"
 						: leaving
@@ -395,20 +399,31 @@
 					onpointerup={onPointerUp}
 					onpointercancel={onPointerUp}
 					onclick={openProfile}
+					ondblclick={onDoubleClick}
 					onkeydown={onKeydown}
 				>
 					{#if current.profilePhotosHashes?.[0]}
-						<MediaImage
-							src={profileMediaUrl({
-								mediaHash: current.profilePhotosHashes[0],
-								size: "full",
-							})}
+						<div
 							class="size-full"
-							imgClass="object-cover"
-							tone="photo"
-							size="xl"
-							loading="eager"
-						/>
+							data-slot="tinder-zoom"
+							style:transform="translate({zoom.x}px, {zoom.y}px)
+							scale({zoom.scale})"
+							style:transition={zoom.active
+								? "none"
+								: "transform 200ms var(--ease-standard)"}
+						>
+							<MediaImage
+								src={profileMediaUrl({
+									mediaHash: current.profilePhotosHashes[0],
+									size: "full",
+								})}
+								class="size-full"
+								imgClass="object-cover"
+								tone="photo"
+								size="xl"
+								loading="eager"
+							/>
+						</div>
 					{:else}
 						<div class="flex size-full items-center justify-center">
 							<UserSilhouette
@@ -444,21 +459,21 @@
 					</div>
 					<span
 						class="pointer-events-none absolute start-4 top-4 -rotate-12 rounded-lg border-4 border-emerald-400 px-2 py-0.5 text-2xl font-black text-emerald-400"
-						style:opacity={acceptOpacity}
+						style:opacity={motion.acceptOpacity}
 						aria-hidden="true"
 					>
 						{t("browse.tinder.like").toUpperCase()}
 					</span>
 					<span
 						class="pointer-events-none absolute end-4 top-4 rotate-12 rounded-lg border-4 border-red-500 px-2 py-0.5 text-2xl font-black text-red-500"
-						style:opacity={rejectOpacity}
+						style:opacity={motion.rejectOpacity}
 						aria-hidden="true"
 					>
 						{t("browse.tinder.reject").toUpperCase()}
 					</span>
 					<span
 						class="pointer-events-none absolute inset-x-0 top-4 mx-auto w-fit rounded-lg border-4 border-slate-300 px-2 py-0.5 text-2xl font-black text-slate-300"
-						style:opacity={skipOpacity}
+						style:opacity={motion.skipOpacity}
 						aria-hidden="true"
 					>
 						{t("browse.tinder.skip").toUpperCase()}

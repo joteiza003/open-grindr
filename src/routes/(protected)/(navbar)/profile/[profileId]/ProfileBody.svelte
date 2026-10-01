@@ -32,6 +32,7 @@
 	import ProfileNoteButton from "./profile-note/ProfileNoteButton.svelte";
 	import type { ProfileState } from "./profile-state.svelte";
 	import ProfileSection from "./ProfileSection.svelte";
+	import ProfileQuickActions from "./ProfileQuickActions.svelte";
 	import ProfileSummary from "./ProfileSummary.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
 	import TriangulateButton from "./TriangulateButton.svelte";
@@ -93,6 +94,12 @@
 			{ "pb-24": ourProfile, "pb-40": !ourProfile },
 		]}
 	>
+		{#if !ourProfile}
+			<ProfileQuickActions
+				{profileState}
+				blockable={profile.isBlockable !== false}
+			/>
+		{/if}
 		<ProfileSummary
 			age={profile.age}
 			showAge={profile.showAge}

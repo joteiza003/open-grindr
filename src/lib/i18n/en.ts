@@ -1,5 +1,6 @@
 import { enFeatures } from "./en.features";
 import { enMore } from "./en.more";
+import { enExtra } from "./en.extra";
 
 export const en = {
 	"nav.browse": "Browse",
@@ -563,6 +564,7 @@ export const en = {
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 	...enFeatures,
 	...enMore,
+	...enExtra,
 } as const;
 
 export type MessageKey = keyof typeof en;

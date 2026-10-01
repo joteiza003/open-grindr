@@ -336,7 +336,9 @@
 		</div>
 	</header>
 
-	<div class="relative min-h-0 flex-1">
+	<!-- `isolate` encierra los z-index de Leaflet y del HUD (hasta 1000): sin
+	     esto quedan por encima de los diálogos (z-50) y tapan sus botones. -->
+	<div class="relative isolate min-h-0 flex-1">
 		<div class="h-full w-full">
 			<Map
 				options={{

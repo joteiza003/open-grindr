@@ -1,5 +1,9 @@
 <script lang="ts">
-	import { ArrowLeftIcon, MagnifyingGlassIcon } from "phosphor-svelte";
+	import {
+		ArrowLeftIcon,
+		GearSixIcon,
+		MagnifyingGlassIcon,
+	} from "phosphor-svelte";
 
 	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
@@ -8,16 +12,18 @@
 	import { t } from "$lib/i18n";
 	import { topChrome } from "$lib/util/screen-chrome.svelte";
 	import ChatSearchDialog from "../../ChatSearchDialog.svelte";
+	import ChatSettingsDialog from "../ChatSettingsDialog.svelte";
 	import { getConversationState } from "../conversation-state.svelte";
 	import ConversationNavBarProfile from "./ConversationNavBarProfile.svelte";
 
 	const conversationState = $derived(getConversationState()());
 	let searchOpen = $state(false);
+	let settingsOpen = $state(false);
 </script>
 
 <ProgressiveBlur
 	direction="topToBottom"
-	class="absolute z-10 h-19 w-full shrink-0"
+	class="absolute z-20 h-19 w-full shrink-0"
 	bgClass="bg-linear-to-b max-split:from-background split:from-card to-transparent"
 	contentClass="flex items-center h-full"
 	tag="nav"
@@ -32,7 +38,10 @@
 		<ArrowLeftIcon size={32} />
 	</BackLink>
 	{#if conversationState.profile !== null}
-		<ConversationNavBarProfile profile={conversationState.profile} />
+		<ConversationNavBarProfile
+			profile={conversationState.profile}
+			conversationId={conversationState.conversationId}
+		/>
 		<Button
 			variant="ghost"
 			size="icon"
@@ -42,6 +51,19 @@
 		>
 			<MagnifyingGlassIcon size={24} />
 		</Button>
+		<Button
+			variant="ghost"
+			size="icon"
+			class="me-1 shrink-0"
+			aria-label={t("chatSettings.title")}
+			onclick={() => (settingsOpen = true)}
+		>
+			<GearSixIcon size={24} />
+		</Button>
+		<ChatSettingsDialog
+			bind:open={settingsOpen}
+			conversationId={conversationState.conversationId}
+		/>
 		<ChatSearchDialog
 			bind:open={searchOpen}
 			conversationId={conversationState.conversationId}

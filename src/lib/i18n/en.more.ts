@@ -71,7 +71,8 @@ export const enMore = {
 	"navSettings.title": "Navigation bar",
 	"navSettings.tabs": "Tabs",
 	"navSettings.tabsHint":
-		"Choose which tabs show and in what order. At least {min} must stay visible.",
+		"Choose which tabs show and in what order: between {min} and {max}. The bar is fixed; when there is no room for titles it shows only the icons.",
+	"nav.map": "Map",
 	"navSettings.moveUp": "Move {name} up",
 	"navSettings.moveDown": "Move {name} down",
 	"navSettings.reset": "Restore default tabs",

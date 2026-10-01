@@ -5,10 +5,12 @@
 	import { albumShares } from "$lib/chat/album-shares.svelte";
 	import { saveAlbumToLibrary } from "$lib/chat/archive-album";
 	import AlbumPreview from "$lib/components/album/AlbumPreview.svelte";
+	import { Button } from "$lib/components/ui/button";
 	import { t } from "$lib/i18n";
 	import type { AlbumSlide } from "$lib/components/album/album-lightbox";
 	import type { AlbumMessage } from "$lib/model/messaging/messages";
 	import { getConversationState } from "../../conversation-state.svelte";
+	import AlbumExpiryNote from "./AlbumExpiryNote.svelte";
 	import LockedMedia from "./LockedMedia.svelte";
 	import { MessageMediaState } from "./message-media.svelte";
 
@@ -30,14 +32,32 @@
 	});
 
 	let savingAlbum = false;
+	let downloading = $state(false);
 
-	async function saveAlbum(slides: AlbumSlide[]) {
+	// Se puede bajar un álbum que nos comparten y que podemos ver. Los de una sola
+	// vista no: abrirlos para guardarlos gastaría la única vista.
+	const canDownload = $derived(
+		isViewable &&
+			message.ownerProfileId !== conversationState.ourProfileId &&
+			message.expirationType !== "ONCE",
+	);
+
+	async function download() {
+		downloading = true;
+		try {
+			await saveAlbum();
+		} finally {
+			downloading = false;
+		}
+	}
+
+	async function saveAlbum(slides?: AlbumSlide[]) {
 		if (savingAlbum) return;
 		savingAlbum = true;
 		const profile = conversationState.profile;
 		try {
-			// Reuse the slides the viewer already loaded so a single-view album
-			// is never fetched twice.
+			// Con el visor abierto se reutilizan sus diapositivas para no pedir dos
+			// veces un álbum de una sola vista; sin él, se descarga el contenido.
 			await saveAlbumToLibrary({
 				body: message,
 				conversationId: conversationState.conversationId,
@@ -98,3 +118,18 @@
 		{@render media.adornments?.()}
 	</div>
 {/if}
+<div class="ms-3 flex flex-col items-start">
+	<AlbumExpiryNote {message} />
+	{#if canDownload}
+		<Button
+			variant="ghost"
+			size="sm"
+			class="mt-1 h-6 px-2 text-xs"
+			data-slot="album-download"
+			disabled={downloading}
+			onclick={() => void download()}
+		>
+			{t("album.saveToLibrary")}
+		</Button>
+	{/if}
+</div>

@@ -44,6 +44,11 @@
 			back: "/settings/app",
 		},
 		[`${base}/profile`]: { title: "Edit Profile", back: "/settings" },
+		[`${base}/lists`]: { title: () => t("lists.title"), back: "/settings" },
+		[`${base}/silences`]: {
+			title: () => t("silence.title"),
+			back: "/settings",
+		},
 		[`${base}/navigation`]: {
 			title: () => t("navSettings.title"),
 			back: "/settings",

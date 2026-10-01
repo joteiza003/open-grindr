@@ -27,18 +27,30 @@ import {
 } from "./grid-profiles";
 import { buildCascadeQuery } from "./grid-query";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
+import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
+import { temporarilyHiddenIds } from "$lib/safety/silence-state.svelte";
 import { rejectedProfileIds } from "./swipe-decisions";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onQueryChange: () => this.retry() });
 	items: GridProfile[] = $state.raw([]);
-	// Los perfiles rechazados en el modo Tinder se ocultan de toda la rejilla.
+	// Los perfiles rechazados en el modo Tinder y los ocultados temporalmente
+	// se quitan de toda la rejilla.
 	readonly profiles: GridProfile[] = $derived.by(() => {
-		const hidden = rejectedProfileIds();
+		const hidden = new Set([
+			...rejectedProfileIds(),
+			...temporarilyHiddenIds(),
+		]);
 		const all = sortGridProfilesByDistance(dedupeGridProfiles(this.items));
-		return hidden.size === 0
+		// Con una lista de favoritos elegida solo se ven sus miembros ya cargados.
+		const allowed = favoriteListFilter.allowedIds();
+		return hidden.size === 0 && allowed === null
 			? all
-			: all.filter((profile) => !hidden.has(profile.id));
+			: all.filter(
+					(profile) =>
+						!hidden.has(profile.id) &&
+						(allowed === null || allowed.has(profile.id)),
+				);
 	});
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);

@@ -188,3 +188,55 @@ describe("message actions button", () => {
 		composer.remove();
 	});
 });
+
+describe("message ticks", () => {
+	function renderOwn(isRead: boolean | null) {
+		const { container } = render(Message, {
+			props: {
+				message: apiResponseMessageSchema.parse({
+					messageId: "m2",
+					conversationId: "100001:100002",
+					senderId: 100001,
+					timestamp: 1_700_000_000_000,
+					type: "Text",
+					body: { text: "hola" },
+				}),
+				isOut: true,
+				isRead,
+				indexInStack: 0,
+				stackLength: 1,
+			},
+		});
+		return container;
+	}
+
+	it("shows two blue ticks once the other person has read it", () => {
+		const container = renderOwn(true);
+		expect(
+			container.querySelector('[data-slot="message-read"]'),
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-slot="message-sent"]'),
+		).toBeNull();
+	});
+
+	it("shows a single tick while it is only sent", () => {
+		const container = renderOwn(false);
+		expect(
+			container.querySelector('[data-slot="message-sent"]'),
+		).not.toBeNull();
+		expect(
+			container.querySelector('[data-slot="message-read"]'),
+		).toBeNull();
+	});
+
+	it("shows no ticks on messages we did not send", () => {
+		const container = renderOwn(null);
+		expect(
+			container.querySelector('[data-slot="message-sent"]'),
+		).toBeNull();
+		expect(
+			container.querySelector('[data-slot="message-read"]'),
+		).toBeNull();
+	});
+});

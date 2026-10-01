@@ -6,6 +6,7 @@
 		ChatCircleTextIcon,
 		CopyIcon,
 		FlagIcon,
+		StarIcon,
 		TrashIcon,
 		WarningCircleIcon,
 	} from "phosphor-svelte";
@@ -29,6 +30,8 @@
 		onReply,
 		onReport,
 		onReact,
+		starred = false,
+		onToggleStar,
 		...props
 	}: ComponentProps<typeof ContextMenu> & {
 		textContent?: string;
@@ -41,6 +44,8 @@
 		onReply?: () => void;
 		onReport?: () => void;
 		onReact?: (reactionId: number) => void;
+		starred?: boolean;
+		onToggleStar?: () => void;
 	} = $props();
 </script>
 
@@ -116,6 +121,18 @@
 			>
 				<ChatCircleTextIcon />
 				{t("phrases.addFromMessage")}
+			</Button>
+		{/if}
+		{#if onToggleStar}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					onToggleStar();
+					props.onClose();
+				}}
+			>
+				<StarIcon weight={starred ? "fill" : "regular"} />
+				{starred ? t("chatSettings.unstar") : t("chatSettings.star")}
 			</Button>
 		{/if}
 		{#if onCopyError}

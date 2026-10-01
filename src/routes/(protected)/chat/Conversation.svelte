@@ -10,6 +10,7 @@
 	} from "phosphor-svelte";
 
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
+	import { typing } from "$lib/chat/typing-state.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import FavoriteStar from "$lib/components/profile/FavoriteStar.svelte";
 	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
@@ -138,7 +139,14 @@
 					},
 				]}
 			>
-				{#if draft !== ""}
+				{#if typing.isTyping(conversationId)}
+					<span
+						data-slot="typing-indicator"
+						class="font-medium text-primary"
+					>
+						{t("chat.typing")}
+					</span>
+				{:else if draft !== ""}
 					<span
 						data-slot="conversation-draft-prefix"
 						class="font-bold text-primary"

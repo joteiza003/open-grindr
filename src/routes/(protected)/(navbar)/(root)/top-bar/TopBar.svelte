@@ -6,6 +6,7 @@
 	import { bottomChrome, topChrome } from "$lib/util/screen-chrome.svelte";
 	import GridFilters from "../GridFilters.svelte";
 	import LocationChange from "../LocationChange.svelte";
+	import PresenceToggle from "./PresenceToggle.svelte";
 	import BrowseViewModeToggle from "./BrowseViewModeToggle.svelte";
 	import QuickFilters from "./QuickFilters.svelte";
 
@@ -31,6 +32,7 @@
 		]}
 	>
 		<LocationChange />
+		<PresenceToggle />
 		<QuickFilters bind:openFilters />
 		<CommandCenterTrigger />
 		<BrowseViewModeToggle />

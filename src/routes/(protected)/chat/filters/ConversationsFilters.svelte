@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { MagnifyingGlassIcon, StarIcon } from "phosphor-svelte";
 
+	import FavoriteListFilterChip from "$lib/components/favorites/FavoriteListFilterChip.svelte";
 	import QuickFilterButton from "$lib/components/filters/QuickFilterButton.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Button, buttonVariants } from "$lib/components/ui/button";
@@ -54,6 +55,7 @@
 		<MagnifyingGlassIcon weight="bold" />
 	</Button>
 	<ChatSearchDialog bind:open={searchOpen} />
+	<FavoriteListFilterChip />
 	<ToggleGroup.Root
 		type="multiple"
 		variant="default"

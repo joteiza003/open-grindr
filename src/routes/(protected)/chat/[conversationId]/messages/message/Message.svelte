@@ -2,6 +2,8 @@
 	import {
 		ArrowBendUpLeftIcon,
 		CheckIcon,
+		ChecksIcon,
+		StarIcon,
 		DotsThreeIcon,
 	} from "phosphor-svelte";
 	import { untrack } from "svelte";
@@ -10,6 +12,10 @@
 
 	import { Button } from "$lib/components/ui/button";
 	import { playHaptic } from "$lib/haptics";
+	import {
+		messageIsStarred,
+		toggleStarred,
+	} from "$lib/chat/starred-state.svelte";
 	import { t } from "$lib/i18n";
 	import { phraseSourceText } from "$lib/model/messaging/frequent-phrases";
 	import { firedByTouch } from "$lib/platform/touch-origin";
@@ -238,11 +244,31 @@
 				{ "text-message-bubble-out-foreground": isOut },
 			]}
 		>
+			{#if messageIsStarred(message.messageId)}
+				<StarIcon
+					data-slot="message-starred"
+					aria-label={t("chatSettings.starredBadge")}
+					class="size-3.5 text-yellow-400"
+					weight="fill"
+				/>
+			{/if}
 			{#if isRead !== null}
 				{#if isRead}
-					<CheckIcon class="size-3.5 opacity-90" weight="bold" />
+					<!-- Leído: dos marcas azules, como WhatsApp. -->
+					<ChecksIcon
+						data-slot="message-read"
+						aria-label={t("chat.read")}
+						class="size-4 text-sky-400"
+						weight="bold"
+					/>
 				{:else}
-					<CheckIcon class="size-3.5 opacity-60" weight="bold" />
+					<!-- Enviado: una marca. La API no distingue "entregado". -->
+					<CheckIcon
+						data-slot="message-sent"
+						aria-label={t("chat.sent")}
+						class="size-3.5 opacity-60"
+						weight="bold"
+					/>
 				{/if}
 			{/if}
 			<MessageTime />
@@ -478,5 +504,18 @@
 		{onReply}
 		{onReport}
 		{onReact}
+		starred={messageIsStarred(message.messageId)}
+		onToggleStar={message.unsent ||
+		status === "pending" ||
+		status === "error"
+			? undefined
+			: () =>
+					void toggleStarred({
+						conversationId: message.conversationId,
+						messageId: message.messageId,
+						text:
+							message.type === "Text" ? message.body.text : null,
+						timestamp: message.timestamp,
+					})}
 	/>
 {/if}

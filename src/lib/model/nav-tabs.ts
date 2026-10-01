@@ -15,6 +15,7 @@ export const NAV_TAB_IDS = [
 	"interest",
 	"chat",
 	"notifications",
+	"map",
 ] as const;
 
 export type NavTabId = (typeof NAV_TAB_IDS)[number];
@@ -32,6 +33,8 @@ export const DEFAULT_NAV_TABS: readonly NavTabId[] = [
 
 /** Con menos pestañas la barra deja de tener sentido. */
 export const MIN_NAV_TABS = 2;
+/** La barra es fija y no se desplaza: caben como mucho 5 botones. */
+export const MAX_NAV_TABS = 5;
 
 /**
  * Deja una lista válida: sin ids desconocidos ni repetidos y con el mínimo de
@@ -42,6 +45,7 @@ export function normalizeNavTabs(tabs: readonly unknown[]): NavTabId[] {
 		items: tabs,
 		allowed: NAV_TAB_IDS,
 		min: MIN_NAV_TABS,
+		max: MAX_NAV_TABS,
 		fallback: DEFAULT_NAV_TABS,
 	});
 }
@@ -60,10 +64,10 @@ export function moveNavTab(
 	return moveItem(visible, id, delta);
 }
 
-/** Muestra u oculta una pestaña; ocultar no deja menos del mínimo. */
+/** Muestra u oculta una pestaña; no baja del mínimo ni pasa del máximo. */
 export function toggleNavTab(
 	visible: readonly NavTabId[],
 	id: NavTabId,
 ): NavTabId[] {
-	return toggleItem(visible, id, MIN_NAV_TABS);
+	return toggleItem(visible, id, MIN_NAV_TABS, MAX_NAV_TABS);
 }

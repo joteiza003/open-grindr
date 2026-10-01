@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
 	DEFAULT_NAV_TABS,
+	MAX_NAV_TABS,
 	moveNavTab,
 	type NavTabId,
 	normalizeNavTabs,
@@ -15,6 +16,18 @@ describe("normalizeNavTabs", () => {
 			"chat",
 			"browse",
 		]);
+	});
+
+	it("keeps at most the maximum number of tabs", () => {
+		const all = [
+			"browse",
+			"carrousel",
+			"rightNow",
+			"interest",
+			"chat",
+			"map",
+		];
+		expect(normalizeNavTabs(all)).toEqual(all.slice(0, MAX_NAV_TABS));
 	});
 
 	it("falls back to the defaults below the minimum", () => {
@@ -31,7 +44,7 @@ describe("orderedNavTabs", () => {
 			{ id: "browse", visible: true },
 		]);
 		expect(list.slice(2).every((tab) => !tab.visible)).toBe(true);
-		expect(list).toHaveLength(6);
+		expect(list).toHaveLength(7);
 	});
 });
 
@@ -56,6 +69,18 @@ describe("toggleNavTab", () => {
 			"chat",
 			"rightNow",
 		]);
+	});
+
+	it("does not show another tab once the maximum is reached", () => {
+		const full: NavTabId[] = [
+			"browse",
+			"carrousel",
+			"interest",
+			"chat",
+			"notifications",
+		];
+		expect(full).toHaveLength(MAX_NAV_TABS);
+		expect(toggleNavTab(full, "map")).toEqual(full);
 	});
 
 	it("hides a tab but never below the minimum", () => {

@@ -1,6 +1,7 @@
 import type { MessageKey } from "./en";
 import { esFeatures } from "./es.features";
 import { esMore } from "./es.more";
+import { esExtra } from "./es.extra";
 
 export const es: Record<MessageKey, string> = {
 	"nav.browse": "Explorar",
@@ -570,4 +571,5 @@ export const es: Record<MessageKey, string> = {
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
 	...esFeatures,
 	...esMore,
+	...esExtra,
 };
