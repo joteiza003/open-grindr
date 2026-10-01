@@ -2,8 +2,8 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 	import ChatCircleIcon from "phosphor-svelte/lib/ChatCircleIcon";
+	import DiceFiveIcon from "phosphor-svelte/lib/DiceFiveIcon";
 	import DotsNineIcon from "phosphor-svelte/lib/DotsNineIcon";
-	import DropIcon from "phosphor-svelte/lib/DropIcon";
 	import FireIcon from "phosphor-svelte/lib/FireIcon";
 	import { untrack } from "svelte";
 
@@ -87,15 +87,15 @@
 			{t("nav.browse")}
 		</a>
 		<a
-			href="/right-now"
-			aria-current={page.route.id === "/(protected)/(navbar)/right-now"
+			href="/carrousel"
+			aria-current={page.route.id === "/(protected)/(navbar)/carrousel"
 				? "page"
 				: undefined}
-			data-active={page.route.id === "/(protected)/(navbar)/right-now"}
-			onclick={tabNavigation({ href: "/right-now" })}
+			data-active={page.route.id === "/(protected)/(navbar)/carrousel"}
+			onclick={tabNavigation({ href: "/carrousel" })}
 		>
-			<DropIcon weight="fill" />
-			{t("nav.rightNow")}
+			<DiceFiveIcon weight="fill" />
+			{t("nav.carrousel")}
 		</a>
 		<a
 			href="/interest"

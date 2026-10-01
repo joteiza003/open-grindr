@@ -2,7 +2,7 @@ import type { MessageKey } from "./en";
 
 export const es: Record<MessageKey, string> = {
 	"nav.browse": "Explorar",
-	"nav.rightNow": "Ahora",
+	"nav.carrousel": "Carrousel",
 	"nav.interest": "Interés",
 	"nav.inbox": "Chats",
 	"nav.me": "Yo",
@@ -385,6 +385,7 @@ export const es: Record<MessageKey, string> = {
 	"browse.tinder.emptyHint": "Prueba un radio mayor o recupera los perfiles descartados.",
 	"browse.tinder.reset": "Recuperar descartados",
 	"browse.tinder.reject": "Descartar",
+	"browse.tinder.skip": "Omitir",
 	"browse.tinder.accept": "Saludar",
 	"browse.tinder.favorite": "Favorito y saludar",
 	"browse.tinder.greetFailed": "No se pudo enviar el saludo",

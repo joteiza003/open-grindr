@@ -6,25 +6,49 @@ export const TINDER_RADIUS_OPTIONS_KM = [1, 2, 5, 10, 25, 50, 100] as const;
 export const GREETING_MESSAGES = ["Hola", "¿Qué tal?"] as const;
 
 /**
- * Perfiles de la baraja: ya cargados, dentro del radio y aún sin decidir.
- * Conserva el orden de entrada (la rejilla ya va de más cerca a más lejos).
+ * Clave de orden aleatoria y estable por perfil: se sortea la primera vez que
+ * se ve y se recuerda, para que la baraja no se reordene en cada cambio.
+ */
+export function randomOrderKey(
+	keys: Map<number, number>,
+	id: number,
+	random: () => number = Math.random,
+): number {
+	let key = keys.get(id);
+	if (key === undefined) {
+		key = random();
+		keys.set(id, key);
+	}
+	return key;
+}
+
+/**
+ * Perfiles de la baraja: ya cargados, con foto, dentro del radio y aún sin
+ * decidir. Salen en orden aleatorio (no por distancia) si se pasa `keys`.
  */
 export function tinderCandidates({
 	profiles,
 	radiusKm,
 	decided,
+	keys,
 }: {
 	profiles: readonly GridProfile[];
 	radiusKm: number;
 	decided: ReadonlySet<number>;
+	keys?: Map<number, number>;
 }): RenderedGridProfile[] {
 	const radiusMeters = radiusKm * 1000;
-	return profiles.filter(
+	const inside = profiles.filter(
 		(profile): profile is RenderedGridProfile =>
 			profile.type === "rendered" &&
 			profile.distance !== null &&
 			profile.distance <= radiusMeters &&
+			(profile.profilePhotosHashes?.[0] ?? "") !== "" &&
 			!decided.has(profile.id),
+	);
+	if (!keys) return inside;
+	return inside.sort(
+		(a, b) => randomOrderKey(keys, a.id) - randomOrderKey(keys, b.id),
 	);
 }
 

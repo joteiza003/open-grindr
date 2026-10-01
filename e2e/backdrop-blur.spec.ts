@@ -40,7 +40,7 @@ async function setQuality(page: Page, quality: string) {
 test("one root attribute drives every progressive blur mode", async ({
 	page,
 }) => {
-	await openWithBlurReady(page, "/right-now");
+	await openWithBlurReady(page, "/carrousel");
 	await expect(page.locator(".pblur-layer").first()).toBeAttached();
 
 	expect(await visibleLayerBlurs(page)).toEqual([

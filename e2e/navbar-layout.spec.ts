@@ -8,11 +8,11 @@ test("the bottom navbar fits a 1080px physical-width screen", async ({
 	page,
 }) => {
 	await installTauriShim(page);
-	await page.goto("/right-now");
+	await page.goto("/carrousel");
 
 	const navbar = page.getByRole("navigation");
 	const links = navbar.locator(".links");
-	const rightNow = navbar.getByRole("link", { name: "Right Now" });
+	const rightNow = navbar.getByRole("link", { name: "Carrousel" });
 	await expect(rightNow).toHaveAttribute("data-active", "true");
 
 	const layout = await links.evaluate((linksElement) => {
@@ -49,7 +49,7 @@ test.describe("in a 308 × 404 pop-up window", () => {
 
 	test("the bottom navbar scrolls to both of its ends", async ({ page }) => {
 		await installTauriShim(page);
-		await page.goto("/right-now");
+		await page.goto("/carrousel");
 
 		const links = page.getByRole("navigation").locator(".links");
 		await expect(links).toBeVisible();

@@ -47,7 +47,7 @@ test.describe("every navigation bar has a name of its own", () => {
 });
 
 test.describe("every screen has one main landmark", () => {
-	for (const path of ["/right-now", "/interest/views", "/interest/taps"]) {
+	for (const path of ["/carrousel", "/interest/views", "/interest/taps"]) {
 		test(path, async ({ page }) => {
 			await page.goto(path);
 			await page

@@ -2,7 +2,7 @@ import type { MessageKey } from "./en";
 
 export const eu: Record<MessageKey, string> = {
 	"nav.browse": "Arakatu",
-	"nav.rightNow": "Orain",
+	"nav.carrousel": "Carrousel",
 	"nav.interest": "Interesa",
 	"nav.inbox": "Txatak",
 	"nav.me": "Ni",
@@ -373,6 +373,7 @@ export const eu: Record<MessageKey, string> = {
 	"browse.tinder.emptyHint": "Probatu erradio handiago bat edo berreskuratu baztertutako profilak.",
 	"browse.tinder.reset": "Berreskuratu baztertutakoak",
 	"browse.tinder.reject": "Baztertu",
+	"browse.tinder.skip": "Saltatu",
 	"browse.tinder.accept": "Agurtu",
 	"browse.tinder.favorite": "Gogokoa eta agurtu",
 	"browse.tinder.greetFailed": "Ezin izan da agurra bidali",

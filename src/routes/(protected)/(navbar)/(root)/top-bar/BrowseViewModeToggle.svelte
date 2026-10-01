@@ -1,7 +1,6 @@
 <script lang="ts">
 	import {
 		GridFourIcon,
-		HeartIcon,
 		ListBulletsIcon,
 		RowsIcon,
 		SquaresFourIcon,
@@ -14,7 +13,7 @@
 	import { Button } from "$lib/components/ui/button";
 	import { t } from "$lib/i18n";
 
-	type ViewMode = "grid" | "compact" | "detailed" | "list" | "tinder";
+	type ViewMode = "grid" | "compact" | "detailed" | "list";
 
 	const modes: Array<{
 		value: ViewMode;
@@ -25,7 +24,6 @@
 		{ value: "compact", label: "Compact", Icon: SquaresFourIcon },
 		{ value: "detailed", label: "Detailed", Icon: RowsIcon },
 		{ value: "list", label: t("browse.viewList"), Icon: ListBulletsIcon },
-		{ value: "tinder", label: t("browse.viewTinder"), Icon: HeartIcon },
 	];
 
 	const value = $derived(preferencesSnapshot().browse.viewMode);

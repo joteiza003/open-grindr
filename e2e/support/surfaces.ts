@@ -49,8 +49,8 @@ export const SURFACES: Surface[] = [
 		},
 	},
 	{
-		name: "Right Now",
-		path: "/right-now",
+		name: "Carrousel",
+		path: "/carrousel",
 		bars: { bottom: "nothing" },
 		ready: shows(mainNavigation),
 	},

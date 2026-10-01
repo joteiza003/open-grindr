@@ -52,7 +52,7 @@ type Scene = {
 
 const SCENES: Scene[] = [
 	{ name: "browse", path: "/", ready: GRID_READY_SELECTOR },
-	{ name: "right-now", path: "/right-now" },
+	{ name: "carrousel", path: "/carrousel" },
 	{ name: "interest-taps", path: "/interest/taps" },
 	{ name: "interest-views", path: "/interest/views" },
 	{
@@ -101,8 +101,7 @@ const SCENES: Scene[] = [
 	{
 		name: "browse-tinder",
 		open: async (page) => {
-			await page.goto("/", { timeout: STEP_TIMEOUT_MS });
-			await page.getByRole("button", { name: "Discover" }).click();
+			await page.goto("/carrousel", { timeout: STEP_TIMEOUT_MS });
 			await page
 				.locator('[data-slot="tinder-card"]')
 				.waitFor({ timeout: STEP_TIMEOUT_MS });

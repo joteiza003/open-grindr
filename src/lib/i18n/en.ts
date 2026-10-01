@@ -1,6 +1,6 @@
 export const en = {
 	"nav.browse": "Browse",
-	"nav.rightNow": "Right Now",
+	"nav.carrousel": "Carrousel",
 	"nav.interest": "Interest",
 	"nav.inbox": "Inbox",
 	"nav.me": "Me",
@@ -377,6 +377,7 @@ export const en = {
 	"browse.tinder.emptyHint": "Try a bigger radius or bring back the profiles you skipped.",
 	"browse.tinder.reset": "Bring back skipped",
 	"browse.tinder.reject": "Skip",
+	"browse.tinder.skip": "Skip for now",
 	"browse.tinder.accept": "Say hi",
 	"browse.tinder.favorite": "Favorite and say hi",
 	"browse.tinder.greetFailed": "Couldn't send the greeting",

@@ -1,6 +1,11 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import { HeartIcon, StarIcon, XIcon } from "phosphor-svelte";
+	import {
+		FastForwardIcon,
+		HeartIcon,
+		StarIcon,
+		XIcon,
+	} from "phosphor-svelte";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { addFavoriteUser } from "$lib/api/users/favorites";
@@ -41,11 +46,16 @@
 	const units = $derived(preferencesSnapshot().units);
 	const radiusKm = $derived(browse.tinderRadiusKm);
 
+	// Orden aleatorio estable y perfiles omitidos solo durante esta sesión.
+	const orderKeys = new Map<number, number>();
+	let skipped = $state<ReadonlySet<number>>(new Set());
+
 	const candidates = $derived(
 		tinderCandidates({
 			profiles: gridState.profiles,
 			radiusKm,
-			decided: decidedProfileIds(),
+			decided: new Set([...decidedProfileIds(), ...skipped]),
+			keys: orderKeys,
 		}),
 	);
 	const current = $derived(candidates[0] ?? null);
@@ -111,7 +121,7 @@
 		dx = 0;
 	}
 
-	type Decision = "reject" | "accept" | "favorite";
+	type Decision = "reject" | "accept" | "favorite" | "skip";
 
 	const leave = (direction: "left" | "right") =>
 		new Promise<void>((resolve) => {
@@ -127,6 +137,10 @@
 			if (decision === "reject") {
 				await leave("left");
 				await rejectProfile(profile.id);
+			} else if (decision === "skip") {
+				// Omitir no decide nada: el perfil solo se aparta hasta recargar.
+				await leave("left");
+				skipped = new Set([...skipped, profile.id]);
 			} else {
 				// Con la tarjeta aún visible: si el envío falla, sigue ahí.
 				if (decision === "favorite") {
@@ -213,7 +227,7 @@
 
 <div
 	data-slot="tinder-deck"
-	class="flex h-full min-h-0 flex-1 flex-col gap-3 px-4 pt-header-clear-17 pb-nav-clear"
+	class="flex h-full min-h-0 flex-1 flex-col gap-3 px-4 pt-4 pb-nav-clear"
 >
 	<div
 		role="radiogroup"
@@ -388,6 +402,17 @@
 			onclick={() => void decide("reject")}
 		>
 			<XIcon weight="bold" class="size-8" />
+		</Button>
+		<Button
+			variant="ghost"
+			size="icon-lg"
+			class="size-11 rounded-full text-muted-foreground"
+			aria-label={t("browse.tinder.skip")}
+			title={t("browse.tinder.skip")}
+			disabled={current === null || busy}
+			onclick={() => void decide("skip")}
+		>
+			<FastForwardIcon weight="fill" class="size-5" />
 		</Button>
 		<Button
 			variant="ghost"
