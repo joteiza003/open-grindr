@@ -74,6 +74,14 @@
 	--duration-3: 240ms;
 	--duration-4: 320ms;
 	--ease-exit: cubic-bezier(0.4, 0, 1, 1);
+	--duration-5: 480ms;
+	/* Curvas «premium»: salida larga y suave (expo) y un rebote contenido. */
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+	/* Espaciado de ritmo: entre secciones, entre tarjetas y dentro de ellas. */
+	--space-section: 1.5rem;
+	--space-stack: 0.75rem;
+	--space-inset: 1rem;
 
 	/* ── Alias heredados ─────────────────────────────────────────────────── */
 	--background: var(--bg-canvas);
@@ -1693,6 +1701,239 @@ body.og-grain::before {
 	),
 [data-slot="combobox-input"] {
 	min-height: var(--control-height);
+}
+
+/* ══ Oleada 4 — movimiento y espaciado «premium» ══════════════════════════
+   Mismo criterio que el resto de la capa: solo acabado (transiciones,
+   entradas y ritmo vertical), sin tocar lógica ni estructura. La reducción de
+   movimiento ya lo neutraliza todo por `data-reduce-motion`. */
+
+@keyframes og-rise {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes og-pop {
+	from {
+		opacity: 0;
+		transform: scale(0.94);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+/* Pulsar se siente: el botón se hunde un poco y vuelve con rebote suave. */
+[data-slot="button"],
+[data-slot="toggle-group-item"],
+[data-slot="item"] {
+	transition:
+		transform var(--duration-2) var(--ease-out-expo),
+		background-color var(--duration-2) var(--ease-standard),
+		border-color var(--duration-2) var(--ease-standard),
+		box-shadow var(--duration-3) var(--ease-standard),
+		opacity var(--duration-2) var(--ease-standard);
+}
+
+[data-slot="button"]:active:not(:disabled),
+[data-slot="toggle-group-item"]:active {
+	transform: scale(0.96);
+	transition-duration: var(--duration-1);
+}
+
+[data-slot="item"]:active {
+	transform: scale(0.99);
+}
+
+@media (hover: hover) and (pointer: fine) {
+	[data-slot="button"]:hover:not(:disabled):not(:active) {
+		box-shadow: var(--elevation-1);
+	}
+}
+
+/* Interruptores: el pulgar viaja con un pequeño rebote. */
+[data-slot="switch-thumb"] {
+	transition: transform var(--duration-3) var(--ease-spring);
+}
+
+/* Entradas escalonadas: filas de lista y bloques de ajustes aparecen en
+   cascada, una a una, en vez de de golpe. */
+[data-slot="grid-list"] > *,
+.og-settings-group,
+[data-slot="tinder-card"] {
+	animation: og-rise var(--duration-5) var(--ease-out-expo) backwards;
+}
+
+[data-slot="grid-list"] > :nth-child(1) {
+	animation-delay: 0ms;
+}
+[data-slot="grid-list"] > :nth-child(2) {
+	animation-delay: 40ms;
+}
+[data-slot="grid-list"] > :nth-child(3) {
+	animation-delay: 80ms;
+}
+[data-slot="grid-list"] > :nth-child(4) {
+	animation-delay: 120ms;
+}
+[data-slot="grid-list"] > :nth-child(5) {
+	animation-delay: 160ms;
+}
+[data-slot="grid-list"] > :nth-child(n + 6) {
+	animation-delay: 200ms;
+}
+
+.og-settings-group:nth-of-type(2) {
+	animation-delay: 60ms;
+}
+.og-settings-group:nth-of-type(n + 3) {
+	animation-delay: 120ms;
+}
+
+/* La baraja Descubrir: la tarjeta que entra «pop» y la de fondo respira. */
+[data-slot="tinder-card"] {
+	animation-name: og-pop;
+	animation-duration: var(--duration-4);
+}
+
+/* Ritmo vertical: más aire entre secciones y filas algo más generosas. */
+[data-slot="subpage-scroller"] h2 {
+	margin-top: var(--space-section) !important;
+}
+
+[data-slot="grid-list"] {
+	gap: 0.25rem;
+}
+
+[data-slot="conversation-row"] [data-slot="item"] {
+	transition:
+		background-color var(--duration-2) var(--ease-standard),
+		transform var(--duration-3) var(--ease-out-expo);
+}
+
+/* ── Oleada 4b — el mismo lenguaje de movimiento en toda la app ───────────── */
+
+@keyframes og-fade {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+
+@keyframes og-tick {
+	0% {
+		transform: scale(0.85);
+	}
+	60% {
+		transform: scale(1.08);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+@keyframes og-shimmer {
+	from {
+		background-position: 200% 0;
+	}
+	to {
+		background-position: -200% 0;
+	}
+}
+
+/* Pantallas: cada una entra con un fundido (solo opacidad: un `transform`
+   en marcha crearía un bloque contenedor para los elementos `fixed`). */
+.screen-nav-host,
+[data-slot="subpage-scroller"],
+[data-slot="me-scroller"] {
+	animation: og-fade var(--duration-4) var(--ease-standard) backwards;
+}
+
+/* Superposiciones (diálogos, hojas, menús, popovers, tooltips): entradas más
+   largas y suaves, salidas más cortas. Las clases de tw-animate leen estas
+   variables, así que no hace falta tocar cada componente. */
+[data-slot$="-content"][data-open],
+[data-slot$="-overlay"][data-open] {
+	--tw-duration: var(--duration-3);
+	--tw-ease: var(--ease-out-expo);
+	animation-duration: var(--duration-3);
+	animation-timing-function: var(--ease-out-expo);
+}
+
+[data-slot$="-content"][data-closed],
+[data-slot$="-overlay"][data-closed] {
+	--tw-duration: var(--duration-2);
+	--tw-ease: var(--ease-exit);
+	animation-duration: var(--duration-2);
+	animation-timing-function: var(--ease-exit);
+}
+
+/* Pulsar en navegación y tarjetas. */
+.app-nav-island a,
+.app-nav-profile,
+[data-slot="tabs-trigger"],
+.profile-card {
+	transition:
+		transform var(--duration-2) var(--ease-out-expo),
+		background-color var(--duration-2) var(--ease-standard),
+		color var(--duration-2) var(--ease-standard);
+}
+
+.app-nav-island a:active,
+.app-nav-profile:active,
+[data-slot="tabs-trigger"]:active {
+	transform: scale(0.94);
+	transition-duration: var(--duration-1);
+}
+
+.profile-card:active {
+	transform: scale(0.97);
+	transition-duration: var(--duration-1);
+}
+
+/* Campos: el foco aparece con suavidad en vez de saltar. */
+[data-slot="input"],
+[data-slot="textarea"],
+[data-slot="input-group"] {
+	transition:
+		border-color var(--duration-2) var(--ease-standard),
+		box-shadow var(--duration-3) var(--ease-standard),
+		background-color var(--duration-2) var(--ease-standard);
+}
+
+/* Marcar casillas y opciones: pequeño «pop». */
+[data-slot="checkbox"][data-state="checked"],
+[data-slot="radio-group-item"][data-state="checked"] {
+	animation: og-tick var(--duration-3) var(--ease-out-expo);
+}
+
+/* Esqueletos: brillo que recorre la pieza en lugar de un parpadeo plano. */
+[data-slot="skeleton"] {
+	background-image: linear-gradient(
+		100deg,
+		transparent 30%,
+		rgb(255 255 255 / 7%) 50%,
+		transparent 70%
+	);
+	background-size: 200% 100%;
+	animation: og-shimmer 1.8s linear infinite;
+}
+
+/* Avisos (sonner): movimiento con la misma curva que el resto. */
+[data-sonner-toast] {
+	transition:
+		transform var(--duration-4) var(--ease-out-expo),
+		opacity var(--duration-3) var(--ease-standard),
+		height var(--duration-4) var(--ease-out-expo) !important;
 }
 
 @supports not (

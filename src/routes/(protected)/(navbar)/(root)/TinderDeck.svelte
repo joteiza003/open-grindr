@@ -303,7 +303,9 @@
 					style:transform="translateX({offset}px) rotate({rotation}deg)"
 					style:transition={dragging
 						? "none"
-						: `transform ${LEAVE_MS}ms ease-out`}
+						: leaving
+							? `transform ${LEAVE_MS}ms var(--ease-exit)`
+							: "transform 380ms var(--ease-spring)"}
 					onpointerdown={onPointerDown}
 					onpointermove={onPointerMove}
 					onpointerup={onPointerUp}
