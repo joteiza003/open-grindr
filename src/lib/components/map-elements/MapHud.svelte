@@ -2,7 +2,6 @@
 	import { goto } from "$app/navigation";
 	import { MapPinIcon, TrashIcon, XIcon } from "phosphor-svelte";
 
-	import MarkerEditor from "$lib/components/map-elements/MarkerEditor.svelte";
 	import SelectedMarkerCard from "$lib/components/map-elements/SelectedMarkerCard.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
@@ -15,7 +14,6 @@
 
 	let {
 		overlays,
-		modeHint = null,
 		empty = false,
 		openCluster = $bindable(null),
 		confirmOpen = $bindable(false),
@@ -35,7 +33,6 @@
 		onOpenDirections,
 	}: {
 		overlays: MapElementsState;
-		modeHint?: string | null;
 		empty?: boolean;
 		openCluster: Extract<MarkerCluster, { type: "group" }> | null;
 		confirmOpen: boolean;
@@ -57,42 +54,10 @@
 
 	const listVisible = $derived(listOpen && overlays.mode === "NORMAL");
 
-	async function saveMarker(): Promise<void> {
-		try {
-			const result = await overlays.saveMarkerDraft();
-			if (!result.ok) overlays.error = result.error;
-		} catch (error) {
-			console.error("[map-elements] Failed to save marker", error);
-			overlays.error = String(error);
-		}
-	}
-
 	function openProfile(id: number) {
 		(onOpenProfile ?? ((pid: number) => void goto(`/profile/${pid}`)))(id);
 	}
 </script>
-
-<!-- Mode hint (add marker) -->
-{#if modeHint}
-	<div
-		class="pointer-events-none absolute inset-x-0 top-3 z-1000 flex justify-center px-14"
-	>
-		<div
-			class="pointer-events-auto flex max-w-md items-center gap-2.5 rounded-2xl border border-border/80 bg-card/95 px-3.5 py-2.5 shadow-xl"
-		>
-			<p class="flex-1 text-sm leading-snug font-medium">{modeHint}</p>
-			<Button
-				variant="ghost"
-				size="icon"
-				class="size-8 shrink-0 rounded-full text-foreground"
-				aria-label={t("map.cancelAria")}
-				onclick={() => overlays.cancelCreation()}
-			>
-				<XIcon class="size-4" />
-			</Button>
-		</div>
-	</div>
-{/if}
 
 <!-- Empty state -->
 {#if empty}
@@ -313,14 +278,6 @@
 				{/if}
 			</div>
 		</section>
-	{:else if overlays.mode === "MARKER_CONFIGURATION" && overlays.markerDraft}
-		<MarkerEditor
-			draft={overlays.markerDraft}
-			error={overlays.error}
-			onchange={(patch) => overlays.updateMarkerDraft(patch)}
-			oncancel={() => overlays.cancelCreation()}
-			onsave={() => void saveMarker()}
-		/>
 	{:else if overlays.mode === "SELECTED_MARKER" && selectedMarker}
 		<SelectedMarkerCard
 			{selectedMarker}

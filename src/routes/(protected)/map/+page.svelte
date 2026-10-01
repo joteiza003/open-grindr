@@ -11,7 +11,6 @@
 		CaretLeftIcon,
 		CrosshairIcon,
 		ListIcon,
-		MapPinPlusIcon,
 	} from "phosphor-svelte";
 	import {
 		ControlAttribution,
@@ -96,14 +95,12 @@
 		centered = true;
 	});
 
-	const picking = $derived(overlays.mode === "ADD_MARKER");
-
 	$effect(() => {
 		const instance = map;
 		if (!instance) return;
-		const onMapClick = (event: LeafletMouseEvent) => {
+		const onMapClick = () => {
 			openCluster = null;
-			overlays.handleMapClick(event.latlng.lat, event.latlng.lng);
+			overlays.handleMapClick();
 		};
 		const onZoom = () => {
 			zoom = instance.getZoom();
@@ -111,11 +108,9 @@
 		zoom = instance.getZoom();
 		instance.on("click", onMapClick);
 		instance.on("zoomend", onZoom);
-		instance.getContainer().style.cursor = picking ? "crosshair" : "";
 		return () => {
 			instance.off("click", onMapClick);
 			instance.off("zoomend", onZoom);
-			instance.getContainer().style.cursor = "";
 		};
 	});
 
@@ -151,10 +146,6 @@
 			library.locations.length === 0 &&
 			overlays.markers.length === 0 &&
 			overlays.mode === "NORMAL",
-	);
-
-	const modeHint = $derived(
-		overlays.mode === "ADD_MARKER" ? t("map.tapMarker") : null,
 	);
 
 	type PendingDelete =
@@ -263,18 +254,6 @@
 		overlays.selectMarker(marker.id);
 		map?.setView([marker.latitude, marker.longitude], Math.max(zoom, 16));
 	}
-
-	const markerActive = $derived(
-		overlays.mode === "ADD_MARKER" ||
-			overlays.mode === "MARKER_CONFIGURATION",
-	);
-
-	function toggleAdd(active: boolean, begin: () => void) {
-		listOpen = false;
-		openCluster = null;
-		if (active) overlays.cancelCreation();
-		else begin();
-	}
 </script>
 
 <main
@@ -315,22 +294,6 @@
 				<ListIcon
 					class="size-5"
 					weight={listOpen ? "fill" : "regular"}
-				/>
-			</Button>
-
-			<Button
-				variant={markerActive ? "default" : "ghost"}
-				size="icon"
-				class="size-10 rounded-full text-foreground"
-				aria-label={t("map.addMarker")}
-				title={t("map.addMarker")}
-				aria-pressed={markerActive}
-				onclick={() =>
-					toggleAdd(markerActive, () => overlays.beginAddMarker())}
-			>
-				<MapPinPlusIcon
-					class="size-5"
-					weight={markerActive ? "fill" : "regular"}
 				/>
 			</Button>
 		</div>
@@ -387,13 +350,6 @@
 							}}
 							onclick={(event: LeafletMouseEvent) => {
 								DomEvent.stopPropagation(event);
-								if (picking) {
-									overlays.handleMapClick(
-										event.latlng.lat,
-										event.latlng.lng,
-									);
-									return;
-								}
 								overlays.selectMarker(marker.id);
 							}}
 						>
@@ -418,34 +374,11 @@
 							}}
 							onclick={(event: LeafletMouseEvent) => {
 								DomEvent.stopPropagation(event);
-								if (picking) {
-									overlays.handleMapClick(
-										event.latlng.lat,
-										event.latlng.lng,
-									);
-									return;
-								}
 								onClusterClick(cluster);
 							}}
 						/>
 					{/if}
 				{/each}
-
-				{#if overlays.markerDraft}
-					<Marker
-						latLng={[
-							overlays.markerDraft.latitude,
-							overlays.markerDraft.longitude,
-						]}
-						options={{
-							icon: placePinIcon,
-							zIndexOffset: 800,
-							title:
-								overlays.markerDraft.title ||
-								t("map.newMarker"),
-						}}
-					/>
-				{/if}
 
 				{#if customLocation}
 					<Marker
@@ -523,7 +456,6 @@
 				})}
 			confirmTitle={confirmTexts.title}
 			confirmBody={confirmTexts.body}
-			{modeHint}
 			{empty}
 			bind:openCluster
 			bind:confirmOpen

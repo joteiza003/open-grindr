@@ -23,17 +23,7 @@ export const mapElementsFileSchema = z.object({
 export type MapMarker = z.infer<typeof mapMarkerSchema>;
 export type MapElementsFile = z.infer<typeof mapElementsFileSchema>;
 
-export type InteractionMode =
-	| "NORMAL"
-	| "ADD_MARKER"
-	| "MARKER_CONFIGURATION"
-	| "SELECTED_MARKER";
-
-export type MarkerDraft = {
-	latitude: number;
-	longitude: number;
-	title: string;
-};
+export type InteractionMode = "NORMAL" | "SELECTED_MARKER";
 
 export function emptyMapElementsFile(): MapElementsFile {
 	return { version: 1, markers: [] };
