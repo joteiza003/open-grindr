@@ -90,8 +90,15 @@
 			return;
 		}
 		const first = library.locations[0];
-		if (first === undefined) return;
-		map.setView([first.lat, first.lon], 11);
+		if (first !== undefined) {
+			map.setView([first.lat, first.lon], 11);
+			centered = true;
+			return;
+		}
+		// Sin ubicación propia ni compartidas: centra en el primer pin guardado.
+		const pin = overlays.markers[0];
+		if (pin === undefined) return;
+		map.setView([pin.latitude, pin.longitude], 12);
 		centered = true;
 	});
 
@@ -115,6 +122,12 @@
 	});
 
 	const markerClusters = $derived(clusterMarkers(overlays.markers, zoom));
+	const hasPoints = $derived(
+		overlays.markers.length > 0 ||
+			library.locations.length > 0 ||
+			customLocation !== null,
+	);
+
 	function fitAll() {
 		if (!map) return;
 		const points = allMapPoints(
@@ -424,6 +437,7 @@
 				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg can-hover:hover:bg-card"
 				aria-label={t("map.fitAll")}
 				title={t("map.fitAll")}
+				disabled={!hasPoints}
 				onclick={fitAll}
 			>
 				<ArrowsOutIcon class="size-5" />
