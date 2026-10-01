@@ -1,7 +1,8 @@
 import type { MessageKey } from "./en";
+import { esExtra } from "./es.extra";
 import { esFeatures } from "./es.features";
 import { esMore } from "./es.more";
-import { esExtra } from "./es.extra";
+import { esProfile } from "./es.profile";
 
 export const es: Record<MessageKey, string> = {
 	"nav.browse": "Explorar",
@@ -572,4 +573,5 @@ export const es: Record<MessageKey, string> = {
 	...esFeatures,
 	...esMore,
 	...esExtra,
+	...esProfile,
 };

@@ -32,6 +32,7 @@
 		type SilenceKind,
 	} from "$lib/safety/temporary-silence";
 	import type { ProfileState } from "./profile-state.svelte";
+	import ProfileListChips from "./ProfileListChips.svelte";
 
 	let {
 		profileState,
@@ -214,6 +215,7 @@
 			</Button>
 		{/if}
 	</div>
+	<ProfileListChips {profileId} onOpen={() => (listsOpen = true)} />
 	{#if mutedUntil !== null}
 		<p class="text-xs text-muted-foreground">
 			{t("silence.mutedUntil", { when: untilText(mutedUntil) })}

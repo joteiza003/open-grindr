@@ -5,6 +5,7 @@
 	import type PhotoSwipeLightbox from "photoswipe/lightbox";
 
 	import UserSilhouette from "$lib/components/profile/UserSilhouette.svelte";
+	import { t } from "$lib/i18n";
 	import { profileMediaUrl } from "$lib/util/media";
 	import {
 		applyPhotoSwipeBackGesture,
@@ -120,6 +121,7 @@
 	const BULLET_SIZE_PX = 8;
 	const BULLET_PITCH_PX = BULLET_SIZE_PX + GAP_PX;
 
+	let currentPhoto = $state(1);
 	let indicatorY = $state(PADDING_VERTICAL_PX);
 	let indicatorHeight = $state(BULLET_SIZE_PX);
 </script>
@@ -142,6 +144,10 @@
 						? Math.max(0, (frac - 0.5) * 2)
 						: frac);
 				indicatorY = PADDING_VERTICAL_PX + tipYp * BULLET_PITCH_PX;
+				currentPhoto = Math.min(
+					medias.length,
+					Math.max(1, Math.round(item) + 1),
+				);
 				const indicatorStretch = stretch * 2 * BULLET_PITCH_PX;
 				indicatorHeight =
 					BULLET_SIZE_PX +
@@ -164,6 +170,17 @@
 				/>
 			{/each}
 		</div>
+		{#if medias.length > 1}
+			<span
+				data-slot="photo-counter"
+				class="pointer-events-none absolute top-[calc(0.75rem+var(--safe-area-top))] left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-2.5 py-0.5 text-xs font-medium text-white tabular-nums"
+			>
+				{t("profile.photoCounter", {
+					current: currentPhoto,
+					total: medias.length,
+				})}
+			</span>
+		{/if}
 		<div
 			class="absolute top-1/2 right-2 flex -translate-y-1/2 flex-col rounded-full bg-background/30 scrim p-2 backdrop-filter-(--bd-veil)"
 			style:gap="{GAP_PX}px"

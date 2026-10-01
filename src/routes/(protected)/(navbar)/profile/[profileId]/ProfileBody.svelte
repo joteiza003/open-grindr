@@ -22,6 +22,7 @@
 		tribes,
 	} from "$lib/model/users/profiles";
 	import AboutMe from "./AboutMe.svelte";
+	import CommonGround from "./CommonGround.svelte";
 	import Genders from "./fields/GendersPronouns.svelte";
 	import HivStatusIcon from "./fields/HivStatusIcon.svelte";
 	import LastTested from "./fields/LastTested.svelte";
@@ -31,11 +32,12 @@
 	import MyProfileTags from "./my-tags/MyProfileTags.svelte";
 	import ProfileNoteButton from "./profile-note/ProfileNoteButton.svelte";
 	import type { ProfileState } from "./profile-state.svelte";
-	import ProfileSection from "./ProfileSection.svelte";
 	import ProfileQuickActions from "./ProfileQuickActions.svelte";
+	import ProfileSection from "./ProfileSection.svelte";
 	import ProfileSummary from "./ProfileSummary.svelte";
 	import ProfileTags from "./ProfileTags.svelte";
 	import TriangulateButton from "./TriangulateButton.svelte";
+	import YouAndThem from "./YouAndThem.svelte";
 
 	let { profileState }: { profileState: ProfileState } = $props();
 
@@ -89,6 +91,7 @@
 		</div>
 	{/if}
 	<div
+		data-slot="profile-body"
 		class={[
 			"flex flex-col px-4 pt-4",
 			{ "pb-24": ourProfile, "pb-40": !ourProfile },
@@ -118,6 +121,14 @@
 		{/if}
 		<ProfileTags tags={profileTags} />
 		{#if !ourProfile}
+			<CommonGround
+				ourProfileId={profileState.ourProfileId}
+				theirs={{ profileTags, lookingFor, meetAt, grindrTribes }}
+			/>
+			<YouAndThem
+				ourProfileId={profileState.ourProfileId}
+				profileId={profile.profileId}
+			/>
 			<MyProfileTags profileId={profile.profileId} />
 		{/if}
 		{#if aboutMe !== null}

@@ -1,7 +1,8 @@
 import type { MessageKey } from "./en";
+import { euExtra } from "./eu.extra";
 import { euFeatures } from "./eu.features";
 import { euMore } from "./eu.more";
-import { euExtra } from "./eu.extra";
+import { euProfile } from "./eu.profile";
 
 export const eu: Record<MessageKey, string> = {
 	"nav.browse": "Arakatu",
@@ -558,4 +559,5 @@ export const eu: Record<MessageKey, string> = {
 	...euFeatures,
 	...euMore,
 	...euExtra,
+	...euProfile,
 };

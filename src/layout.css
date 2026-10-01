@@ -1936,6 +1936,95 @@ body.og-grain::before {
 		height var(--duration-4) var(--ease-out-expo) !important;
 }
 
+/* ── Oleada 4c — ventana de perfil ──────────────────────────────────────── */
+
+@keyframes og-burst {
+	from {
+		opacity: 1;
+		transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0)
+			scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: translate(-50%, -50%) rotate(var(--angle)) translateY(-26px)
+			scale(0.4);
+	}
+}
+
+.og-burst {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: oklch(0.85 0.17 85);
+	animation: og-burst 650ms var(--ease-out-expo) forwards;
+}
+
+@keyframes og-star-pop {
+	0% {
+		transform: scale(1) rotate(0);
+	}
+	40% {
+		transform: scale(1.5) rotate(-14deg);
+	}
+	100% {
+		transform: scale(1) rotate(0);
+	}
+}
+
+.og-star-pop {
+	animation: og-star-pop 520ms var(--ease-spring);
+}
+
+/* La foto de cabecera «crece» al abrir el perfil. */
+@keyframes og-hero-reveal {
+	from {
+		opacity: 0.55;
+		transform: scale(1.07);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1);
+	}
+}
+
+[data-slot="profile-hero"] {
+	overflow: clip;
+}
+
+[data-slot="profile-hero"] > [data-slot="profile-hero-photo"] {
+	transform-origin: 50% 0;
+	animation: og-hero-reveal 620ms var(--ease-out-expo) backwards;
+	will-change: transform;
+}
+
+/* Parallax: el desplazamiento llega como variable desde el panel. */
+[data-slot="profile-pane"] [data-slot="profile-hero-photo"] {
+	translate: 0 calc(var(--og-scroll, 0) * 0.28px);
+}
+
+/* Secciones del perfil: entran en cascada. */
+[data-slot="profile-body"] > * {
+	animation: og-rise var(--duration-5) var(--ease-out-expo) backwards;
+}
+[data-slot="profile-body"] > :nth-child(1) {
+	animation-delay: 40ms;
+}
+[data-slot="profile-body"] > :nth-child(2) {
+	animation-delay: 90ms;
+}
+[data-slot="profile-body"] > :nth-child(3) {
+	animation-delay: 140ms;
+}
+[data-slot="profile-body"] > :nth-child(4) {
+	animation-delay: 190ms;
+}
+[data-slot="profile-body"] > :nth-child(n + 5) {
+	animation-delay: 240ms;
+}
+
 @supports not (
 	(-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))
 ) {

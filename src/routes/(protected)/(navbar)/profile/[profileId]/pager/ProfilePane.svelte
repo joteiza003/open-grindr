@@ -7,6 +7,7 @@
 		isUnviewableProfileError,
 		ProfileUnavailableError,
 	} from "$lib/api/users/profiles";
+	import { recordProfileView } from "$lib/app-data/profile-metadata.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import NotFound from "$lib/components/feedback/NotFound.svelte";
@@ -21,6 +22,8 @@
 	import ProfileBody from "../ProfileBody.svelte";
 	import ProfileHero from "../ProfileHero.svelte";
 	import ProfilePreview from "../ProfilePreview.svelte";
+	import ProfileSkeleton from "../ProfileSkeleton.svelte";
+	import ProfileStickyBar from "../ProfileStickyBar.svelte";
 
 	let {
 		profileState,
@@ -37,6 +40,35 @@
 	} = $props();
 
 	let scroller = $state<HTMLElement | null>(null);
+	let heroHeight = $state(0);
+	let pinned = $state(false);
+	let everPinned = $state(false);
+	let scrollFrame = 0;
+
+	// Parallax y cabecera fija: una sola lectura de scroll por fotograma.
+	function onScroll() {
+		if (scrollFrame || !scroller) return;
+		scrollFrame = requestAnimationFrame(() => {
+			scrollFrame = 0;
+			if (!scroller) return;
+			const top = scroller.scrollTop;
+			scroller.style.setProperty("--og-scroll", String(top));
+			pinned = top > Math.max(160, heroHeight * 0.7);
+			if (pinned) everPinned = true;
+		});
+	}
+
+	// Cuenta una visita local cada vez que este perfil pasa a primer plano.
+	let counted = false;
+	$effect(() => {
+		if (!active) {
+			counted = false;
+			return;
+		}
+		if (counted || !profile || ourProfile) return;
+		counted = true;
+		void recordProfileView(profileState.profileId);
+	});
 
 	const profile = $derived(profileState.profile);
 	const error = $derived(profileState.error);
@@ -98,14 +130,21 @@
 			bind:this={scroller}
 			{...scrollerHooks}
 			class="h-full overflow-x-hidden overflow-y-auto overscroll-contain overscroll-x-auto pb-[calc(var(--nav-height)+var(--safe-area-bottom)+6.5rem)]"
+			onscroll={onScroll}
 		>
 			<main
 				inert={!active}
 				class="relative mx-auto min-h-overscrollable w-full max-w-(--profile-content-max)"
 			>
 				{#if profile || medias.length > 0}
-					<div class="relative">
-						<ImageCarousel {medias} />
+					<div
+						class="relative"
+						data-slot="profile-hero"
+						bind:clientHeight={heroHeight}
+					>
+						<div data-slot="profile-hero-photo">
+							<ImageCarousel {medias} />
+						</div>
 						<ProfileHero {profileState} />
 					</div>
 				{:else}
@@ -130,29 +169,14 @@
 						</div>
 					{/if}
 				{:else}
-					<div
-						class={[
-							"flex max-w-full flex-col gap-3.5 p-4",
-							{ "pb-24": ourProfile, "pb-40": !ourProfile },
-						]}
-					>
-						<Skeleton class="h-6 w-40 max-w-full" />
-						<Skeleton class="h-3 w-30 max-w-full" />
-						<Skeleton class="mt-0.5 h-3 w-50 max-w-full" />
-						<div class="mt-2 flex flex-wrap gap-1">
-							{#each [10, 12, 18, 16, 15] as w, i (i)}
-								<Skeleton
-									class="h-4.5 w-(--w)"
-									--w="calc(var(--spacing) * {w})"
-								/>
-							{/each}
-						</div>
-						<Skeleton class="mt-2.25 h-27 w-full rounded-4xl" />
-					</div>
+					<ProfileSkeleton {ourProfile} />
 				{/if}
 			</main>
 		</div>
 		{#if profile}
+			{#if everPinned}
+				<ProfileStickyBar {profileState} visible={pinned && active} />
+			{/if}
 			<ProfileBottomNavBar
 				ourProfileId={profileState.ourProfileId}
 				profileId={profile.profileId}

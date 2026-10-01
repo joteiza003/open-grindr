@@ -61,6 +61,9 @@ vi.mock("$lib/api/users/profiles", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api/users/profiles")>()),
 	getProfile: getProfileMock,
 }));
+vi.mock("$lib/stats/event-log", () => ({
+	usageEvents: { all: () => Promise.resolve([]), record: vi.fn() },
+}));
 vi.mock("$lib/api/users/favorites", () => ({
 	getFavoriteNote: vi.fn(),
 	invalidateFavoriteNote: vi.fn(),
@@ -147,7 +150,9 @@ async function openProfile({
 	};
 }
 
-const fetchedIds = () => getProfileMock.mock.calls.map(([id]) => id);
+// El perfil propio lo pide «En común»: no cuenta como carga de un vecino.
+const fetchedIds = () =>
+	getProfileMock.mock.calls.map(([id]) => id).filter((id) => id !== OUR_ID);
 
 const viewedIds = () =>
 	recordProfileViewMock.mock.calls.map(([{ profileId }]) => profileId);

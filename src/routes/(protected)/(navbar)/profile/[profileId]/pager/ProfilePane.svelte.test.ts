@@ -19,6 +19,9 @@ vi.mock("$lib/api/users/profiles", async (importOriginal) => ({
 	...(await importOriginal<typeof import("$lib/api/users/profiles")>()),
 	getProfile: getProfileMock,
 }));
+vi.mock("$lib/stats/event-log", () => ({
+	usageEvents: { all: () => Promise.resolve([]), record: vi.fn() },
+}));
 vi.mock("$lib/api/users/favorites", () => ({
 	getFavoriteNote: vi.fn(),
 	invalidateFavoriteNote: vi.fn(),
@@ -160,7 +163,10 @@ describe("ProfilePane failures", () => {
 		await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
 		await flush();
 
-		expect(getProfileMock).toHaveBeenCalledTimes(2);
+		// Sin contar el perfil propio, que pide «En común».
+		expect(
+			getProfileMock.mock.calls.filter(([id]) => id !== OUR_ID),
+		).toHaveLength(2);
 		expect(heading(section)).toBe("Loaded, 30");
 		expect(screen.queryByRole("button", { name: "Retry" })).toBeNull();
 	});

@@ -1,6 +1,7 @@
+import { enExtra } from "./en.extra";
 import { enFeatures } from "./en.features";
 import { enMore } from "./en.more";
-import { enExtra } from "./en.extra";
+import { enProfile } from "./en.profile";
 
 export const en = {
 	"nav.browse": "Browse",
@@ -565,6 +566,7 @@ export const en = {
 	...enFeatures,
 	...enMore,
 	...enExtra,
+	...enProfile,
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -23,11 +23,13 @@
 		blockable,
 		onBlocked,
 		onHidden,
+		compact = false,
 	}: {
 		profileId: number;
 		blockable: boolean;
 		onBlocked: () => void;
 		onHidden: () => void;
+		compact?: boolean;
 	} = $props();
 
 	let submitting = $state(false);
@@ -41,11 +43,11 @@
 				size="icon-lg"
 				variant="secondary"
 				aria-label="Profile menu"
-				class={[className, "size-12"]}
+				class={[className, { "size-10": compact, "size-12": !compact }]}
 				disabled={submitting}
 				{...props}
 			>
-				<DotsThreeIcon class="size-8" />
+				<DotsThreeIcon class={{ "size-6": compact, "size-8": !compact }} />
 			</Button>
 		{/snippet}
 	</DropdownMenu.Trigger>
