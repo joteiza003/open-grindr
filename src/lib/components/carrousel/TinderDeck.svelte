@@ -1,11 +1,6 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
-	import {
-		FastForwardIcon,
-		HeartIcon,
-		StarIcon,
-		XIcon,
-	} from "phosphor-svelte";
+	import { HeartIcon, StarIcon, XIcon } from "phosphor-svelte";
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { addFavoriteUser } from "$lib/api/users/favorites";
@@ -121,7 +116,7 @@
 		dx = 0;
 	}
 
-	type Decision = "reject" | "accept" | "favorite" | "skip";
+	type Decision = "reject" | "skip" | "like" | "superlike" | "favorite";
 
 	const leave = (direction: "left" | "right") =>
 		new Promise<void>((resolve) => {
@@ -141,6 +136,10 @@
 				// Omitir no decide nada: el perfil solo se aparta hasta recargar.
 				await leave("left");
 				skipped = new Set([...skipped, profile.id]);
+			} else if (decision === "like") {
+				// Me gusta: se queda visible en la rejilla, sin saludar.
+				await leave("right");
+				await acceptProfile(profile.id);
 			} else {
 				// Con la tarjeta aún visible: si el envío falla, sigue ahí.
 				if (decision === "favorite") {
@@ -186,7 +185,7 @@
 	function onPointerUp() {
 		if (!dragging) return;
 		dragging = false;
-		if (dx > SWIPE_THRESHOLD_PX) void decide("accept");
+		if (dx > SWIPE_THRESHOLD_PX) void decide("like");
 		else if (dx < -SWIPE_THRESHOLD_PX) void decide("reject");
 		else dx = 0;
 	}
@@ -204,7 +203,7 @@
 			void decide("reject");
 		} else if (event.key === "ArrowRight") {
 			event.preventDefault();
-			void decide("accept");
+			void decide("like");
 		} else if (event.key === "Enter") {
 			event.preventDefault();
 			openProfile();
@@ -377,7 +376,7 @@
 						style:opacity={acceptOpacity}
 						aria-hidden="true"
 					>
-						{t("browse.tinder.accept").toUpperCase()}
+						{t("browse.tinder.like").toUpperCase()}
 					</span>
 					<span
 						class="pointer-events-none absolute end-4 top-4 rotate-12 rounded-lg border-4 border-red-500 px-2 py-0.5 text-2xl font-black text-red-500"
@@ -391,50 +390,61 @@
 		{/if}
 	</div>
 
-	<div class="flex shrink-0 items-center justify-center gap-5 pb-1">
+	<div class="flex shrink-0 items-center justify-center gap-3 pb-1">
 		<Button
 			variant="secondary"
 			size="icon-lg"
-			class="size-16 rounded-full border-2 border-red-500/60 text-red-500"
+			class="size-14 rounded-full border-2 border-red-500/60 text-red-500"
 			aria-label={t("browse.tinder.reject")}
 			title={t("browse.tinder.reject")}
 			disabled={current === null || busy}
 			onclick={() => void decide("reject")}
 		>
-			<XIcon weight="bold" class="size-8" />
+			<XIcon weight="bold" class="size-7" />
 		</Button>
 		<Button
-			variant="ghost"
+			variant="secondary"
 			size="icon-lg"
-			class="size-11 rounded-full text-muted-foreground"
+			class="size-11 rounded-full border border-border text-muted-foreground"
 			aria-label={t("browse.tinder.skip")}
 			title={t("browse.tinder.skip")}
 			disabled={current === null || busy}
 			onclick={() => void decide("skip")}
 		>
-			<FastForwardIcon weight="fill" class="size-5" />
+			<XIcon weight="bold" class="size-5" />
 		</Button>
 		<Button
-			variant="ghost"
+			variant="secondary"
 			size="icon-lg"
-			class="size-11 rounded-full text-muted-foreground"
+			class="size-12 rounded-full border-2 border-yellow-500/60"
 			aria-label={t("browse.tinder.favorite")}
 			title={t("browse.tinder.favorite")}
 			disabled={current === null || busy}
 			onclick={() => void decide("favorite")}
 		>
-			<StarIcon weight="fill" class="size-5 text-yellow-500" />
+			<StarIcon weight="fill" class="size-6 text-yellow-500" />
 		</Button>
 		<Button
 			variant="secondary"
 			size="icon-lg"
-			class="size-16 rounded-full border-2 border-emerald-500/60 text-emerald-500"
-			aria-label={t("browse.tinder.accept")}
-			title={t("browse.tinder.accept")}
+			class="size-14 rounded-full border-2 border-sky-500/60 text-sky-500"
+			aria-label={t("browse.tinder.superlike")}
+			title={t("browse.tinder.superlike")}
 			disabled={current === null || busy}
-			onclick={() => void decide("accept")}
+			onclick={() => void decide("superlike")}
 		>
-			<HeartIcon weight="fill" class="size-8" />
+			<HeartIcon weight="fill" class="size-7" />
+		</Button>
+		<Button
+			variant="secondary"
+			size="icon-lg"
+			class="size-14 rounded-full border-2 border-emerald-500/60 text-emerald-500"
+			aria-label={t("browse.tinder.like")}
+			title={t("browse.tinder.like")}
+			disabled={current === null || busy}
+			onclick={() => void decide("like")}
+		>
+			<HeartIcon weight="fill" class="size-7" />
 		</Button>
 	</div>
 </div>
