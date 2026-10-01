@@ -1,4 +1,4 @@
-const MIN_VISIBLE_MS = 1200;
+const MIN_VISIBLE_MS = 3000;
 const FADE_MS = 400;
 
 /**
