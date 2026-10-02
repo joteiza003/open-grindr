@@ -4,9 +4,9 @@
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { observeIntersection } from "$lib/util/observe-intersection";
 	import { virtualGrid } from "$lib/util/virtual-grid.svelte";
-	import type { GridProfile } from "$lib/grid/grid";
 	import EmptyGrid from "./EmptyGrid.svelte";
 	import GridCellSkeleton from "./GridCellSkeleton.svelte";
+	import GridListRows from "./GridListRows.svelte";
 	import GridProfileMiniCard from "./GridProfileMiniCard.svelte";
 
 	const PAGE_SKELETONS = 20;
@@ -15,41 +15,16 @@
 
 	let gridElement: HTMLElement | null = $state(null);
 
-	// Grindr's cascade can return profiles shuffled (especially once filters are
-	// applied), interleaving near and far. Sort by distance in the presentation
-	// layer for a stable, closest-first order without touching gridState, the
-	// API, or virtualization. Unresolved "lazy" profiles carry no distance yet,
-	// so they sort to the end until they resolve; the sort is stable, so equal
-	// distances keep the server's original order.
-	function gridDistance(profile: GridProfile): number {
-		return profile.type === "rendered" && profile.distance !== null
-			? profile.distance
-			: Number.POSITIVE_INFINITY;
-	}
-
-	const gridProfiles = $derived.by(() => {
-		// eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and spread inside this $derived, never mutated afterwards
-		const byId = new Map<number, GridProfile>();
-		for (const item of gridState.items) {
-			const existing = byId.get(item.id);
-			if (
-				!existing ||
-				(existing.type === "lazy" && item.type === "rendered")
-			) {
-				byId.set(item.id, item);
-			}
-		}
-		return [...byId.values()].sort(
-			(a, b) => gridDistance(a) - gridDistance(b),
-		);
-	});
-
 	const browsePreferences = $derived(preferencesSnapshot().browse);
 
+	const listMode = $derived(browsePreferences.viewMode === "list");
+
+	// "list" y "tinder" no son tamaños de tarjeta: la rejilla usa la estándar.
 	const cardVariant = $derived(
-		browsePreferences.viewMode === "grid"
-			? "standard"
-			: browsePreferences.viewMode,
+		browsePreferences.viewMode === "compact" ||
+			browsePreferences.viewMode === "detailed"
+			? browsePreferences.viewMode
+			: "standard",
 	);
 
 	// Optional per-user overrides applied inline so the default grid (and its
@@ -70,15 +45,16 @@
 	);
 	const view = virtualGrid({
 		grid: () => gridElement,
-		count: () => gridProfiles.length + pendingSkeletons,
+		count: () => gridState.profiles.length + pendingSkeletons,
 	});
 	const visibleProfiles = $derived(
-		gridProfiles.slice(view.startIndex, view.endIndex),
+		gridState.profiles.slice(view.startIndex, view.endIndex),
 	);
 	const visibleSkeletons = $derived(
 		Math.max(
 			0,
-			view.endIndex - Math.max(view.startIndex, gridProfiles.length),
+			view.endIndex -
+				Math.max(view.startIndex, gridState.profiles.length),
 		),
 	);
 
@@ -95,63 +71,76 @@
 </script>
 
 <div class="relative flex flex-1 flex-col">
-	<div
-		bind:this={gridElement}
-		class={["photo-grid", `photo-grid-${cardVariant}`]}
-		style:padding-top="{view.paddingTopPx}px"
-		style:padding-bottom="{view.paddingBottomPx}px"
-		style:--radius-grid={cardRadiusVar}
-		style:gap={cardGapVar}
-		data-rows-above={view.hasRowsAbove || undefined}
-		data-rows-below={view.hasRowsBelow || undefined}
-	>
-		{#if gridState.loading && gridProfiles.length === 0}
-			{#each Array.from({ length: PAGE_SKELETONS })}
-				<GridCellSkeleton />
-			{/each}
-		{:else if gridState.error && gridProfiles.length === 0}
-			<div class="col-span-full flex p-4">
-				<ApiErrorDisplay
-					error={gridState.error}
-					onRetry={() => gridState.retry()}
-					class="m-auto"
-				/>
-			</div>
-		{:else}
-			{#if gridProfiles.length === 0}
-				<EmptyGrid />
-			{/if}
-			{#each visibleProfiles as item (item.id)}
-				{#if item.type === "rendered"}
-					<GridProfileMiniCard
-						id={item.id}
-						displayName={item.displayName}
-						distance={item.distance}
-						unread={item.unread}
-						onlineUntil={item.onlineUntil}
-						isFavorite={item.isFavorite}
-						isVisiting={item.isVisiting}
-						hadRecentChat={item.hasChattedInLast24Hrs}
-						variant={cardVariant}
-						medias={item.profilePhotosHashes?.map((mediaHash) => ({
-							mediaHash,
-						})) ?? []}
+	{#if listMode}
+		<GridListRows />
+	{:else}
+		<div
+			bind:this={gridElement}
+			data-slot="grid-cells"
+			class={["photo-grid", `photo-grid-${cardVariant}`]}
+			style:padding-top="{view.paddingTopPx}px"
+			style:padding-bottom="{view.paddingBottomPx}px"
+			style:--radius-grid={cardRadiusVar}
+			style:gap={cardGapVar}
+			data-rows-above={view.hasRowsAbove || undefined}
+			data-rows-below={view.hasRowsBelow || undefined}
+		>
+			{#if gridState.loading && gridState.profiles.length === 0}
+				{#each Array.from({ length: PAGE_SKELETONS })}
+					<GridCellSkeleton />
+				{/each}
+			{:else if gridState.error && gridState.profiles.length === 0}
+				<div class="col-span-full flex p-4">
+					<ApiErrorDisplay
+						error={gridState.error}
+						onRetry={() => gridState.retry()}
+						class="m-auto"
 					/>
-				{:else}
-					<GridCellSkeleton
-						onVisible={() => {
-							gridState
-								.resolveProfile(item.id)
-								.catch((error) => console.error(error));
-						}}
-					/>
+				</div>
+			{:else}
+				{#if gridState.profiles.length === 0}
+					<EmptyGrid />
 				{/if}
-			{/each}
-			{#each Array.from({ length: visibleSkeletons })}
-				<GridCellSkeleton />
-			{/each}
-		{/if}
-	</div>
+				{#each visibleProfiles as item (item.id)}
+					{#if item.type === "rendered"}
+						<GridProfileMiniCard
+							id={item.id}
+							displayName={item.displayName}
+							distance={item.distance}
+							unread={item.unread}
+							onlineUntil={item.onlineUntil}
+							isFavorite={item.isFavorite}
+							isVisiting={item.isVisiting}
+							hadRecentChat={item.hasChattedInLast24Hrs}
+							variant={cardVariant}
+							age={item.age ?? null}
+							showName={browsePreferences.showName}
+							showDistance={browsePreferences.showDistance}
+							showAge={browsePreferences.showAge}
+							showOnlineStatus={browsePreferences.showOnlineStatus}
+							nameStyle={browsePreferences.nameStyle}
+							showFavoriteBadge={browsePreferences.showFavoriteBadge}
+							showChatBadge={browsePreferences.showChatBadge}
+							medias={item.profilePhotosHashes?.map(
+								(mediaHash) => ({ mediaHash }),
+							) ?? []}
+						/>
+					{:else}
+						<GridCellSkeleton
+							onVisible={() => {
+								gridState
+									.resolveProfile(item.id)
+									.catch((error) => console.error(error));
+							}}
+						/>
+					{/if}
+				{/each}
+				{#each Array.from({ length: visibleSkeletons })}
+					<GridCellSkeleton />
+				{/each}
+			{/if}
+		</div>
+	{/if}
 	<div role="status" class="sr-only">
 		{#if gridState.loadingMore}
 			Loading more profiles

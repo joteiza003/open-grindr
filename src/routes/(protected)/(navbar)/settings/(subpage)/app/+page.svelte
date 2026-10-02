@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { CaretRightIcon } from "phosphor-svelte";
+	import {
+		ArrowSquareOutIcon,
+		CaretRightIcon,
+		type IconComponentProps,
+	} from "phosphor-svelte";
 	import { toast } from "svelte-sonner";
 
+	import { APP_NAME, APP_SUBTITLE } from "$lib/brand";
 	import ToastUnimplemented from "$lib/components/feedback/ToastUnimplemented.svelte";
 	import * as Item from "$lib/components/ui/item";
+	import Link from "$lib/components/ui/link/Link.svelte";
 	import { hapticsAvailable } from "$lib/haptics";
+	import { t } from "$lib/i18n";
 	import { desktopEntryAvailable } from "$lib/platform/desktop-entry.svelte";
 	import { addonInstallerAvailable } from "$lib/updates/addon.svelte";
 	import {
@@ -18,6 +25,22 @@
 	import UnitsSetting from "./UnitsSetting.svelte";
 </script>
 
+{#snippet rowContent({
+	title,
+	trailingIcon: TrailingIcon = CaretRightIcon,
+}: {
+	title: string;
+	trailingIcon?: import("svelte").Component<IconComponentProps>;
+})}
+	<Item.Content class="max-cramped:min-w-0">
+		<Item.Title class="inline-block max-w-full min-w-0 truncate">
+			{title}
+		</Item.Title>
+	</Item.Content>
+	<Item.Actions class="min-w-0">
+		<TrailingIcon class="size-4 shrink-0" />
+	</Item.Actions>
+{/snippet}
 {#snippet item({
 	title,
 	unimplemented,
@@ -37,16 +60,7 @@
 					});
 				}}
 			>
-				<Item.Content class="max-cramped:min-w-0">
-					<Item.Title
-						class="inline-block max-w-full min-w-0 truncate"
-					>
-						{title}
-					</Item.Title>
-				</Item.Content>
-				<Item.Actions class="min-w-0">
-					<CaretRightIcon class="size-4 shrink-0" />
-				</Item.Actions>
+				{@render rowContent({ title })}
 			</a>
 		{/snippet}
 	</Item.Root>
@@ -58,16 +72,19 @@
 	<PreferenceSwitchSetting
 		preference="hapticFeedback"
 		title="Haptic feedback"
-		description="Play a short tap when a swipe has gone far enough to reply."
+		description="Use the haptic engine for interactions."
 	/>
 {/if}
 {#if desktopEntryAvailable()}
 	<AppsMenuEntrySetting />
 {/if}
-{@render item({
-	title: "Notifications",
-	unimplemented: { feature: "Notifications", issue: 45 },
-})}
+<Item.Root variant="outline">
+	{#snippet child({ props })}
+		<a href="/settings/app/notifications" {...props}>
+			{@render rowContent({ title: "Notifications" })}
+		</a>
+	{/snippet}
+</Item.Root>
 <h2>Privacy</h2>
 <PreferenceSwitchSetting
 	preference="stayOnline"
@@ -85,30 +102,46 @@
 	description="Let others know when you've viewed their profile. Your profile view history remains unaffected."
 />
 <h2>Security</h2>
-{@render item({
-	title: "Discreet app icon",
-	unimplemented: { feature: "Discreet app icon", issue: 97 },
-})}
-{@render item({ title: "PIN", unimplemented: { feature: "PIN", issue: 50 } })}
+<div class="og-settings-group">
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<a href="/settings/app/icon" {...props}>
+				{@render rowContent({ title: t("icon.title") })}
+			</a>
+		{/snippet}
+	</Item.Root>
+	{@render item({
+		title: "PIN",
+		unimplemented: { feature: "PIN", issue: 50 },
+	})}
+</div>
 {#if updatesSelfManaged() || updatesUnsupportedReason() !== null || addonInstallerAvailable()}
 	<h2>Updates</h2>
 	<AutomaticUpdatesSetting />
 {/if}
 <h2>About</h2>
-<Item.Root variant="outline">
-	{#snippet child({ props })}
-		<a href="/settings/app/credits" {...props}>
-			<Item.Content class="max-cramped:min-w-0">
-				<Item.Title class="inline-block max-w-full min-w-0 truncate">
-					Credits &amp; Licenses
-				</Item.Title>
-			</Item.Content>
-			<Item.Actions class="min-w-0">
-				<CaretRightIcon class="size-4 shrink-0" />
-			</Item.Actions>
-		</a>
-	{/snippet}
-</Item.Root>
+<div class="og-settings-group">
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<Link href="https://opengrind.org/privacy" {...props}>
+				{@render rowContent({
+					title: "Privacy policy",
+					trailingIcon: ArrowSquareOutIcon,
+				})}
+			</Link>
+		{/snippet}
+	</Item.Root>
+	<Item.Root variant="outline">
+		{#snippet child({ props })}
+			<a href="/settings/app/credits" {...props}>
+				{@render rowContent({ title: "Credits & Licenses" })}
+			</a>
+		{/snippet}
+	</Item.Root>
+</div>
+<p class="px-4 text-center text-xs text-muted-foreground">
+	{APP_NAME} · {APP_SUBTITLE}
+</p>
 
 <style lang="postcss">
 	@reference "$layout";

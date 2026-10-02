@@ -1,5 +1,6 @@
 <script lang="ts">
 	import "leaflet/dist/leaflet.css";
+	import { goto } from "$app/navigation";
 	import {
 		DomEvent,
 		type Map as LeafletMap,
@@ -8,10 +9,8 @@
 	import {
 		ArrowsOutIcon,
 		CaretLeftIcon,
-		CircleIcon,
 		CrosshairIcon,
 		ListIcon,
-		MapPinPlusIcon,
 	} from "phosphor-svelte";
 	import {
 		ControlAttribution,
@@ -25,16 +24,13 @@
 
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
-	import MapCircleLayer from "$lib/components/map-elements/MapCircleLayer.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
-	import { currentLocale } from "$lib/i18n/t";
 	import {
 		clusterMarkers,
 		type MarkerCluster,
 	} from "$lib/map/cluster-markers";
-	import { circleBounds, radiusPixels } from "$lib/map/geographic";
 	import { MapElementsState } from "$lib/map/map-elements-state.svelte";
 	import {
 		clusterIcon,
@@ -44,11 +40,18 @@
 		sharedPinIcon,
 		userPinIcon,
 	} from "$lib/map/map-icons";
-	import { openExternalLink } from "$lib/platform/link-opener";
-	import { profileMediaUrl } from "$lib/util/media";
-	import { goto } from "$app/navigation";
+	import {
+		allMapPoints,
+		directionsUrl,
+		formatReceivedAt,
+		locationLabel,
+	} from "$lib/map/map-page-helpers";
 	import { decodeGeohash } from "$lib/model/geohash";
-	import type { MapCircle, MapMarker } from "$lib/model/map-elements";
+	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
+	import { openExternalLink } from "$lib/platform/link-opener";
+	import { canGoBack } from "$lib/util/history";
+	import { profileMediaUrl } from "$lib/util/media";
+	import type { MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 
 	const library = new SavedLocationsState();
@@ -87,21 +90,24 @@
 			return;
 		}
 		const first = library.locations[0];
-		if (first === undefined) return;
-		map.setView([first.lat, first.lon], 11);
+		if (first !== undefined) {
+			map.setView([first.lat, first.lon], 11);
+			centered = true;
+			return;
+		}
+		// Sin ubicación propia ni compartidas: centra en el primer pin guardado.
+		const pin = overlays.markers[0];
+		if (pin === undefined) return;
+		map.setView([pin.latitude, pin.longitude], 12);
 		centered = true;
 	});
-
-	const picking = $derived(
-		overlays.mode === "ADD_CIRCLE" || overlays.mode === "ADD_MARKER",
-	);
 
 	$effect(() => {
 		const instance = map;
 		if (!instance) return;
-		const onMapClick = (event: LeafletMouseEvent) => {
+		const onMapClick = () => {
 			openCluster = null;
-			overlays.handleMapClick(event.latlng.lat, event.latlng.lng);
+			overlays.handleMapClick();
 		};
 		const onZoom = () => {
 			zoom = instance.getZoom();
@@ -109,51 +115,26 @@
 		zoom = instance.getZoom();
 		instance.on("click", onMapClick);
 		instance.on("zoomend", onZoom);
-		instance.getContainer().style.cursor = picking ? "crosshair" : "";
 		return () => {
 			instance.off("click", onMapClick);
 			instance.off("zoomend", onZoom);
-			instance.getContainer().style.cursor = "";
 		};
 	});
 
 	const markerClusters = $derived(clusterMarkers(overlays.markers, zoom));
-	const locale = $derived(currentLocale());
-	const userLocation = $derived(
-		customLocation
-			? { latitude: customLocation.lat, longitude: customLocation.lon }
-			: null,
+	const hasPoints = $derived(
+		overlays.markers.length > 0 ||
+			library.locations.length > 0 ||
+			customLocation !== null,
 	);
-
-	/** Frame a circle in the space left free by the bottom editor. */
-	function focusCircle(circle: MapCircle) {
-		if (!map) return;
-		const bounds = circleBounds(circle);
-		const pixels = radiusPixels(circle.radiusKm, circle.latitude, zoom);
-		if (map.getBounds().contains(bounds) && pixels >= 40) return;
-		map.fitBounds(bounds, {
-			paddingTopLeft: [40, 40],
-			paddingBottomRight: [40, 300],
-			maxZoom: 16,
-		});
-	}
 
 	function fitAll() {
 		if (!map) return;
-		const points: [number, number][] = [];
-		for (const circle of overlays.circles) {
-			const [[south, west], [north, east]] = circleBounds(circle);
-			points.push([south, west], [north, east]);
-		}
-		for (const marker of overlays.markers) {
-			points.push([marker.latitude, marker.longitude]);
-		}
-		for (const location of library.locations) {
-			points.push([location.lat, location.lon]);
-		}
-		if (customLocation) {
-			points.push([customLocation.lat, customLocation.lon]);
-		}
+		const points = allMapPoints(
+			overlays.markers,
+			library.locations,
+			customLocation,
+		);
 		if (points.length === 0) return;
 		map.fitBounds(points, { padding: [40, 40], maxZoom: 16 });
 	}
@@ -166,72 +147,106 @@
 		);
 	}
 
-	// Bring a newly selected circle into view (not while dragging its handles).
-	let lastFocusedCircleId: string | null = null;
-	$effect(() => {
-		const id = overlays.selectedCircleId;
-		if (id === lastFocusedCircleId) return;
-		lastFocusedCircleId = id;
-		const circle = id
-			? overlays.circles.find((item) => item.id === id)
-			: null;
-		if (circle) focusCircle(circle);
-	});
-
-	function pickListedCircle(circle: MapCircle) {
-		listOpen = false;
-		overlays.selectCircle(circle.id);
-	}
-
-	function labelFor(location: SavedLocation): string {
-		return (
-			location.displayName ??
-			(location.senderId !== null
-				? `#${location.senderId}`
-				: t("chat.sharedLocation"))
-		);
-	}
-
-	function when(timestamp: number): string {
-		return new Date(timestamp).toLocaleString();
-	}
-
-	const selectedCircle = $derived(
-		overlays.circles.find(
-			(circle) => circle.id === overlays.selectedCircleId,
-		) ?? null,
-	);
 	const selectedMarker = $derived(
 		overlays.markers.find(
 			(marker) => marker.id === overlays.selectedMarkerId,
 		) ?? null,
 	);
 
-	const empty =
+	const empty = $derived(
 		!library.loading &&
-		!overlays.loading &&
-		library.locations.length === 0 &&
-		overlays.circles.length === 0 &&
-		overlays.markers.length === 0 &&
-		overlays.mode === "NORMAL";
+			!overlays.loading &&
+			library.locations.length === 0 &&
+			overlays.markers.length === 0 &&
+			overlays.mode === "NORMAL",
+	);
 
-	const modeHint =
-		overlays.mode === "ADD_CIRCLE"
-			? t("map.tapCircle")
-			: overlays.mode === "ADD_MARKER"
-				? t("map.tapMarker")
-				: null;
+	type PendingDelete =
+		| { kind: "location"; id: string }
+		| { kind: "marker"; id: string }
+		| { kind: "all-locations" }
+		| { kind: "all-markers" };
+
+	// Qué se va a borrar al confirmar. Solo se escribe al pedir el borrado: en
+	// un móvil real el diálogo se cierra ANTES de que llegue el clic de
+	// «Eliminar», así que no se puede borrar este dato al cerrarse.
+	let pending = $state<PendingDelete | null>(null);
+
+	function requestDelete(next: PendingDelete) {
+		pending = next;
+		confirmOpen = true;
+	}
+
+	function requestDeleteLocation(location: SavedLocation) {
+		requestDelete({ kind: "location", id: location.localId });
+	}
+
+	const confirmTexts = $derived.by(() => {
+		if (pending?.kind === "all-locations") {
+			return {
+				title: t("map.deleteAllTitle"),
+				body: t("map.deleteAllLocationsBody", {
+					n: library.locations.length,
+				}),
+			};
+		}
+		if (pending?.kind === "all-markers") {
+			return {
+				title: t("map.deleteAllTitle"),
+				body: t("map.deleteAllMarkersBody", {
+					n: overlays.markers.length,
+				}),
+			};
+		}
+		return { title: t("map.deleteTitle"), body: t("map.deleteBody") };
+	});
+
+	function pickListedLocation(location: SavedLocation) {
+		listOpen = false;
+		map?.setView([location.lat, location.lon], Math.max(zoom, 14));
+	}
 
 	async function confirmDelete(): Promise<void> {
-		if (overlays.circleDraft?.id) {
-			await overlays.deleteCircle(overlays.circleDraft.id);
-		} else if (selectedCircle) {
-			await overlays.deleteCircle(selectedCircle.id);
-		} else if (selectedMarker) {
-			await overlays.deleteMarker(selectedMarker.id);
+		const target = pending;
+		try {
+			if (target?.kind === "location") {
+				await library.remove(target.id);
+			} else if (target?.kind === "marker") {
+				await overlays.deleteMarker(target.id);
+			} else if (target?.kind === "all-locations") {
+				await library.removeAll();
+			} else if (target?.kind === "all-markers") {
+				await overlays.deleteAllMarkers();
+			}
+		} catch (error) {
+			console.error("[map] Failed to delete", error);
+			overlays.error = String(error);
+		} finally {
+			confirmOpen = false;
 		}
-		confirmOpen = false;
 	}
+
+	$effect(() => {
+		if (overlays.mode !== "NORMAL") listOpen = false;
+	});
+
+	/** Sale del mapa; si no hay historial (p. ej. app restaurada aquí), va al inicio. */
+	function leaveMap() {
+		if (canGoBack()) history.back();
+		else void goto("/", { replaceState: true });
+	}
+
+	// System back closes the innermost open panel before leaving the map.
+	dismissOnBackGesture({
+		active: () => true,
+		dismiss: () => {
+			if (confirmOpen) confirmOpen = false;
+			else if (openCluster) openCluster = null;
+			else if (listOpen) listOpen = false;
+			else if (overlays.mode !== "NORMAL") overlays.cancelCreation();
+			else leaveMap();
+		},
+	});
 
 	function onClusterClick(
 		cluster: Extract<MarkerCluster, { type: "group" }>,
@@ -259,65 +274,52 @@
 <main
 	class="relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
-	<header class="flex items-center gap-2 px-4 pt-3 pb-2">
-		<a
-			href="/"
-			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
+	<!-- Glass header -->
+	<header
+		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/95 px-3 py-2.5"
+	>
+		<Button
+			variant="ghost"
+			size="icon"
+			class="size-10 shrink-0 rounded-full text-foreground"
 			aria-label={t("common.back")}
-			onclick={(event) => {
-				if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-					return;
-				const canBack =
-					(window.navigation && "canGoBack" in window.navigation
-						? Boolean((window.navigation as { canGoBack?: boolean }).canGoBack)
-						: false) || history.length > 1;
-				if (canBack) {
-					event.preventDefault();
-					history.back();
-				}
-			}}
+			title={t("common.back")}
+			onclick={leaveMap}
 		>
-			<CaretLeftIcon class="size-5" />
-		</a>
-		<h1 class="min-w-0 flex-1 text-xl font-semibold tracking-tight">
+			<CaretLeftIcon class="size-5" weight="bold" />
+		</Button>
+
+		<h1
+			class="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight"
+		>
 			{t("map.title")}
 		</h1>
-		<Button
-			variant={listOpen ? "default" : "secondary"}
-			size="icon"
-			aria-label={t("map.list")}
-			title={t("map.list")}
-			onclick={() => (listOpen = !listOpen)}
-		>
-			<ListIcon class="size-5" />
-		</Button>
-		<Button
-			variant={overlays.mode === "ADD_CIRCLE" ||
-			overlays.mode === "CIRCLE_CONFIGURATION"
-				? "default"
-				: "secondary"}
-			size="icon"
-			aria-label={t("map.addCircle")}
-			title={t("map.addCircle")}
-			onclick={() => overlays.beginAddCircle()}
-		>
-			<CircleIcon class="size-5" />
-		</Button>
-		<Button
-			variant={overlays.mode === "ADD_MARKER" ||
-			overlays.mode === "MARKER_CONFIGURATION"
-				? "default"
-				: "secondary"}
-			size="icon"
-			aria-label={t("map.addMarker")}
-			title={t("map.addMarker")}
-			onclick={() => overlays.beginAddMarker()}
-		>
-			<MapPinPlusIcon class="size-5" />
-		</Button>
+
+		<div class="flex items-center gap-1">
+			<Button
+				variant={listOpen ? "default" : "ghost"}
+				size="icon"
+				class="size-10 rounded-full text-foreground"
+				aria-label={t("map.list")}
+				title={t("map.list")}
+				aria-pressed={listOpen}
+				onclick={() => {
+					openCluster = null;
+					if (overlays.mode !== "NORMAL") overlays.cancelCreation();
+					listOpen = !listOpen;
+				}}
+			>
+				<ListIcon
+					class="size-5"
+					weight={listOpen ? "fill" : "regular"}
+				/>
+			</Button>
+		</div>
 	</header>
 
-	<div class="relative min-h-0 flex-1">
+	<!-- `isolate` encierra los z-index de Leaflet y del HUD (hasta 1000): sin
+	     esto quedan por encima de los diálogos (z-50) y tapan sus botones. -->
+	<div class="relative isolate min-h-0 flex-1">
 		<div class="h-full w-full">
 			<Map
 				options={{
@@ -340,8 +342,6 @@
 					options={{ imperial: false, position: "bottomleft" }}
 				/>
 
-				<MapCircleLayer {overlays} {zoom} {picking} {locale} />
-
 				{#each markerClusters as cluster (cluster.type === "single" ? cluster.marker.id : cluster.id)}
 					{#if cluster.type === "single"}
 						{@const marker = cluster.marker}
@@ -354,7 +354,8 @@
 												mediaHash: marker.mediaHash,
 												size: "thumb",
 											}),
-											marker.id === overlays.selectedMarkerId,
+											marker.id ===
+												overlays.selectedMarkerId,
 										)
 									: marker.id === overlays.selectedMarkerId
 										? selectedPlacePinIcon
@@ -367,19 +368,15 @@
 							}}
 							onclick={(event: LeafletMouseEvent) => {
 								DomEvent.stopPropagation(event);
-								if (picking) {
-									overlays.handleMapClick(
-										event.latlng.lat,
-										event.latlng.lng,
-									);
-									return;
-								}
 								overlays.selectMarker(marker.id);
 							}}
 						>
 							{#if marker.id === overlays.selectedMarkerId}
 								<Popup>
-									<strong>{marker.displayName ?? marker.title}</strong>
+									<strong
+										>{marker.displayName ??
+											marker.title}</strong
+									>
 								</Popup>
 							{/if}
 						</Marker>
@@ -395,34 +392,11 @@
 							}}
 							onclick={(event: LeafletMouseEvent) => {
 								DomEvent.stopPropagation(event);
-								if (picking) {
-									overlays.handleMapClick(
-										event.latlng.lat,
-										event.latlng.lng,
-									);
-									return;
-								}
 								onClusterClick(cluster);
 							}}
 						/>
 					{/if}
 				{/each}
-
-				{#if overlays.markerDraft}
-					<Marker
-						latLng={[
-							overlays.markerDraft.latitude,
-							overlays.markerDraft.longitude,
-						]}
-						options={{
-							icon: placePinIcon,
-							zIndexOffset: 800,
-							title:
-								overlays.markerDraft.title ||
-								t("map.newMarker"),
-						}}
-					/>
-				{/if}
 
 				{#if customLocation}
 					<Marker
@@ -445,28 +419,30 @@
 						latLng={[location.lat, location.lon]}
 						options={{
 							icon: sharedPinIcon,
-							title: labelFor(location),
+							title: locationLabel(location),
 							zIndexOffset: 400,
 						}}
 					>
 						<Popup>
-							<strong>{labelFor(location)}</strong><br />
-							{when(location.receivedAt)}
+							<strong>{locationLabel(location)}</strong><br />
+							{formatReceivedAt(location.receivedAt)}
 						</Popup>
 					</Marker>
 				{/each}
 			</Map>
 		</div>
 
+		<!-- Floating map controls -->
 		<div
 			class="pointer-events-none absolute end-3 top-3 z-1000 flex flex-col gap-2"
 		>
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto shadow-lg"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg can-hover:hover:bg-card"
 				aria-label={t("map.fitAll")}
 				title={t("map.fitAll")}
+				disabled={!hasPoints}
 				onclick={fitAll}
 			>
 				<ArrowsOutIcon class="size-5" />
@@ -474,7 +450,7 @@
 			<Button
 				variant="secondary"
 				size="icon"
-				class="pointer-events-auto shadow-lg"
+				class="pointer-events-auto size-11 rounded-2xl border border-border/60 bg-card/95 shadow-lg disabled:opacity-40 can-hover:hover:bg-card"
 				aria-label={t("map.locate")}
 				title={customLocation ? t("map.locate") : t("map.noLocation")}
 				disabled={!customLocation}
@@ -487,9 +463,18 @@
 		<MapHud
 			{overlays}
 			bind:listOpen
-			{userLocation}
-			onPickCircle={pickListedCircle}
-			{modeHint}
+			locations={library.locations}
+			{locationLabel}
+			onPickLocation={pickListedLocation}
+			onDeleteLocation={requestDeleteLocation}
+			onDeleteMarker={(marker) =>
+				requestDelete({ kind: "marker", id: marker.id })}
+			onDeleteAll={(kind) =>
+				requestDelete({
+					kind: kind === "markers" ? "all-markers" : "all-locations",
+				})}
+			confirmTitle={confirmTexts.title}
+			confirmBody={confirmTexts.body}
 			{empty}
 			bind:openCluster
 			bind:confirmOpen
@@ -497,34 +482,18 @@
 			onPickMarker={pickClusteredMarker}
 			onConfirmDelete={confirmDelete}
 			onOpenProfile={(id) => void goto(`/profile/${id}`)}
-			onOpenDirections={(marker) => {
-				const dest = `${marker.latitude},${marker.longitude}`;
-				const origin =
-					customLocation != null
-						? `${customLocation.lat},${customLocation.lon}`
-						: null;
-				const url = origin
-					? `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&travelmode=walking`
-					: `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking`;
-				openExternalLink(url);
-			}}
+			onOpenDirections={(marker) =>
+				openExternalLink(directionsUrl(marker, customLocation))}
 		/>
 	</div>
 </main>
 
 <style>
-	:global(.leaflet-tooltip.map-circle-label) {
-		background: rgb(0 0 0 / 65%);
-		border: 0;
-		border-radius: 999px;
-		box-shadow: none;
-		color: #fff;
-		font-size: 12px;
-		font-weight: 600;
-		padding: 2px 8px;
-		pointer-events: none;
-	}
-	:global(.leaflet-tooltip.map-circle-label::before) {
-		display: none;
+	/* Soften leaflet attribution on dark/light */
+	:global(.leaflet-control-attribution) {
+		background: rgb(255 255 255 / 75%) !important;
+		border-radius: 8px 0 0 0;
+		font-size: 10px !important;
+		padding: 2px 6px !important;
 	}
 </style>

@@ -9,6 +9,7 @@ import type { AlbumMessage } from "$lib/model/messaging/messages";
 import {
 	downloadMediaBytes,
 	mediaFileName,
+	removeMediaFiles,
 	upsertSavedAlbum,
 	writeMediaFile,
 } from "./saved-album-library";
@@ -24,6 +25,12 @@ export type SavableAlbumSlide = {
 	contentId: number;
 	contentType: string;
 	url: string;
+	/**
+	 * The original https URL. Saving reads the whole file, so it goes through the
+	 * buffering image fetcher: the video fetcher streams to a media element on
+	 * Android and cannot be downloaded with `fetch`.
+	 */
+	sourceUrl?: string;
 	thumbUrl: string;
 };
 
@@ -49,29 +56,42 @@ export async function saveAlbumToLibrary({
 	profileSnapshot: SavedAlbumProfileSnapshot;
 	content?: SavableAlbumSlide[];
 }): Promise<SavedAlbum> {
-	const slides = content ?? (await getAlbumContent(body.albumId)).content;
+	const slides: SavableAlbumSlide[] =
+		content ?? (await getAlbumContent(body.albumId)).content;
 	const storageId = crypto.randomUUID();
 
+	const written: string[] = [];
+	const write = async (path: string, bytes: Uint8Array) => {
+		written.push(path);
+		await writeMediaFile(path, bytes);
+	};
+
 	const items: SavedAlbum["items"] = [];
+	const failures: string[] = [];
 	for (const slide of slides) {
-		if (!slide.url) continue;
-		const kind = slide.contentType.startsWith("video/") ? "video" : "image";
+		if (!slide.url) {
+			failures.push(`#${slide.contentId}: no url`);
+			continue;
+		}
 
 		// One slide that fails to download must not lose the whole album; save
 		// the rest and let the empty-album check below decide if nothing landed.
 		let localPath: string;
 		try {
 			const bytes = await downloadMediaBytes(
-				proxyMediaUrl(slide.url, { as: kind }),
+				proxyMediaUrl(slide.sourceUrl ?? slide.url, { as: "image" }),
 			);
 			localPath = mediaFileName(
 				storageId,
 				String(slide.contentId),
 				slide.contentType,
 			);
-			await writeMediaFile(localPath, bytes);
+			await write(localPath, bytes);
 		} catch (error) {
 			console.error("[album-library] media save failed", error);
+			failures.push(
+				`#${slide.contentId}: ${error instanceof Error ? error.message : String(error)}`,
+			);
 			continue;
 		}
 
@@ -85,7 +105,7 @@ export async function saveAlbumToLibrary({
 				`${slide.contentId}_thumb`,
 				"image/jpeg",
 			);
-			await writeMediaFile(thumbnailPath, thumbBytes);
+			await write(thumbnailPath, thumbBytes);
 		} catch (error) {
 			console.error("[album-library] thumbnail save failed", error);
 		}
@@ -99,7 +119,12 @@ export async function saveAlbumToLibrary({
 	}
 
 	if (items.length === 0) {
-		throw new Error("This album has no downloadable media");
+		await removeMediaFiles(written);
+		throw new Error(
+			slides.length === 0
+				? "This album has no media to save"
+				: `This album has no downloadable media (${failures.join("; ")})`,
+		);
 	}
 
 	let coverPath: string | null = null;
@@ -108,7 +133,7 @@ export async function saveAlbumToLibrary({
 		try {
 			const coverBytes = await downloadMediaBytes(proxiedCover);
 			coverPath = mediaFileName(storageId, "cover", "image/jpeg");
-			await writeMediaFile(coverPath, coverBytes);
+			await write(coverPath, coverBytes);
 		} catch (error) {
 			console.error("[album-library] cover save failed", error);
 		}
@@ -139,6 +164,12 @@ export async function saveAlbumToLibrary({
 		hidden: false,
 	};
 
-	await upsertSavedAlbum(record);
+	try {
+		await upsertSavedAlbum(record);
+	} catch (error) {
+		// Nothing references these files, so don't leave them behind.
+		await removeMediaFiles(written);
+		throw error;
+	}
 	return record;
 }

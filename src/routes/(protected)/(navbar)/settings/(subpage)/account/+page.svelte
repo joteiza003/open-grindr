@@ -54,12 +54,22 @@
 		{/snippet}
 	</Item.Root>
 {/snippet}
-{@render linkItem({ title: "Privacy", href: "/settings/account/privacy" })}
-{@render item({ title: "Email" })}
-{@render item({ title: "Password" })}
-{@render linkItem({
-	title: "Blocked users",
-	href: "/settings/account/blocked",
-})}
-{@render linkItem({ title: "Hidden users", href: "/settings/account/hidden" })}
-{@render item({ title: "Delete account" })}
+<div class="og-settings-group">
+	{@render linkItem({
+		title: "Privacy",
+		href: "/settings/account/privacy",
+	})}
+	{@render item({ title: "Email" })}
+	{@render item({ title: "Password" })}
+	{@render linkItem({
+		title: "Blocked users",
+		href: "/settings/account/blocked",
+	})}
+	{@render linkItem({
+		title: "Hidden users",
+		href: "/settings/account/hidden",
+	})}
+</div>
+<div class="og-settings-group">
+	{@render item({ title: "Delete account" })}
+</div>

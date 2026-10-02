@@ -6,7 +6,6 @@ import {
 import {
 	parsePhotoAlbumsFile,
 	type PhotoAlbum,
-	recentsAlbum,
 } from "$lib/model/messaging/photo-albums";
 import type { DrawerMedia } from "$lib/api/messaging/drawer";
 
@@ -29,25 +28,9 @@ export async function saveStoredPhotoAlbums(
 	albums: PhotoAlbum[],
 ): Promise<void> {
 	const content = new TextEncoder().encode(
-		JSON.stringify({
-			version: 1,
-			albums: albums.filter((album) => album.dynamic !== "drawer"),
-		}),
+		JSON.stringify({ version: 1, albums }),
 	);
 	await writeAppDataFileAtomic({ path: ALBUMS_PATH, content });
-}
-
-export function albumsWithRecents({
-	stored,
-	drawer,
-}: {
-	stored: PhotoAlbum[];
-	drawer: DrawerMedia[];
-}): PhotoAlbum[] {
-	const recentsIds = [...drawer]
-		.sort((a, b) => b.createdTs - a.createdTs)
-		.map((item) => String(item.id));
-	return [recentsAlbum(recentsIds), ...stored];
 }
 
 export function resolveAlbumMedia({
@@ -98,7 +81,6 @@ export function upsertPhotoAlbum(
 	albums: PhotoAlbum[],
 	album: PhotoAlbum,
 ): PhotoAlbum[] {
-	if (album.dynamic === "drawer") return albums;
 	const index = albums.findIndex((existing) => existing.id === album.id);
 	if (index === -1) return [...albums, album];
 	return albums.map((existing, i) => (i === index ? album : existing));

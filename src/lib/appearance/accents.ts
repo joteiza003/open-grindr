@@ -12,14 +12,14 @@ import { z } from "zod";
  * override block in the stylesheet.
  */
 export const accents = [
-	{ key: "amber", label: "Amber", swatch: "oklch(86.521% 0.17664 90.372)" },
-	{ key: "blue", label: "Blue", swatch: "oklch(0.72 0.15 250)" },
-	{ key: "teal", label: "Teal", swatch: "oklch(0.8 0.13 190)" },
-	{ key: "green", label: "Green", swatch: "oklch(0.8 0.17 145)" },
-	{ key: "violet", label: "Violet", swatch: "oklch(0.72 0.16 300)" },
-	{ key: "pink", label: "Pink", swatch: "oklch(0.78 0.16 350)" },
-	{ key: "orange", label: "Orange", swatch: "oklch(0.78 0.17 55)" },
-	{ key: "red", label: "Red", swatch: "oklch(0.7 0.19 25)" },
+	{ key: "amber", label: "Amber", swatch: "oklch(0.82 0.17 85)" },
+	{ key: "blue", label: "Blue", swatch: "oklch(0.82 0.15 250)" },
+	{ key: "teal", label: "Teal", swatch: "oklch(0.82 0.13 190)" },
+	{ key: "green", label: "Green", swatch: "oklch(0.82 0.16 150)" },
+	{ key: "violet", label: "Violet", swatch: "oklch(0.82 0.16 300)" },
+	{ key: "pink", label: "Pink", swatch: "oklch(0.82 0.16 350)" },
+	{ key: "orange", label: "Orange", swatch: "oklch(0.82 0.17 55)" },
+	{ key: "red", label: "Red", swatch: "oklch(0.82 0.18 25)" },
 ] as const;
 
 export type AccentKey = (typeof accents)[number]["key"];

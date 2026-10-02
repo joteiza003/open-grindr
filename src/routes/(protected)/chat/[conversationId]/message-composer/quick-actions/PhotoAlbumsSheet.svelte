@@ -10,7 +10,6 @@
 		getDrawerMedia,
 	} from "$lib/api/messaging/drawer";
 	import {
-		albumsWithRecents,
 		loadStoredPhotoAlbums,
 		resolveAlbumMedia,
 	} from "$lib/chat/photo-albums-library";
@@ -70,7 +69,7 @@
 				loadStoredPhotoAlbums(),
 			]);
 			drawer = media;
-			albums = albumsWithRecents({ stored, drawer: media });
+			albums = stored;
 		} catch (error) {
 			console.error(error);
 			showErrorToast({ label: t("chat.albums.loadError"), error });
@@ -285,21 +284,20 @@
 										</span>
 									</span>
 								</button>
-								{#if !album.dynamic}
-									<Button
-										type="button"
-										variant="ghost"
-										size="icon"
-										class="size-9 shrink-0 rounded-full"
-										aria-label={t("chat.albums.editAria", {
-											name: album.name,
-										})}
-										disabled={sending}
-										onclick={() => (editing = { album })}
-									>
-										<PencilSimpleIcon class="size-4" />
-									</Button>
-								{/if}
+
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									class="size-9 shrink-0 rounded-full"
+									aria-label={t("chat.albums.editAria", {
+										name: album.name,
+									})}
+									disabled={sending}
+									onclick={() => (editing = { album })}
+								>
+									<PencilSimpleIcon class="size-4" />
+								</Button>
 							</li>
 						{/each}
 					</ul>

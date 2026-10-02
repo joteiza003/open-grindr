@@ -50,6 +50,10 @@ export async function upsertSavedLocation(
 	});
 }
 
+export async function deleteAllSavedLocations(): Promise<void> {
+	await serialize(() => writeIndex([]));
+}
+
 export async function deleteSavedLocation(localId: string): Promise<void> {
 	await serialize(async () => {
 		const locations = await loadIndex();

@@ -1,5 +1,6 @@
 import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 import {
+	deleteAllSavedLocations,
 	deleteSavedLocation,
 	loadSavedLocations,
 } from "./saved-locations-library";
@@ -19,6 +20,11 @@ export class SavedLocationsState {
 		} finally {
 			this.loading = false;
 		}
+	}
+
+	async removeAll(): Promise<void> {
+		await deleteAllSavedLocations();
+		this.locations = [];
 	}
 
 	async remove(localId: string): Promise<void> {

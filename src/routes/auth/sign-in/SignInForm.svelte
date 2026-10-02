@@ -8,45 +8,50 @@
 	import { callMethod } from "$lib/api/methods";
 	import {
 		companionDisabled,
+		companionRefused,
 		companionUnavailable,
 		companionUntrusted,
 		disabledCompanionMessage,
 		finishSignIn,
+		refusedCompanionMessage,
 		reportSignInFailure,
-		untrustedCompanionCopy,
+		untrustedCompanionMessage,
 	} from "$lib/api/sign-in";
 	import { Button } from "$lib/components/ui/button";
 	import * as Card from "$lib/components/ui/card";
 	import { Input } from "$lib/components/ui/input";
 	import { Label } from "$lib/components/ui/label";
 	import { Spinner } from "$lib/components/ui/spinner";
-	import RecaptchaUnsupported from "./RecaptchaUnsupported.svelte";
 
 	type OauthProvider = "google" | "facebook";
 
 	const oauthProviders: Record<
 		OauthProvider,
 		{
-			method: "login_with_google" | "login_with_facebook";
+			method: "sign_in_with_google" | "sign_in_with_facebook";
 			label: string;
 			failures: Record<string, () => void>;
 		}
 	> = {
 		google: {
-			method: "login_with_google",
+			method: "sign_in_with_google",
 			label: "Google",
 			failures: {
 				[companionUnavailable]: () => void goto("/auth/sign-in/google"),
 				[companionDisabled]: () =>
 					toast.error(disabledCompanionMessage),
 				[companionUntrusted]: () => {
-					toast.error(untrustedCompanionCopy());
+					toast.error(untrustedCompanionMessage);
+					void goto("/auth/sign-in/google?paste");
+				},
+				[companionRefused]: () => {
+					toast.error(refusedCompanionMessage);
 					void goto("/auth/sign-in/google?paste");
 				},
 			},
 		},
 		facebook: {
-			method: "login_with_facebook",
+			method: "sign_in_with_facebook",
 			label: "Facebook",
 			failures: {
 				"facebook-dialog-error": () =>
@@ -55,7 +60,7 @@
 					),
 				"facebook-handoff-refused": () =>
 					toast.error(
-						"Facebook tried to open its own app, which Grindr + can't use. Sign in with your email and password instead.",
+						"Facebook tried to open its own app, which Euskal Grindr can't use. Sign in with your email and password instead.",
 					),
 			},
 		},
@@ -73,12 +78,48 @@
 		}),
 	});
 
+	const recaptchaErrorSchema = z.object({
+		kind: z.literal("Recaptcha"),
+		message: z.object({ reason: z.string() }),
+	});
+
+	const captchaSignInMessages: Record<string, string> = {
+		unsupportedPlatform:
+			"This account needs captcha verification, available through the Euskal Grindr reCAPTCHA helper on Android.",
+		addonUnavailable:
+			"Install the Euskal Grindr reCAPTCHA helper to sign in to this account.",
+		addonDisabled:
+			"Enable the Euskal Grindr reCAPTCHA helper to sign in to this account.",
+		addonUntrusted:
+			"The installed reCAPTCHA helper isn't the official Euskal Grindr build.",
+		grindrMissing:
+			"The reCAPTCHA helper needs the Grindr app installed to verify this sign-in.",
+	};
+
 	async function signIn(event: SubmitEvent) {
 		event.preventDefault();
+		if (submitting) return;
 		submitting = "password";
 		try {
-			finishSignIn(await callMethod("login", { email, password }));
+			if (await trySignIn()) return;
+			await trySignInWithCaptcha();
+		} finally {
+			submitting = false;
+		}
+	}
+
+	async function trySignIn(captchaToken?: string): Promise<boolean> {
+		try {
+			finishSignIn(
+				await callMethod("sign_in_with_email", {
+					email,
+					password,
+					captchaToken,
+				}),
+			);
+			return true;
 		} catch (error) {
+			let invalidCredentials = false;
 			reportSignInFailure({
 				error,
 				onFailure: (appError) => {
@@ -88,31 +129,48 @@
 					) {
 						return false;
 					}
-					toast.error("Invalid email or password");
-					void maybeCheckRecaptcha();
+					invalidCredentials = true;
 					return true;
 				},
 			});
-		} finally {
-			submitting = false;
+			if (invalidCredentials && captchaToken === undefined) return false;
+			if (invalidCredentials) toast.error("Invalid email or password");
+			return true;
 		}
 	}
 
-	let recaptchaChecked = false;
-	let recaptchaDialogOpen = $state(false);
-
-	async function maybeCheckRecaptcha() {
-		if (recaptchaChecked) return;
-		recaptchaChecked = true;
+	async function trySignInWithCaptcha() {
+		let required = false;
 		try {
-			const enabled = await callMethod("recaptcha_first_party_enabled");
-			if (enabled) recaptchaDialogOpen = true;
+			required = await callMethod("recaptcha_first_party_enabled");
 		} catch (error) {
 			console.error(
-				"[login] failed to check recaptcha_first_party assignment",
+				"[sign-in] failed to check recaptcha_first_party assignment",
 				error,
 			);
 		}
+		if (!required) {
+			toast.error("Invalid email or password");
+			return;
+		}
+		try {
+			const captchaToken = await callMethod("mint_recaptcha_token", {
+				action: "login",
+			});
+			await trySignIn(captchaToken);
+		} catch (error) {
+			reportCaptchaFailure(error);
+		}
+	}
+
+	function reportCaptchaFailure(error: unknown) {
+		const parsed = recaptchaErrorSchema.safeParse(error);
+		const reason = parsed.success ? parsed.data.message.reason : undefined;
+		if (reason === "cancelled") return;
+		toast.error(
+			(reason ? captchaSignInMessages[reason] : undefined) ??
+				"Captcha verification failed. Try again.",
+		);
 	}
 
 	async function signInWith(provider: OauthProvider) {
@@ -138,10 +196,11 @@
 </script>
 
 <form onsubmit={signIn} class="contents">
-	<Card.Root class="m-auto w-full max-w-sm">
+	<Card.Root class="m-auto w-full max-w-100">
 		<Card.Header>
-			<Card.Title>Sign in to your account</Card.Title>
-			<Card.Description>
+			<Card.Title class="text-title-1">Sign in to your account</Card.Title
+			>
+			<Card.Description class="text-body">
 				Enter your email below to sign in to your account
 			</Card.Description>
 			<Card.Action>
@@ -187,6 +246,7 @@
 		<Card.Footer class="flex-col gap-2">
 			<Button
 				type="submit"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "password"}
@@ -199,6 +259,7 @@
 			<Button
 				type="button"
 				variant="outline"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "google"}
@@ -214,6 +275,7 @@
 			<Button
 				type="button"
 				variant="outline"
+				size="lg"
 				class="w-full"
 				disabled={submitting !== false}
 				aria-busy={submitting === "facebook"}
@@ -229,4 +291,3 @@
 		</Card.Footer>
 	</Card.Root>
 </form>
-<RecaptchaUnsupported bind:open={recaptchaDialogOpen} />

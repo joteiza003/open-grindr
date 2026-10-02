@@ -3,6 +3,8 @@
 
 	import { showErrorToast } from "$lib/api/error-toast";
 	import { setPreferences } from "$lib/app-data/preferences.svelte";
+	import icon from "$lib/assets/app-logo.png";
+	import { APP_NAME, APP_SUBTITLE } from "$lib/brand";
 	import { Button } from "$lib/components/ui/button";
 	import { Checkbox } from "$lib/components/ui/checkbox";
 	import { Label } from "$lib/components/ui/label";
@@ -11,9 +13,9 @@
 		desktopEntryInstalled,
 		setDesktopEntryInstalled,
 	} from "$lib/platform/desktop-entry.svelte";
-	import { setAutomaticUpdateChecks } from "$lib/updates";
 	import { updatesSelfManaged } from "$lib/updates/capability.svelte";
-	import icon from "../../../contrib/logo/app-icon.svg";
+	import { saveAutomaticChecks } from "$lib/updates/update-settings.svelte";
+	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
 
 	let checkAutomatically = $state(true);
 	let addToAppsMenu = $state(true);
@@ -26,12 +28,12 @@
 		starting = true;
 		try {
 			if (updatesSelfManaged()) {
-				await setAutomaticUpdateChecks(checkAutomatically);
+				await saveAutomaticChecks(checkAutomatically);
 			}
 			if (addToAppsMenu && offerAppsMenu()) {
 				await setDesktopEntryInstalled(true).catch((error: unknown) =>
 					showErrorToast({
-						label: "Couldn't add Grindr + to your apps",
+						label: "Couldn't add Euskal Grindr to your apps",
 						error,
 					}),
 				);
@@ -53,16 +55,15 @@
 	<div
 		class="flex flex-1 flex-col items-center justify-center gap-6 text-center"
 	>
-		<img src={icon} alt="" class="size-28" />
+		<img src={icon} alt="" class="size-28 rounded-3xl" />
 		<div class="flex flex-col gap-1">
-			<h1 class="font-heading text-3xl font-semibold tracking-tight">
-				Grindr +
-			</h1>
-			<p class="text-xl text-muted-foreground">
+			<h1 class="font-heading text-display font-semibold">{APP_NAME}</h1>
+			<p class="text-title-2 text-muted-foreground">
 				Unofficial Grindr client
 			</p>
+			<p class="text-body text-muted-foreground">{APP_SUBTITLE}</p>
 		</div>
-		<p class="max-w-sm text-balance text-muted-foreground">
+		<p class="max-w-[60ch] text-body-lg text-balance text-muted-foreground">
 			Cross-platform, free, libre, ad-free, tracker-free, privacy-centered
 			and community-driven
 		</p>
@@ -70,18 +71,23 @@
 
 	<div
 		class="sticky bottom-0 flex shrink-0 flex-col items-center gap-2 bg-background pt-2 pb-[calc(2rem+var(--safe-area-bottom))]"
+		{@attach bottomChrome}
 	>
-		{#if updatesSelfManaged()}
-			<Label class="flex items-center rounded-xl p-2 pb-3">
-				<Checkbox bind:checked={checkAutomatically} />
-				Check updates automatically
-			</Label>
-		{/if}
-		{#if offerAppsMenu()}
-			<Label class="flex items-center rounded-xl p-2 pb-3">
-				<Checkbox bind:checked={addToAppsMenu} />
-				Add Grindr + to your apps menu
-			</Label>
+		{#if updatesSelfManaged() || offerAppsMenu()}
+			<div class="flex flex-col items-start pb-1">
+				{#if updatesSelfManaged()}
+					<Label class="flex items-center rounded-xl p-2">
+						<Checkbox bind:checked={checkAutomatically} />
+						Check updates automatically
+					</Label>
+				{/if}
+				{#if offerAppsMenu()}
+					<Label class="flex items-center rounded-xl p-2">
+						<Checkbox bind:checked={addToAppsMenu} />
+						Add Euskal Grindr to your apps menu
+					</Label>
+				{/if}
+			</div>
 		{/if}
 		<Button
 			size="lg"

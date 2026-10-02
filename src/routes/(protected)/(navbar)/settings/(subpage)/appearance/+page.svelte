@@ -9,9 +9,11 @@
 	import ChatBackgroundSetting from "./ChatBackgroundSetting.svelte";
 	import ChatPreview from "./ChatPreview.svelte";
 	import ChatStyleSetting from "./ChatStyleSetting.svelte";
+	import ChatSwipeSetting from "./ChatSwipeSetting.svelte";
 	import DensitySetting from "./DensitySetting.svelte";
 	import GridPreview from "./GridPreview.svelte";
 	import LanguageSetting from "./LanguageSetting.svelte";
+	import LookSetting from "./LookSetting.svelte";
 	import MotionSetting from "./MotionSetting.svelte";
 	import ThemeSetting from "./ThemeSetting.svelte";
 
@@ -30,6 +32,7 @@
 	</Tabs.List>
 
 	<Tabs.Content value="general" class="flex flex-col gap-3">
+		<LookSetting />
 		<LanguageSetting />
 		<ThemeSetting />
 		<AccentSetting />
@@ -47,6 +50,7 @@
 	<Tabs.Content value="chat" class="flex flex-col gap-3">
 		<ChatPreview />
 		<ChatStyleSetting />
+		<ChatSwipeSetting />
 		<BubbleColorsSetting />
 		<ChatBackgroundSetting />
 	</Tabs.Content>

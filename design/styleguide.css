@@ -1,0 +1,182 @@
+/**
+ * Guía visual viva de «Lumen».
+ *
+ * Importa los tokens reales de la aplicación (src/layout.css), así que lo que
+ * se ve aquí es exactamente lo que aplica el producto. Lo que sigue es solo el
+ * andamiaje de la guía (CSS plano, sin utilidades): no forma parte de la app.
+ */
+@import "../src/layout.css";
+
+@source "./index.html";
+
+body {
+	user-select: text;
+	-webkit-user-select: text;
+	margin: 0;
+}
+
+.sg-shell {
+	max-width: 1180px;
+	margin-inline: auto;
+	padding: 32px 32px 96px;
+}
+
+.sg-head {
+	position: sticky;
+	top: 0;
+	z-index: 20;
+	backdrop-filter: blur(16px);
+	background: color-mix(in oklch, var(--bg-canvas) 82%, transparent);
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.sg-head-inner {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	flex-wrap: wrap;
+	max-width: 1180px;
+	margin-inline: auto;
+	padding: 12px 32px;
+}
+
+.sg-brand {
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	font-size: 15px;
+	margin-inline-end: auto;
+}
+
+.sg-controls {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.sg-chip {
+	border: 1px solid var(--border-subtle);
+	background: var(--bg-raised);
+	color: var(--text-secondary);
+	border-radius: 999px;
+	padding: 6px 12px;
+	font-size: 12px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.sg-chip[aria-pressed="true"] {
+	background: var(--accent-soft);
+	border-color: var(--accent-border);
+	color: var(--text-primary);
+}
+
+.sg-section {
+	margin-top: 64px;
+	scroll-margin-top: 72px;
+}
+
+.sg-title {
+	font-size: 28px;
+	line-height: 34px;
+	letter-spacing: -0.02em;
+	font-weight: 600;
+	margin: 0 0 6px;
+}
+
+.sg-lead {
+	max-width: 68ch;
+	font-size: 15px;
+	line-height: 22px;
+	color: var(--text-secondary);
+	margin: 0 0 24px;
+}
+
+.sg-label {
+	font-size: 11px;
+	line-height: 14px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	font-weight: 600;
+	color: var(--text-tertiary);
+	margin: 0 0 10px;
+}
+
+.sg-token {
+	font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+	font-size: 11px;
+	color: var(--text-tertiary);
+}
+
+.sg-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	align-items: center;
+}
+
+.sg-swatches {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+	gap: 8px;
+}
+
+.sg-swatch {
+	border-radius: var(--radius-md);
+	border: 1px solid var(--border-subtle);
+	height: 64px;
+	display: flex;
+	align-items: flex-end;
+	padding: 8px;
+	font-size: 11px;
+	font-weight: 500;
+}
+
+.sg-panel {
+	border: 1px solid var(--border-subtle);
+	border-radius: var(--radius-lg);
+	background: var(--bg-surface);
+	padding: 16px;
+}
+
+.sg-stack {
+	display: grid;
+	gap: 12px;
+}
+
+.sg-spec {
+	display: grid;
+	grid-template-columns: 140px 1fr;
+	gap: 16px;
+	align-items: baseline;
+	padding: 10px 0;
+	border-bottom: 1px solid var(--border-subtle);
+}
+
+.sg-spec:last-child {
+	border-bottom: 0;
+}
+
+.sg-bar {
+	height: 12px;
+	border-radius: 3px;
+	background: var(--accent);
+	opacity: 0.85;
+}
+
+.sg-radius {
+	height: 64px;
+	background: var(--bg-raised);
+	border: 1px solid var(--border-strong);
+	display: grid;
+	place-items: center;
+}
+
+.sg-elev {
+	height: 88px;
+	border-radius: var(--radius-lg);
+	background: var(--bg-surface);
+	border: 1px solid var(--border-subtle);
+	display: grid;
+	place-items: center;
+}

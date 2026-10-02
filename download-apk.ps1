@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 # ============================================================
-# Open Grind - APK Build Selector & Downloader
+# Euskal Grindr - APK Build Selector & Downloader
 # ============================================================
 
 $Repo = "joteiza003/open-grindr"
@@ -40,7 +40,7 @@ Clear-Host
 
 Write-Host ""
 Write-Host "============================================================" -ForegroundColor Cyan
-Write-Host "          OPEN GRIND - APK BUILD SELECTOR" -ForegroundColor Cyan
+Write-Host "          EUSKAL GRINDR - APK BUILD SELECTOR" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host ""
 

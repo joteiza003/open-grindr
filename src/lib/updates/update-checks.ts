@@ -1,5 +1,5 @@
-import { addonUpdates } from "./addon.svelte";
-import { GOOGLE_OAUTH_COMPONENT } from "./components";
+import { addonFlow } from "./addon.svelte";
+import { ADDON_KEYS, type AddonKey } from "./components";
 import { problemBody, updateErrorText } from "./error-copy";
 import type { CheckReport } from "./flow";
 import { getInstalledVersion } from "./index";
@@ -26,8 +26,8 @@ function describeChecks({
 }: UpdatesScope): string {
 	if (selfManaged || !addonAvailable) {
 		const subject = addonAvailable
-			? "Grindr + and its add-ons"
-			: "Grindr +";
+			? "Euskal Grindr and its add-ons"
+			: "Euskal Grindr";
 		return (
 			unsupportedReason ??
 			`Periodically request updates for ${subject} from git.opengrind.org. ${privacyNote}`
@@ -36,7 +36,7 @@ function describeChecks({
 	if (unsupportedReason !== null) {
 		return `${unsupportedReason}. ${addonCheck} ${privacyNote}`;
 	}
-	return `${addonCheck} Grindr + itself isn't updated from here. ${privacyNote}`;
+	return `${addonCheck} Euskal Grindr itself isn't updated from here. ${privacyNote}`;
 }
 
 export function automaticChecksSetting(scope: UpdatesScope): {
@@ -61,31 +61,27 @@ export function manualCheckOffered({
 	return selfManaged || addonAvailable;
 }
 
-async function checkInstalledAddon({
-	reportFailure,
-}: {
-	reportFailure: boolean;
-}): Promise<CheckReport | null> {
+async function checkInstalledAddon(
+	component: AddonKey,
+	{ reportFailure }: { reportFailure: boolean },
+): Promise<CheckReport | null> {
+	const flow = addonFlow(component);
 	try {
-		const installed = await getInstalledVersion(GOOGLE_OAUTH_COMPONENT);
-		if (installed === null) {
-			await addonUpdates.withdrawUpdate();
+		if ((await getInstalledVersion(component)) === null) {
+			await flow.withdrawUpdate();
 			return null;
 		}
 	} catch (error) {
 		if (reportFailure) {
 			const title = updateErrorText(error, {
 				fallback: "Couldn't check for updates",
-				component: GOOGLE_OAUTH_COMPONENT,
+				component,
 			});
-			showProblem({
-				title,
-				body: problemBody({ component: GOOGLE_OAUTH_COMPONENT, title }),
-			});
+			showProblem({ title, body: problemBody({ component, title }) });
 		}
 		return "failed";
 	}
-	return addonUpdates.checkNow({ reportFailure });
+	return flow.checkNow({ reportFailure });
 }
 
 async function checkEachComponent({
@@ -95,7 +91,11 @@ async function checkEachComponent({
 }: CheckScope & { reportFailure: boolean }): Promise<CheckReport[]> {
 	const reports = await Promise.all([
 		selfManaged ? checkForUpdateNow({ reportFailure }) : null,
-		addonAvailable ? checkInstalledAddon({ reportFailure }) : null,
+		...(addonAvailable
+			? ADDON_KEYS.map((addon) =>
+					checkInstalledAddon(addon, { reportFailure }),
+				)
+			: []),
 	]);
 	return reports.filter((report) => report !== null);
 }

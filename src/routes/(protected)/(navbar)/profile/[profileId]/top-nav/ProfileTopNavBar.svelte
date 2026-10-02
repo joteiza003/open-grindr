@@ -22,6 +22,7 @@
 </script>
 
 <nav
+	aria-label="Profile actions"
 	class="absolute top-[calc(0.75rem+var(--safe-area-top))] right-2 z-20 flex flex-row-reverse items-center gap-1.5"
 >
 	{#if isOurProfile}
@@ -32,6 +33,11 @@
 			isFavorite={profile.isFavorite}
 			{onFavorite}
 		/>
-		<ProfileActionsMenu {profileId} {onBlocked} {onHidden} />
+		<ProfileActionsMenu
+			{profileId}
+			blockable={profile.isBlockable !== false}
+			{onBlocked}
+			{onHidden}
+		/>
 	{/if}
 </nav>

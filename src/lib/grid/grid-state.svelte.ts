@@ -20,12 +20,38 @@ import {
 	resolveLazyProfile,
 	setCachedProfile,
 } from "./grid";
+import {
+	dedupeGridProfiles,
+	indexProfilesById,
+	sortGridProfilesByDistance,
+} from "./grid-profiles";
 import { buildCascadeQuery } from "./grid-query";
 import { GridSearchFiltersState } from "./grid-search-filters-state.svelte";
+import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
+import { temporarilyHiddenIds } from "$lib/safety/silence-state.svelte";
+import { rejectedProfileIds } from "./swipe-decisions";
 
 class GridState {
 	filters = new GridSearchFiltersState({ onQueryChange: () => this.retry() });
 	items: GridProfile[] = $state.raw([]);
+	// Los perfiles rechazados en el modo Tinder y los ocultados temporalmente
+	// se quitan de toda la rejilla.
+	readonly profiles: GridProfile[] = $derived.by(() => {
+		const hidden = new Set([
+			...rejectedProfileIds(),
+			...temporarilyHiddenIds(),
+		]);
+		const all = sortGridProfilesByDistance(dedupeGridProfiles(this.items));
+		// Con una lista de favoritos elegida solo se ven sus miembros ya cargados.
+		const allowed = favoriteListFilter.allowedIds();
+		return hidden.size === 0 && allowed === null
+			? all
+			: all.filter(
+					(profile) =>
+						!hidden.has(profile.id) &&
+						(allowed === null || allowed.has(profile.id)),
+				);
+	});
 	nextPage: number | null = $state(0);
 	loadingMore = $state(false);
 	loading = $state(false);
@@ -38,12 +64,28 @@ class GridState {
 	}
 	currentQuery: z.infer<typeof cascadeV4QuerySchema> | null = null;
 	scrollY = 0;
+	revealProfileId: number | null = null;
 
 	#geohash: string | null = null;
 	#retargeted: string | null = null;
 	#resolvingIds = new Set<number>();
 	#firstPageIds = new Set<number>();
 	#fetchToken = 0;
+	#indexById = $derived(indexProfilesById(this.profiles));
+
+	indexInProfiles(profileId: number): number {
+		return this.#indexById.get(profileId) ?? -1;
+	}
+
+	profileById(profileId: number): GridProfile | null {
+		return this.profiles[this.indexInProfiles(profileId)] ?? null;
+	}
+
+	consumeReveal(): number | null {
+		const profileId = this.revealProfileId;
+		this.revealProfileId = null;
+		return profileId;
+	}
 
 	setFavorite({
 		profileId,
@@ -53,16 +95,17 @@ class GridState {
 		isFavorite: boolean;
 	}): void {
 		patchCachedProfile({ id: profileId, patch: { isFavorite } });
-		const index = this.items.findIndex((item) => item.id === profileId);
-		const item = this.items[index];
-		if (!item || item.type !== "rendered") return;
-		this.items = this.items.with(index, { ...item, isFavorite });
+		if (this.profileById(profileId)?.type !== "rendered") return;
+		this.items = this.items.map((item) =>
+			item.id === profileId && item.type === "rendered"
+				? { ...item, isFavorite }
+				: item,
+		);
 	}
 
 	removeProfile(profileId: number): void {
-		const index = this.items.findIndex((item) => item.id === profileId);
-		if (index === -1) return;
-		this.items = this.items.toSpliced(index, 1);
+		if (this.indexInProfiles(profileId) === -1) return;
+		this.items = this.items.filter((item) => item.id !== profileId);
 	}
 
 	load(geohash: string): void {
@@ -109,6 +152,7 @@ class GridState {
 		this.loading = true;
 		this.error = null;
 		this.currentQuery = null;
+		this.revealProfileId = null;
 		this.#resolvingIds.clear();
 		this.#firstPageIds.clear();
 	}
@@ -173,7 +217,7 @@ class GridState {
 				setCachedProfile(resolved);
 				this.items = this.items.with(idx, resolved);
 			} else {
-				this.items = this.items.toSpliced(idx, 1);
+				this.removeProfile(id);
 			}
 		} catch (error) {
 			console.error(id, error);

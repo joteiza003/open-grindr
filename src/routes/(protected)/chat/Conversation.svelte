@@ -3,23 +3,30 @@
 	import {
 		BellIcon,
 		BellSimpleSlashIcon,
+		EyeIcon,
 		PushPinIcon,
 		PushPinSlashIcon,
 		TrashIcon,
 	} from "phosphor-svelte";
 
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
+	import { typing } from "$lib/chat/typing-state.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
 	import FavoriteStar from "$lib/components/profile/FavoriteStar.svelte";
+	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
 	import ProfileItem from "$lib/components/profile/ProfileItem.svelte";
 	import RelativeTimeDynamic from "$lib/components/shared/RelativeTimeDynamic.svelte";
 	import SelectionCheck from "$lib/components/shared/SelectionCheck.svelte";
 	import { Badge } from "$lib/components/ui/badge";
 	import * as ContextMenu from "$lib/components/ui/context-menu";
 	import * as Item from "$lib/components/ui/item";
+	import { playHaptic } from "$lib/haptics";
 	import { t } from "$lib/i18n";
 	import { previewLabel } from "$lib/model/messaging/message-preview";
+	import { firedByTouch } from "$lib/platform/touch-origin";
 	import type { Conversation } from "$lib/model/messaging/conversations";
 	import type { SelectionSet } from "$lib/util/selection.svelte";
+	import SwipeRow from "./SwipeRow.svelte";
 
 	let {
 		conversation,
@@ -45,6 +52,15 @@
 	const isSelected = $derived(selection?.has(conversationId) ?? false);
 
 	let contextMenuUsed = $state(false);
+	let pressedByTouch = false;
+
+	function previewParticipant() {
+		if (!participant) return;
+		openProfilePreview(participant.profileId, {
+			distance: participant.distanceMetres ?? null,
+			mediaHash: participant.primaryMediaHash ?? null,
+		});
+	}
 
 	function togglePinned() {
 		void conversations.setPinned({
@@ -58,6 +74,17 @@
 			conversationIds: [conversationId],
 			muted: !conversation.data.muted,
 		});
+	}
+
+	const swipeActions = $derived({
+		left: preferencesSnapshot().chat.swipeLeft,
+		right: preferencesSnapshot().chat.swipeRight,
+	});
+
+	function onSwipe(action: "pin" | "mute" | "delete") {
+		if (action === "pin") togglePinned();
+		else if (action === "mute") toggleMuted();
+		else onRequestDelete?.();
 	}
 
 	function toggleSelected() {
@@ -104,14 +131,22 @@
 				class={[
 					"wrap-anywhere",
 					{
-						"font-medium text-white":
+						// text-white dejaba la previsualización invisible en tema claro
+						"font-medium text-foreground":
 							draft === "" &&
 							conversation.data.unreadCount > 0 &&
 							!conversation.data.muted,
 					},
 				]}
 			>
-				{#if draft !== ""}
+				{#if typing.isTyping(conversationId)}
+					<span
+						data-slot="typing-indicator"
+						class="font-medium text-primary"
+					>
+						{t("chat.typing")}
+					</span>
+				{:else if draft !== ""}
 					<span
 						data-slot="conversation-draft-prefix"
 						class="font-bold text-primary"
@@ -162,14 +197,31 @@
 {:else}
 	<ContextMenu.Root
 		onOpenChange={(open) => {
-			if (open) contextMenuUsed = true;
+			if (!open) return;
+			contextMenuUsed = true;
+			if (pressedByTouch) playHaptic("longPress");
 		}}
 	>
-		<ContextMenu.Trigger class="rounded-2xl" data-slot="conversation-row">
-			{@render row()}
+		<ContextMenu.Trigger
+			class="rounded-2xl"
+			onpointerdown={(event) => (pressedByTouch = firedByTouch(event))}
+			oncontextmenu={(event) => (pressedByTouch = firedByTouch(event))}
+		>
+			<div data-slot="conversation-row">
+				<SwipeRow actions={swipeActions} onAction={onSwipe}>
+					{@render row()}
+				</SwipeRow>
+			</div>
 		</ContextMenu.Trigger>
 		{#if contextMenuUsed}
 			<ContextMenu.Content class="w-48">
+				{#if participant}
+					<ContextMenu.Item onSelect={previewParticipant}>
+						<EyeIcon weight="fill" class="size-5" />
+						{t("preview.menu")}
+					</ContextMenu.Item>
+					<ContextMenu.Separator />
+				{/if}
 				<ContextMenu.Item onSelect={togglePinned}>
 					{#if conversation.data.pinned}
 						<PushPinSlashIcon weight="fill" class="size-5" />

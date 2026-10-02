@@ -1,12 +1,27 @@
 <script lang="ts">
-	import { ArrowBendUpLeftIcon, CheckIcon } from "phosphor-svelte";
-	import { tick, untrack } from "svelte";
+	import {
+		ArrowBendUpLeftIcon,
+		CheckIcon,
+		ChecksIcon,
+		StarIcon,
+		DotsThreeIcon,
+	} from "phosphor-svelte";
+	import { untrack } from "svelte";
 	import { expoOut } from "svelte/easing";
-	import { scale } from "svelte/transition";
+	import type { VirtualElement } from "@floating-ui/dom";
 
+	import { Button } from "$lib/components/ui/button";
+	import { playHaptic } from "$lib/haptics";
+	import {
+		messageIsStarred,
+		toggleStarred,
+	} from "$lib/chat/starred-state.svelte";
 	import { t } from "$lib/i18n";
 	import { phraseSourceText } from "$lib/model/messaging/frequent-phrases";
+	import { firedByTouch } from "$lib/platform/touch-origin";
 	import { observeIntersection } from "$lib/util/observe-intersection";
+	import { scale } from "$lib/util/reduced-motion";
+	import { returnFocus } from "$lib/util/return-focus";
 	import {
 		MAX_DRAG_PX,
 		SwipeToReply,
@@ -14,7 +29,9 @@
 	} from "$lib/util/swipe-to-reply.svelte";
 	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
 	import AlbumMessage from "./AlbumMessage.svelte";
+	import AudioMessage from "./AudioMessage.svelte";
 	import { type MessageRefs, setMessageContext } from "./context";
+	import DiscreetGate from "./DiscreetGate.svelte";
 	import ExpiringImageMessage from "./ExpiringImageMessage.svelte";
 	import ImageMessage from "./ImageMessage.svelte";
 	import LocationMessage from "./LocationMessage.svelte";
@@ -26,6 +43,7 @@
 	import TextMessage from "./TextMessage.svelte";
 	import UnsentMessage from "./UnsentMessage.svelte";
 	import UnsupportedMessage from "./UnsupportedMessage.svelte";
+	import VideoMessage from "./VideoMessage.svelte";
 
 	let {
 		message,
@@ -41,6 +59,7 @@
 		onUnsend,
 		onCopyError,
 		onReply,
+		onReport,
 	}: {
 		message: ApiResponseMessage;
 		isOut: boolean;
@@ -55,6 +74,7 @@
 		onUnsend?: () => void;
 		onCopyError?: () => void;
 		onReply?: () => void;
+		onReport?: () => void;
 	} = $props();
 
 	const swipe = untrack(() =>
@@ -66,6 +86,15 @@
 			: null,
 	);
 
+	const textContent = $derived(
+		message.type === "Text" ? message.body.text : undefined,
+	);
+	const hasMenuActions = $derived(
+		textContent !== undefined ||
+			[onReply, onDelete, onUnsend, onCopyError, onReport].some(
+				(action) => action !== undefined,
+			),
+	);
 	const firstInStack = $derived(indexInStack === 0);
 	const lastInStack = $derived(indexInStack === stackLength - 1);
 
@@ -77,12 +106,18 @@
 		timestamp: message.timestamp,
 	}));
 
-	let contextMenuOpen:
-		| false
-		| { x: number; y: number; width: number; height: number } =
-		$state(false);
+	const ACTIONS_GAP_PX = 4;
+
+	let contextMenuOpen = $state(false);
+	let menuOpener: HTMLElement | null = null;
+	let rowElement: HTMLElement | null = $state(null);
 	let frameElement: HTMLElement | null = $state(null);
 	let messageElement: HTMLElement | null = $state(null);
+	let actionsFocused = $state(false);
+	let actionsPlacement = $state({ inset: 0, top: 0 });
+	const actionsStyle = $derived(
+		`top: ${actionsPlacement.top}px; ${isOut ? "right" : "left"}: min(${actionsPlacement.inset}px, 100% - 2rem)`,
+	);
 
 	function setRefs({ frame, content }: MessageRefs) {
 		frameElement = frame;
@@ -119,32 +154,79 @@
 		"quotes",
 	];
 
-	function onContextMenu() {
-		if (!messageElement || !frameElement) return;
-		// The clone renders the quote too, so it is the frame that decides how
-		// tall the lifted box is, while the bubble still decides where it sits.
-		const contentRect = messageElement.getBoundingClientRect();
-		const frameRect = frameElement.getBoundingClientRect();
-		const quoteRect = frameElement
-			.querySelector('[data-slot="message-quote"]')
-			?.getBoundingClientRect();
-		const liftedWidth = Math.max(contentRect.width, quoteRect?.width ?? 0);
+	$effect(() => {
+		if (!hasMenuActions) contextMenuOpen = false;
+	});
+
+	function openContextMenu(): boolean {
+		if (!messageElement || !frameElement || !hasMenuActions) return false;
 		const computed = getComputedStyle(messageElement);
 		inheritedStyles = INHERITED_PROPS.map(
 			(prop) => `${prop}: ${computed.getPropertyValue(prop)}`,
 		).join("; ");
-		contextMenuOpen = {
-			x: isOut ? contentRect.right - liftedWidth : contentRect.x,
-			y: frameRect.y,
-			width: liftedWidth,
-			height: frameRect.height,
-		};
-		tick()
-			.then(() => contextMenu?.showModal())
-			.catch((error) => console.error(error));
+		const focused = document.activeElement;
+		menuOpener =
+			focused instanceof HTMLElement && rowElement?.contains(focused)
+				? focused
+				: null;
+		contextMenuOpen = true;
+		return true;
 	}
 
-	let contextMenu: HTMLDialogElement | null = $state(null);
+	function closeContextMenu() {
+		contextMenuOpen = false;
+		if (menuOpener !== null) returnFocus(menuOpener);
+		menuOpener = null;
+	}
+
+	function placeActions() {
+		if (!rowElement || !messageElement) return;
+		const row = rowElement.getBoundingClientRect();
+		const bubble = messageElement.getBoundingClientRect();
+		const beside = isOut
+			? row.right - bubble.left
+			: bubble.right - row.left;
+		actionsPlacement = {
+			inset: beside + ACTIONS_GAP_PX,
+			top: bubble.top - row.top + bubble.height / 2,
+		};
+	}
+
+	$effect(() => {
+		if (!actionsFocused || !rowElement || !messageElement) return;
+		const observer = new ResizeObserver(placeActions);
+		observer.observe(rowElement);
+		observer.observe(messageElement);
+		return () => observer.disconnect();
+	});
+
+	function liftedAnchor({
+		frame,
+		content,
+	}: {
+		frame: HTMLElement;
+		content: HTMLElement;
+	}): VirtualElement {
+		return {
+			getBoundingClientRect() {
+				const contentRect = content.getBoundingClientRect();
+				const frameRect = frame.getBoundingClientRect();
+				const quoteRect = frame
+					.querySelector('[data-slot="message-quote"]')
+					?.getBoundingClientRect();
+				const width = Math.max(
+					contentRect.width,
+					quoteRect?.width ?? 0,
+				);
+				return new DOMRect(
+					isOut ? contentRect.right - width : contentRect.x,
+					frameRect.y,
+					width,
+					frameRect.height,
+				);
+			},
+		};
+	}
 
 	// A dblclick carries no pointerType of its own, and only the pointer can
 	// tell a double tap (react) from a double click (reply).
@@ -162,11 +244,31 @@
 				{ "text-message-bubble-out-foreground": isOut },
 			]}
 		>
+			{#if messageIsStarred(message.messageId)}
+				<StarIcon
+					data-slot="message-starred"
+					aria-label={t("chatSettings.starredBadge")}
+					class="size-3.5 text-yellow-400"
+					weight="fill"
+				/>
+			{/if}
 			{#if isRead !== null}
 				{#if isRead}
-					<CheckIcon class="size-3.5 opacity-90" weight="bold" />
+					<!-- Leído: dos marcas azules, como WhatsApp. -->
+					<ChecksIcon
+						data-slot="message-read"
+						aria-label={t("chat.read")}
+						class="size-4 text-sky-400"
+						weight="bold"
+					/>
 				{:else}
-					<CheckIcon class="size-3.5 opacity-60" weight="bold" />
+					<!-- Enviado: una marca. La API no distingue "entregado". -->
+					<CheckIcon
+						data-slot="message-sent"
+						aria-label={t("chat.sent")}
+						class="size-3.5 opacity-60"
+						weight="bold"
+					/>
 				{/if}
 			{/if}
 			<MessageTime />
@@ -209,16 +311,22 @@
 		{#if message.type === "Text"}
 			<TextMessage message={message.body} messageId={message.messageId} />
 		{:else if message.type === "Image"}
-			<ImageMessage message={message.body} />
+			<DiscreetGate kind="photo">
+				<ImageMessage message={message.body} />
+			</DiscreetGate>
 		{:else if message.type === "ExpiringImage"}
-			<ExpiringImageMessage
-				message={message.body}
-				conversationId={message.conversationId}
-				messageId={message.messageId}
-				{isOut}
-			/>
+			<DiscreetGate kind="photo">
+				<ExpiringImageMessage
+					message={message.body}
+					conversationId={message.conversationId}
+					messageId={message.messageId}
+					{isOut}
+				/>
+			</DiscreetGate>
 		{:else if message.type === "Album" || message.type === "ExpiringAlbum" || message.type === "ExpiringAlbumV2"}
-			<AlbumMessage message={message.body} />
+			<DiscreetGate kind="album">
+				<AlbumMessage message={message.body} />
+			</DiscreetGate>
 		{:else if message.type === "Location"}
 			<LocationMessage
 				lat={message.body.lat}
@@ -229,6 +337,17 @@
 				timestamp={message.timestamp}
 				{isOut}
 			/>
+		{:else if message.type === "Video" || message.type === "PrivateVideo"}
+			<DiscreetGate kind="video">
+				<VideoMessage
+					message={message.body}
+					conversationId={message.conversationId}
+					messageId={message.messageId}
+					delivered={status !== "pending" && status !== "error"}
+				/>
+			</DiscreetGate>
+		{:else if message.type === "Audio"}
+			<AudioMessage message={message.body} />
 		{:else if message.type === "Unsent"}
 			<UnsentMessage />
 		{:else}
@@ -280,15 +399,15 @@
 				<div class="shrink-0" style:width="{MAX_DRAG_PX}px"></div>
 			{/if}
 			<div
+				bind:this={rowElement}
 				class={[
-					"w-full shrink-0",
+					"relative w-full shrink-0",
 					{
 						"pe-3 *:float-start *:me-auto": !isOut,
 						"ps-3 *:float-end *:ms-auto": isOut,
 					},
 				]}
-				role="button"
-				tabindex="0"
+				role="article"
 				onpointerdown={(event) => (lastPointerType = event.pointerType)}
 				ondblclick={(event) => {
 					const selection = window.getSelection();
@@ -312,15 +431,11 @@
 						selection?.removeAllRanges();
 					}
 				}}
-				onkeydown={(event) => {
-					if (event.key === "Enter" || event.key === " ") {
-						if (event.key === " ") event.preventDefault();
-						onContextMenu();
-					}
-				}}
 				oncontextmenu={(event) => {
 					event.preventDefault();
-					onContextMenu();
+					if (openContextMenu() && firedByTouch(event)) {
+						playHaptic("longPress");
+					}
 				}}
 				style:visibility={contextMenuOpen ? "hidden" : undefined}
 				style:transform={swipe?.deltaX
@@ -328,6 +443,26 @@
 					: undefined}
 			>
 				{@render content()}
+				{#if hasMenuActions}
+					<Button
+						data-slot="message-actions"
+						variant="secondary"
+						size="icon-sm"
+						aria-label="Message actions"
+						aria-haspopup="dialog"
+						aria-expanded={contextMenuOpen}
+						class="absolute size-8 -translate-y-1/2 scroll-my-20 transition-none not-focus-visible:sr-only"
+						style={actionsStyle}
+						onfocus={() => {
+							placeActions();
+							actionsFocused = true;
+						}}
+						onblur={() => (actionsFocused = false)}
+						onclick={() => openContextMenu()}
+					>
+						<DotsThreeIcon weight="bold" />
+					</Button>
+				{/if}
 			</div>
 			{#if swipe && railWheel && isOut}
 				<div class="shrink-0" style:width="{MAX_DRAG_PX}px"></div>
@@ -350,15 +485,15 @@
 	{/if}
 </div>
 
-{#if contextMenuOpen}
+{#if contextMenuOpen && frameElement && messageElement}
 	<MessageContextMenu
-		{contextMenuOpen}
+		anchor={liftedAnchor({ frame: frameElement, content: messageElement })}
 		{content}
 		{isOut}
-		selectable={message.type === "Text"}
-		onClose={() => (contextMenuOpen = false)}
+		selectable={textContent !== undefined}
+		onClose={closeContextMenu}
 		style={inheritedStyles}
-		textContent={message.type === "Text" ? message.body.text : undefined}
+		{textContent}
 		phraseText={message.unsent ? undefined : phraseSourceText(message)}
 		reactionAvailable={message.reactions.length === 0 &&
 			!isOut &&
@@ -367,6 +502,20 @@
 		{onUnsend}
 		{onCopyError}
 		{onReply}
+		{onReport}
 		{onReact}
+		starred={messageIsStarred(message.messageId)}
+		onToggleStar={message.unsent ||
+		status === "pending" ||
+		status === "error"
+			? undefined
+			: () =>
+					void toggleStarred({
+						conversationId: message.conversationId,
+						messageId: message.messageId,
+						text:
+							message.type === "Text" ? message.body.text : null,
+						timestamp: message.timestamp,
+					})}
 	/>
 {/if}

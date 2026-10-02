@@ -26,6 +26,23 @@ class TransferTitleTest {
 	}
 
 	@Test
+	fun `a media upload keeps its own title whatever the download fields say`() {
+		assertEquals(
+			TransferTitle.MediaUpload,
+			TransferTitle.of(updatesThisApp = true, kind = null, purpose = TransferTitle.MEDIA_UPLOAD),
+		)
+		assertEquals(
+			TransferTitle.MediaUpload,
+			TransferTitle.of(updatesThisApp = false, kind = "install", purpose = TransferTitle.MEDIA_UPLOAD),
+		)
+	}
+
+	@Test
+	fun `an unknown purpose leaves the download titles alone`() {
+		assertEquals(TransferTitle.AppUpdate, TransferTitle.of(updatesThisApp = true, kind = null, purpose = "sideload"))
+	}
+
+	@Test
 	fun `a title survives the trip through an intent extra`() {
 		TransferTitle.entries.forEach { title ->
 			assertEquals(title, TransferTitle.named(title.name))

@@ -34,7 +34,7 @@
 			<AlertDialog.Title>Paid feature</AlertDialog.Title>
 			<AlertDialog.Description>
 				<p class="mb-3">{entitlementBypassState.reason}</p>
-				Grindr + can attempt to bypass this by momentarily spoofing your geolocation
+				Euskal Grindr can attempt to bypass this by momentarily spoofing your geolocation
 				to Honduras.
 				<Link href="https://opengrind.org/guides/bypasses">
 					Learn more

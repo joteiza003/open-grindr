@@ -33,8 +33,9 @@ internal class PackageArgs {
 
 @InvokeArg
 internal class TransferArgs {
-	lateinit var packageName: String
-	lateinit var kind: String
+	var packageName: String? = null
+	var kind: String? = null
+	var purpose: String? = null
 }
 
 @InvokeArg
@@ -49,7 +50,8 @@ class UpdatePlugin(private val activity: Activity) : Plugin(activity) {
 	private fun isInstallableTarget(packageName: String): Boolean =
 		packageName == activity.packageName ||
 			packageName == GOOGLE_OAUTH ||
-			packageName == RECAPTCHA
+			packageName == RECAPTCHA ||
+			packageName == FCM
 
 	@Command
 	fun packageState(invoke: Invoke) {
@@ -189,23 +191,33 @@ class UpdatePlugin(private val activity: Activity) : Plugin(activity) {
 
 	@Command
 	fun beginTransfer(invoke: Invoke) {
-		val args = runCatching { invoke.parseArgs(TransferArgs::class.java) }.getOrNull()
-		val title = TransferTitle.of(
-			updatesThisApp = args == null || args.packageName == activity.packageName,
-			kind = args?.kind,
-		)
-		runCatching { TransferService.start(context = activity, title = title) }
+		val transfer = transfer(invoke)
+		runCatching { TransferService.start(context = activity, transfer = transfer) }
 		invoke.resolve()
 	}
 
 	@Command
 	fun endTransfer(invoke: Invoke) {
-		runCatching { TransferService.stop(activity) }
+		val transfer = transfer(invoke)
+		runCatching { TransferService.stop(context = activity, transfer = transfer) }
 		invoke.resolve()
+	}
+
+	private fun transfer(invoke: Invoke): Transfer {
+		val args = runCatching { invoke.parseArgs(TransferArgs::class.java) }.getOrNull()
+		return Transfer(
+			title = TransferTitle.of(
+				updatesThisApp = args == null || args.packageName == activity.packageName,
+				kind = args?.kind,
+				purpose = args?.purpose,
+			),
+			addonPackage = args?.packageName,
+		)
 	}
 
 	private companion object {
 		const val GOOGLE_OAUTH = "org.opengrind.google_oauth"
 		const val RECAPTCHA = "org.opengrind.recaptcha"
+		const val FCM = "org.opengrind.fcm"
 	}
 }
