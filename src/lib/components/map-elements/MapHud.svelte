@@ -284,7 +284,7 @@
 			onOpenProfile={openProfile}
 			{onOpenDirections}
 			onClose={() => overlays.clearSelection()}
-			onDelete={() => (confirmOpen = true)}
+			onDelete={() => onDeleteMarker?.(selectedMarker)}
 		/>
 	{/if}
 </div>

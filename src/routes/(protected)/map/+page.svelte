@@ -25,7 +25,6 @@
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
 	import MapHud from "$lib/components/map-elements/MapHud.svelte";
-	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import Button from "$lib/components/ui/button/button.svelte";
 	import { t } from "$lib/i18n";
 	import {
@@ -50,6 +49,7 @@
 	import { decodeGeohash } from "$lib/model/geohash";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { openExternalLink } from "$lib/platform/link-opener";
+	import { canGoBack } from "$lib/util/history";
 	import { profileMediaUrl } from "$lib/util/media";
 	import type { MapMarker } from "$lib/model/map-elements";
 	import type { SavedLocation } from "$lib/model/messaging/saved-locations";
@@ -167,7 +167,9 @@
 		| { kind: "all-locations" }
 		| { kind: "all-markers" };
 
-	// Qué se va a borrar al confirmar; sin nada, es el marcador seleccionado.
+	// Qué se va a borrar al confirmar. Solo se escribe al pedir el borrado: en
+	// un móvil real el diálogo se cierra ANTES de que llegue el clic de
+	// «Eliminar», así que no se puede borrar este dato al cerrarse.
 	let pending = $state<PendingDelete | null>(null);
 
 	function requestDelete(next: PendingDelete) {
@@ -215,8 +217,6 @@
 				await library.removeAll();
 			} else if (target?.kind === "all-markers") {
 				await overlays.deleteAllMarkers();
-			} else if (selectedMarker) {
-				await overlays.deleteMarker(selectedMarker.id);
 			}
 		} catch (error) {
 			console.error("[map] Failed to delete", error);
@@ -227,22 +227,24 @@
 	}
 
 	$effect(() => {
-		if (!confirmOpen) pending = null;
 		if (overlays.mode !== "NORMAL") listOpen = false;
 	});
 
+	/** Sale del mapa; si no hay historial (p. ej. app restaurada aquí), va al inicio. */
+	function leaveMap() {
+		if (canGoBack()) history.back();
+		else void goto("/", { replaceState: true });
+	}
+
 	// System back closes the innermost open panel before leaving the map.
 	dismissOnBackGesture({
-		active: () =>
-			confirmOpen ||
-			openCluster !== null ||
-			listOpen ||
-			overlays.mode !== "NORMAL",
+		active: () => true,
 		dismiss: () => {
 			if (confirmOpen) confirmOpen = false;
 			else if (openCluster) openCluster = null;
-			else if (overlays.mode === "NORMAL") listOpen = false;
-			else overlays.cancelCreation();
+			else if (listOpen) listOpen = false;
+			else if (overlays.mode !== "NORMAL") overlays.cancelCreation();
+			else leaveMap();
 		},
 	});
 
@@ -276,13 +278,16 @@
 	<header
 		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/95 px-3 py-2.5"
 	>
-		<BackLink
-			href="/"
-			label={t("common.back")}
-			class="grid size-10 shrink-0 place-items-center rounded-full text-foreground transition-colors active:bg-muted can-hover:hover:bg-muted"
+		<Button
+			variant="ghost"
+			size="icon"
+			class="size-10 shrink-0 rounded-full text-foreground"
+			aria-label={t("common.back")}
+			title={t("common.back")}
+			onclick={leaveMap}
 		>
 			<CaretLeftIcon class="size-5" weight="bold" />
-		</BackLink>
+		</Button>
 
 		<h1
 			class="min-w-0 flex-1 truncate text-lg font-semibold tracking-tight"

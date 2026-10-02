@@ -7,6 +7,7 @@ import {
 	screen,
 	within,
 } from "@testing-library/svelte";
+import { flushSync } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
@@ -115,11 +116,68 @@ async function confirmDeletion() {
 }
 
 describe("the map screen", () => {
-	it("has a back link to the previous screen", async () => {
+	it("leaves the map with the back button", async () => {
+		const back = vi.spyOn(history, "back").mockImplementation(() => {});
+		vi.stubGlobal("navigation", { canGoBack: true });
 		render(MapPage);
 		await settle();
 
-		expect(screen.getByRole("link", { name: "Back" })).toBeTruthy();
+		await fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(back).toHaveBeenCalledTimes(1);
+
+		back.mockRestore();
+		vi.unstubAllGlobals();
+	});
+
+	it("goes home with back when there is no history to return to", async () => {
+		vi.stubGlobal("navigation", { canGoBack: false });
+		render(MapPage);
+		await settle();
+
+		await fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(mocks.goto).toHaveBeenCalledWith("/", { replaceState: true });
+
+		vi.unstubAllGlobals();
+	});
+
+	it("leaves the map with the system back gesture when nothing is open", async () => {
+		const back = vi.spyOn(history, "back").mockImplementation(() => {});
+		vi.stubGlobal("navigation", { canGoBack: true });
+		render(MapPage);
+		await settle();
+
+		expect([...backGestureEventHandlers].at(-1)!()).toBe(false);
+		expect(back).toHaveBeenCalledTimes(1);
+
+		back.mockRestore();
+		vi.unstubAllGlobals();
+	});
+
+	it("still deletes when the dialog closes before the confirm click lands, as on a real phone", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		const row = list().getByText("Café").closest("div")!;
+		await fireEvent.click(
+			row.querySelector<HTMLButtonElement>(
+				'button[aria-label="Delete"]',
+			)!,
+		);
+		const dialog = await screen.findByRole("alertdialog");
+		const confirm = within(dialog).getByRole("button", { name: "Delete" });
+		// En un dedo real, los efectos de Svelte se ejecutan entre el cierre del
+		// diálogo y el clic delegado; lo reproducimos aquí.
+		confirm.addEventListener("click", () => flushSync());
+
+		await fireEvent.click(confirm);
+
+		await vi.waitFor(() => {
+			expect(
+				(mocks.markersFile.markers as { id: string }[]).map(
+					(m) => m.id,
+				),
+			).toEqual(["p2"]);
+		});
 	});
 
 	it("lists saved pins and shared locations and closes the list", async () => {
@@ -285,7 +343,8 @@ describe("the map screen", () => {
 				screen.queryByRole("region", { name: "Saved items" }),
 			).toBeNull();
 		});
-		expect(backGestureEventHandlers.size).toBe(0);
+		// El mapa siempre atiende «atrás»: si no hay nada abierto, sale.
+		expect(backGestureEventHandlers.size).toBe(1);
 	});
 
 	it("closes the delete confirmation with the back gesture", async () => {
