@@ -1,4 +1,5 @@
 import type { MessageKey } from "./en";
+import { euChatBulk } from "./eu.chatbulk";
 import { euExtra } from "./eu.extra";
 import { euFeatures } from "./eu.features";
 import { euMore } from "./eu.more";
@@ -551,4 +552,5 @@ export const eu: Record<MessageKey, string> = {
 	...euMore,
 	...euExtra,
 	...euProfile,
+	...euChatBulk,
 };

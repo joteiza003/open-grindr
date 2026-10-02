@@ -1,3 +1,4 @@
+import { enChatBulk } from "./en.chatbulk";
 import { enExtra } from "./en.extra";
 import { enFeatures } from "./en.features";
 import { enMore } from "./en.more";
@@ -558,6 +559,7 @@ export const en = {
 	...enMore,
 	...enExtra,
 	...enProfile,
+	...enChatBulk,
 } as const;
 
 export type MessageKey = keyof typeof en;

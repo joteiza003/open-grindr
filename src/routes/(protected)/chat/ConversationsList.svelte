@@ -1,15 +1,20 @@
 ﻿<script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
+	import { ChecksIcon } from "phosphor-svelte";
 	import { onDestroy, tick } from "svelte";
+	import { toast } from "svelte-sonner";
 
-	import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import { markAllConversationsRead } from "$lib/chat/mark-all-conversations";
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
+	import * as AlertDialog from "$lib/components/ui/alert-dialog";
+	import Button from "$lib/components/ui/button/button.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
 	import { t } from "$lib/i18n";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
@@ -50,6 +55,29 @@
 	let deleteDialogOpen = $state(false);
 	let deleteIds: string[] = $state([]);
 	let tab = $state<"chats" | "albums">("chats");
+
+	// Marcar todo como leído: confirmación, una sola ejecución a la vez y un aviso.
+	let markAllOpen = $state(false);
+	let markingAll = $state(false);
+
+	async function markAllRead() {
+		if (markingAll) return;
+		markingAll = true;
+		try {
+			const result = await markAllConversationsRead(
+				conversations.entries,
+			);
+			if (result.marked === 0 && result.failed === 0) {
+				toast(t("chat.markAllReadNone"));
+			} else if (result.marked > 0) {
+				toast.success(
+					t("chat.markAllReadDone", { count: result.marked }),
+				);
+			}
+		} finally {
+			markingAll = false;
+		}
+	}
 
 	async function compensateScroll() {
 		if (!container) return;
@@ -173,6 +201,24 @@
 		onClose={exitSelection}
 	/>
 {/if}
+<AlertDialog.Root bind:open={markAllOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{t("chat.markAllReadTitle")}</AlertDialog.Title>
+			<AlertDialog.Description>
+				{t("chat.markAllReadBody")}
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel size="lg">
+				{t("common.cancel")}
+			</AlertDialog.Cancel>
+			<AlertDialog.Action size="lg" onclick={() => void markAllRead()}>
+				{t("chat.markAllRead")}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
 <DeleteConversationsDialog
 	bind:open={deleteDialogOpen}
 	count={deleteIds.length}
@@ -216,6 +262,19 @@
 				{t("chat.albums")}
 			</button>
 		</div>
+		{#if tab === "chats"}
+			<Button
+				variant="ghost"
+				size="icon"
+				class="size-9 shrink-0 rounded-full"
+				aria-label={t("chat.markAllRead")}
+				title={t("chat.markAllRead")}
+				disabled={markingAll || conversations.loading}
+				onclick={() => (markAllOpen = true)}
+			>
+				<ChecksIcon class="size-5" weight="bold" />
+			</Button>
+		{/if}
 	</div>
 	<div class="relative flex min-h-0 flex-1 flex-col">
 		{#if tab === "albums"}

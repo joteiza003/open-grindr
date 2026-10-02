@@ -1,4 +1,5 @@
 import type { MessageKey } from "./en";
+import { esChatBulk } from "./es.chatbulk";
 import { esExtra } from "./es.extra";
 import { esFeatures } from "./es.features";
 import { esMore } from "./es.more";
@@ -565,4 +566,5 @@ export const es: Record<MessageKey, string> = {
 	...esMore,
 	...esExtra,
 	...esProfile,
+	...esChatBulk,
 };
