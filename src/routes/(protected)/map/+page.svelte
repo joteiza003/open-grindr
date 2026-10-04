@@ -47,7 +47,10 @@
 		formatReceivedAt,
 		locationLabel,
 	} from "$lib/map/map-page-helpers";
-	import { refreshProfileMarkers } from "$lib/map/refresh-profile-markers";
+	import {
+		refreshProfileMarkers,
+		refreshSingleProfileMarker,
+	} from "$lib/map/refresh-profile-markers";
 	import { decodeGeohash } from "$lib/model/geohash";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { openExternalLink } from "$lib/platform/link-opener";
@@ -80,11 +83,19 @@
 		),
 	);
 
-	async function onRefreshProfiles(): Promise<void> {
+	async function onRefreshProfiles() {
 		if (overlays.refreshing) return;
-		await refreshProfileMarkers(overlays, (label) => {
-			refreshStatus = label;
-		});
+		await refreshProfileMarkers(overlays, (l) => (refreshStatus = l));
+	}
+
+	async function onRefreshOne(marker: MapMarker) {
+		if (overlays.refreshing) return;
+		try {
+			await refreshSingleProfileMarker(overlays, marker, (l) => (refreshStatus = l));
+		} catch (error) {
+			console.error("[map] refresh one failed", error);
+			overlays.error = String(error);
+		}
 	}
 
 	const customLocation = $derived.by(() => {
@@ -141,9 +152,7 @@
 
 	const markerClusters = $derived(clusterMarkers(overlays.markers, zoom));
 	const hasPoints = $derived(
-		overlays.markers.length > 0 ||
-			library.locations.length > 0 ||
-			customLocation !== null,
+		overlays.markers.length > 0 || library.locations.length > 0 || customLocation !== null,
 	);
 
 	function fitAll() {
@@ -166,9 +175,7 @@
 	}
 
 	const selectedMarker = $derived(
-		overlays.markers.find(
-			(marker) => marker.id === overlays.selectedMarkerId,
-		) ?? null,
+		overlays.markers.find((m) => m.id === overlays.selectedMarkerId) ?? null,
 	);
 
 	const empty = $derived(
@@ -226,15 +233,10 @@
 	async function confirmDelete(): Promise<void> {
 		const target = pending;
 		try {
-			if (target?.kind === "location") {
-				await library.remove(target.id);
-			} else if (target?.kind === "marker") {
-				await overlays.deleteMarker(target.id);
-			} else if (target?.kind === "all-locations") {
-				await library.removeAll();
-			} else if (target?.kind === "all-markers") {
-				await overlays.deleteAllMarkers();
-			}
+			if (target?.kind === "location") await library.remove(target.id);
+			else if (target?.kind === "marker") await overlays.deleteMarker(target.id);
+			else if (target?.kind === "all-locations") await library.removeAll();
+			else if (target?.kind === "all-markers") await overlays.deleteAllMarkers();
 		} catch (error) {
 			console.error("[map] Failed to delete", error);
 			overlays.error = String(error);
@@ -248,19 +250,15 @@
 	});
 
 	function leaveMap() {
+		const home = () => void goto("/", { replaceState: true });
 		try {
-			if (canGoBack()) {
-				history.back();
-				window.setTimeout(() => {
-					if (location.pathname.startsWith("/map")) {
-						void goto("/", { replaceState: true });
-					}
-				}, 120);
-			} else {
-				void goto("/", { replaceState: true });
-			}
+			if (!canGoBack()) return home();
+			history.back();
+			window.setTimeout(() => {
+				if (location.pathname.startsWith("/map")) home();
+			}, 120);
 		} catch {
-			void goto("/", { replaceState: true });
+			home();
 		}
 	}
 
@@ -483,7 +481,7 @@
 
 		<!-- Floating map controls — above map tiles, receive taps -->
 		<div
-			class="pointer-events-none absolute end-3 top-3 z-[1000] flex flex-col gap-2"
+			class="pointer-events-none absolute end-3 top-3 z-[2000] flex flex-col gap-2"
 		>
 			<Button
 				variant="secondary"
@@ -517,7 +515,7 @@
 
 		{#if refreshStatus}
 			<div
-				class="pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-4"
+				class="pointer-events-none absolute inset-x-0 top-3 z-[2000] flex justify-center px-4"
 			>
 				<div
 					class="rounded-full border border-border/60 bg-card/95 px-3 py-1.5 text-xs font-medium shadow-lg"
@@ -551,12 +549,12 @@
 			onOpenProfile={(id) => void goto(`/profile/${id}`)}
 			onOpenDirections={(marker) =>
 				openExternalLink(directionsUrl(marker, customLocation))}
+			onRefreshMarker={(marker) => void onRefreshOne(marker)}
 		/>
 	</div>
 </main>
 
 <style>
-	/* Soften leaflet attribution on dark/light */
 	:global(.leaflet-control-attribution) {
 		background: rgb(255 255 255 / 75%) !important;
 		border-radius: 8px 0 0 0;
@@ -564,9 +562,24 @@
 		padding: 2px 6px !important;
 	}
 
-	/* Keep map tiles from painting above chrome; constrain touch target to map box */
+	/* Contain Leaflet so it cannot steal taps from header / HUD */
 	:global(.leaflet-container) {
 		z-index: 0 !important;
+		position: absolute !important;
+		inset: 0 !important;
+		height: 100% !important;
+		width: 100% !important;
 		touch-action: pan-x pan-y;
+	}
+	:global(.leaflet-pane) {
+		z-index: auto !important;
+	}
+	:global(.leaflet-top),
+	:global(.leaflet-bottom) {
+		z-index: 400 !important;
+		pointer-events: none;
+	}
+	:global(.leaflet-control) {
+		pointer-events: auto;
 	}
 </style>

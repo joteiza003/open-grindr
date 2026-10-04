@@ -1,3 +1,5 @@
+import { SvelteMap } from "svelte/reactivity";
+
 import type { InteractionMode, MapMarker } from "$lib/model/map-elements";
 import {
 	appDataMapElementsBackend,
@@ -78,11 +80,7 @@ export class MapElementsState {
 		patch: Partial<
 			Pick<
 				MapMarker,
-				| "latitude"
-				| "longitude"
-				| "title"
-				| "mediaHash"
-				| "displayName"
+				"latitude" | "longitude" | "title" | "mediaHash" | "displayName"
 			>
 		>,
 	): Promise<void> {
@@ -103,7 +101,7 @@ export class MapElementsState {
 	 * createdAt (or the first if dates are equal).
 	 */
 	async dedupeProfileMarkers(): Promise<void> {
-		const byProfile = new Map<number, MapMarker>();
+		const byProfile = new SvelteMap<number, MapMarker>();
 		const withoutProfile: MapMarker[] = [];
 		for (const marker of this.markers) {
 			if (marker.profileId === undefined) {

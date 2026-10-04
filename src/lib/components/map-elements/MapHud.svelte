@@ -31,6 +31,7 @@
 		onConfirmDelete,
 		onOpenProfile,
 		onOpenDirections,
+		onRefreshMarker,
 	}: {
 		overlays: MapElementsState;
 		empty?: boolean;
@@ -50,6 +51,7 @@
 		onConfirmDelete: () => void | Promise<void>;
 		onOpenProfile?: (profileId: number) => void;
 		onOpenDirections?: (marker: MapMarker) => void;
+		onRefreshMarker?: (marker: MapMarker) => void;
 	} = $props();
 
 	const listVisible = $derived(listOpen && overlays.mode === "NORMAL");
@@ -62,7 +64,7 @@
 <!-- Empty state -->
 {#if empty}
 	<div
-		class="pointer-events-none absolute inset-x-0 bottom-10 z-[1000] flex justify-center px-4"
+		class="pointer-events-none absolute inset-x-0 bottom-10 z-[2000] flex justify-center px-4"
 	>
 		<div
 			class="max-w-md rounded-2xl border border-border/80 bg-card/95 px-4 py-3 text-center shadow-xl"
@@ -75,7 +77,7 @@
 {/if}
 
 <!-- Bottom panels -->
-<div class="pointer-events-none absolute inset-x-0 bottom-4 z-[1000] px-3">
+<div class="pointer-events-none absolute inset-x-0 bottom-4 z-[2000] px-3">
 	{#if openCluster}
 		<!-- Cluster list -->
 		<section
@@ -281,8 +283,10 @@
 	{:else if overlays.mode === "SELECTED_MARKER" && selectedMarker}
 		<SelectedMarkerCard
 			{selectedMarker}
+			refreshing={overlays.refreshing}
 			onOpenProfile={openProfile}
 			{onOpenDirections}
+			onRefresh={onRefreshMarker}
 			onClose={() => overlays.clearSelection()}
 			onDelete={() => onDeleteMarker?.(selectedMarker)}
 		/>

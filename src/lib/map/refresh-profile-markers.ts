@@ -1,11 +1,30 @@
 import { autoTriangulateProfile } from "$lib/location/auto-triangulate-profile";
 import type { MapElementsState } from "$lib/map/map-elements-state.svelte";
+import type { MapMarker } from "$lib/model/map-elements";
 
-/**
- * Re-triangulates every saved profile pin so positions stay current.
- * Does not modify the triangulation algorithm — only calls it and then
- * updates the existing marker (removes the temporary pin it creates).
- */
+async function triangulateAndApply(
+	overlays: MapElementsState,
+	marker: MapMarker,
+): Promise<void> {
+	const profileId = marker.profileId;
+	if (typeof profileId !== "number" || profileId <= 0) return;
+
+	const result = await autoTriangulateProfile({
+		profileId,
+		displayName: marker.displayName ?? null,
+	});
+	// Drop the temporary pin created by autoTriangulateProfile, keep the saved one.
+	await overlays.deleteMarker(result.markerId);
+	await overlays.updateMarker(marker.id, {
+		latitude: result.point.lat,
+		longitude: result.point.lon,
+		mediaHash: marker.mediaHash,
+		displayName: marker.displayName,
+		title: marker.title,
+	});
+}
+
+/** Re-triangulate every saved profile pin. */
 export async function refreshProfileMarkers(
 	overlays: MapElementsState,
 	onStatus?: (label: string | null) => void,
@@ -19,30 +38,40 @@ export async function refreshProfileMarkers(
 	try {
 		for (let i = 0; i < targets.length; i++) {
 			const marker = targets[i]!;
-			const profileId = marker.profileId!;
 			onStatus?.(`Actualizando ${i + 1}/${targets.length}…`);
 			try {
-				const result = await autoTriangulateProfile({
-					profileId,
-					displayName: marker.displayName ?? null,
-				});
-				// autoTriangulateProfile always persists a *new* marker id;
-				// drop that temp pin and write the result onto the saved one.
-				await overlays.deleteMarker(result.markerId);
-				await overlays.updateMarker(marker.id, {
-					latitude: result.point.lat,
-					longitude: result.point.lon,
-					mediaHash: marker.mediaHash,
-					displayName: marker.displayName,
-					title: marker.title,
-				});
+				await triangulateAndApply(overlays, marker);
 			} catch (error) {
 				console.error(
-					`[map] Failed to refresh profile ${profileId}`,
+					`[map] Failed to refresh profile ${marker.profileId}`,
 					error,
 				);
 			}
 		}
+	} finally {
+		overlays.refreshing = false;
+		onStatus?.(null);
+	}
+}
+
+/** Re-triangulate a single saved profile pin. */
+export async function refreshSingleProfileMarker(
+	overlays: MapElementsState,
+	marker: MapMarker,
+	onStatus?: (label: string | null) => void,
+): Promise<void> {
+	if (typeof marker.profileId !== "number" || marker.profileId <= 0) return;
+
+	overlays.refreshing = true;
+	onStatus?.("Actualizando…");
+	try {
+		await triangulateAndApply(overlays, marker);
+	} catch (error) {
+		console.error(
+			`[map] Failed to refresh profile ${marker.profileId}`,
+			error,
+		);
+		throw error;
 	} finally {
 		overlays.refreshing = false;
 		onStatus?.(null);

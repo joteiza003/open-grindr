@@ -1,5 +1,6 @@
 <script lang="ts">
 	import {
+		ArrowsClockwiseIcon,
 		MapPinIcon,
 		NavigationArrowIcon,
 		TrashIcon,
@@ -14,105 +15,145 @@
 
 	let {
 		selectedMarker,
+		refreshing = false,
 		onOpenProfile,
 		onOpenDirections,
+		onRefresh,
 		onClose,
 		onDelete,
 	}: {
 		selectedMarker: MapMarker;
+		refreshing?: boolean;
 		onOpenProfile: (profileId: number) => void;
 		onOpenDirections?: (marker: MapMarker) => void;
+		onRefresh?: (marker: MapMarker) => void;
 		onClose: () => void;
 		onDelete: () => void;
 	} = $props();
+
+	const canRefresh = $derived(
+		typeof selectedMarker.profileId === "number" &&
+			selectedMarker.profileId > 0,
+	);
 </script>
 
-<section
-	class="pointer-events-auto mx-auto flex w-full max-w-xl items-center gap-3 overflow-hidden rounded-3xl border border-border/80 bg-card/95 p-3 shadow-2xl"
+<div
+	class="pointer-events-auto relative z-[2000] mx-auto flex w-full max-w-xl flex-col gap-3 overflow-hidden rounded-3xl border border-border/80 bg-card p-3 shadow-2xl"
+	role="dialog"
+	aria-label={selectedMarker.displayName ?? selectedMarker.title}
 >
-	{#if selectedMarker.mediaHash || selectedMarker.profileId}
-		<button
-			type="button"
-			class="size-14 shrink-0 overflow-hidden rounded-2xl ring-2 ring-border transition-opacity active:opacity-80"
-			onclick={() => {
-				if (selectedMarker.profileId) {
-					onOpenProfile(selectedMarker.profileId);
-				}
-			}}
-		>
-			<UserAvatar
-				mediaHash={selectedMarker.mediaHash ?? null}
-				class="size-14"
-				size="md"
-			/>
-		</button>
-	{:else}
-		<span
-			class="grid size-14 shrink-0 place-items-center rounded-2xl bg-muted text-muted-foreground"
-		>
-			<MapPinIcon class="size-6" weight="fill" />
-		</span>
-	{/if}
-
-	<div class="min-w-0 flex-1">
-		<h2 class="truncate text-sm leading-tight font-semibold">
-			{selectedMarker.displayName ?? selectedMarker.title}
-		</h2>
-		<p class="mt-0.5 truncate text-xs text-muted-foreground tabular-nums">
-			{selectedMarker.latitude.toFixed(4)}, {selectedMarker.longitude.toFixed(
-				4,
-			)}
-		</p>
-		<div class="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-			{#if selectedMarker.profileId}
-				<button
-					type="button"
-					class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-opacity active:opacity-70"
-					onclick={() => onOpenProfile(selectedMarker.profileId!)}
-				>
-					<UserIcon class="size-3.5" weight="bold" />
-					{t("map.viewProfile")}
-				</button>
-			{/if}
+	<div class="flex items-center gap-3">
+		{#if selectedMarker.mediaHash || selectedMarker.profileId}
 			<button
 				type="button"
-				class="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-opacity active:opacity-70"
-				onclick={() => onOpenDirections?.(selectedMarker)}
+				class="size-14 shrink-0 overflow-hidden rounded-2xl ring-2 ring-border transition-opacity active:opacity-80"
+				onclick={(e) => {
+					e.stopPropagation();
+					if (selectedMarker.profileId) {
+						onOpenProfile(selectedMarker.profileId);
+					}
+				}}
 			>
-				<NavigationArrowIcon class="size-3.5" weight="fill" />
-				{t("map.directions")}
+				<UserAvatar
+					mediaHash={selectedMarker.mediaHash ?? null}
+					class="size-14"
+					size="md"
+				/>
 			</button>
-		</div>
-	</div>
+		{:else}
+			<span
+				class="grid size-14 shrink-0 place-items-center rounded-2xl bg-muted text-muted-foreground"
+			>
+				<MapPinIcon class="size-6" weight="fill" />
+			</span>
+		{/if}
 
-	<div class="flex shrink-0 items-center gap-1">
-		<Button
-			variant="secondary"
-			size="icon"
-			class="size-9 rounded-xl"
-			aria-label={t("map.directions")}
-			title={t("map.directions")}
-			onclick={() => onOpenDirections?.(selectedMarker)}
-		>
-			<NavigationArrowIcon class="size-4" weight="fill" />
-		</Button>
+		<div class="min-w-0 flex-1">
+			<h2 class="truncate text-sm leading-tight font-semibold">
+				{selectedMarker.displayName ?? selectedMarker.title}
+			</h2>
+			<p
+				class="mt-0.5 truncate text-xs text-muted-foreground tabular-nums"
+			>
+				{selectedMarker.latitude.toFixed(5)}, {selectedMarker.longitude.toFixed(
+					5,
+				)}
+			</p>
+		</div>
+
 		<Button
 			variant="ghost"
 			size="icon"
-			class="size-9 rounded-xl"
+			class="size-9 shrink-0 rounded-xl"
 			aria-label={t("common.close")}
-			onclick={() => onClose()}
+			onclick={(e) => {
+				e.stopPropagation();
+				onClose();
+			}}
 		>
 			<XIcon class="size-4" />
 		</Button>
+	</div>
+
+	<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+		{#if selectedMarker.profileId}
+			<Button
+				variant="secondary"
+				size="sm"
+				class="h-10 gap-1.5 rounded-xl"
+				onclick={(e) => {
+					e.stopPropagation();
+					onOpenProfile(selectedMarker.profileId!);
+				}}
+			>
+				<UserIcon class="size-4" weight="bold" />
+				<span class="truncate text-xs">{t("map.viewProfile")}</span>
+			</Button>
+		{/if}
+
+		<Button
+			variant="secondary"
+			size="sm"
+			class="h-10 gap-1.5 rounded-xl"
+			onclick={(e) => {
+				e.stopPropagation();
+				onOpenDirections?.(selectedMarker);
+			}}
+		>
+			<NavigationArrowIcon class="size-4" weight="fill" />
+			<span class="truncate text-xs">{t("map.directions")}</span>
+		</Button>
+
+		{#if canRefresh}
+			<Button
+				variant="secondary"
+				size="sm"
+				class="h-10 gap-1.5 rounded-xl"
+				disabled={refreshing}
+				onclick={(e) => {
+					e.stopPropagation();
+					onRefresh?.(selectedMarker);
+				}}
+			>
+				<ArrowsClockwiseIcon
+					class="size-4 {refreshing ? 'animate-spin' : ''}"
+					weight="bold"
+				/>
+				<span class="truncate text-xs">Actualizar</span>
+			</Button>
+		{/if}
+
 		<Button
 			variant="ghost"
-			size="icon"
-			class="size-9 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
-			aria-label={t("map.deleteAria")}
-			onclick={() => onDelete()}
+			size="sm"
+			class="h-10 gap-1.5 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive"
+			onclick={(e) => {
+				e.stopPropagation();
+				onDelete();
+			}}
 		>
 			<TrashIcon class="size-4" />
+			<span class="truncate text-xs">{t("common.delete")}</span>
 		</Button>
 	</div>
-</section>
+</div>
