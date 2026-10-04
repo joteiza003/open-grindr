@@ -7,6 +7,7 @@
 		type LeafletMouseEvent,
 	} from "leaflet";
 	import {
+		ArrowsClockwiseIcon,
 		ArrowsOutIcon,
 		CaretLeftIcon,
 		CrosshairIcon,
@@ -70,11 +71,21 @@
 		void (async () => {
 			await Promise.all([library.load(), overlays.load()]);
 			await overlays.dedupeProfileMarkers();
-			void refreshProfileMarkers(overlays, (label) => {
-				refreshStatus = label;
-			});
 		})();
 	});
+
+	const hasProfilePins = $derived(
+		overlays.markers.some(
+			(m) => typeof m.profileId === "number" && m.profileId > 0,
+		),
+	);
+
+	async function onRefreshProfiles(): Promise<void> {
+		if (overlays.refreshing) return;
+		await refreshProfileMarkers(overlays, (label) => {
+			refreshStatus = label;
+		});
+	}
 
 	const customLocation = $derived.by(() => {
 		const geohash = preferencesSnapshot().geohash;
@@ -175,9 +186,7 @@
 		| { kind: "all-locations" }
 		| { kind: "all-markers" };
 
-	// Qué se va a borrar al confirmar. Solo se escribe al pedir el borrado: en
-	// un móvil real el diálogo se cierra ANTES de que llegue el clic de
-	// «Eliminar», así que no se puede borrar este dato al cerrarse.
+	// Kept across dialog close so a late mobile confirm click still sees the target.
 	let pending = $state<PendingDelete | null>(null);
 
 	function requestDelete(next: PendingDelete) {
@@ -231,8 +240,6 @@
 			overlays.error = String(error);
 		} finally {
 			confirmOpen = false;
-			// Keep pending until the next requestDelete so a late confirm click
-			// (dialog already closing on mobile) still sees the target.
 		}
 	}
 
@@ -240,13 +247,10 @@
 		if (overlays.mode !== "NORMAL") listOpen = false;
 	});
 
-	/** Sale del mapa; si no hay historial (p. ej. app restaurada aquí), va al inicio. */
 	function leaveMap() {
 		try {
 			if (canGoBack()) {
 				history.back();
-				// Fallback: if history.back did not navigate away (WebView quirks),
-				// force home after a short tick.
 				window.setTimeout(() => {
 					if (location.pathname.startsWith("/map")) {
 						void goto("/", { replaceState: true });
@@ -323,6 +327,23 @@
 		</h1>
 
 		<div class="flex items-center gap-1">
+			<Button
+				variant="ghost"
+				size="icon"
+				class="size-10 rounded-full text-foreground"
+				aria-label="Actualizar posiciones"
+				title="Actualizar posiciones de perfiles"
+				disabled={!hasProfilePins || overlays.refreshing}
+				onclick={(event) => {
+					event.stopPropagation();
+					void onRefreshProfiles();
+				}}
+			>
+				<ArrowsClockwiseIcon
+					class="size-5 {overlays.refreshing ? 'animate-spin' : ''}"
+					weight="bold"
+				/>
+			</Button>
 			<Button
 				variant={listOpen ? "default" : "ghost"}
 				size="icon"
