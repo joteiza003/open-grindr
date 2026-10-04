@@ -46,6 +46,7 @@
 		formatReceivedAt,
 		locationLabel,
 	} from "$lib/map/map-page-helpers";
+	import { refreshProfileMarkers } from "$lib/map/refresh-profile-markers";
 	import { decodeGeohash } from "$lib/model/geohash";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { openExternalLink } from "$lib/platform/link-opener";
@@ -63,10 +64,16 @@
 	let openCluster = $state<Extract<MarkerCluster, { type: "group" }> | null>(
 		null,
 	);
+	let refreshStatus = $state<string | null>(null);
 
 	onMount(() => {
-		void library.load();
-		void overlays.load();
+		void (async () => {
+			await Promise.all([library.load(), overlays.load()]);
+			await overlays.dedupeProfileMarkers();
+			void refreshProfileMarkers(overlays, (label) => {
+				refreshStatus = label;
+			});
+		})();
 	});
 
 	const customLocation = $derived.by(() => {
@@ -156,6 +163,7 @@
 	const empty = $derived(
 		!library.loading &&
 			!overlays.loading &&
+			!overlays.refreshing &&
 			library.locations.length === 0 &&
 			overlays.markers.length === 0 &&
 			overlays.mode === "NORMAL",
@@ -223,6 +231,8 @@
 			overlays.error = String(error);
 		} finally {
 			confirmOpen = false;
+			// Keep pending until the next requestDelete so a late confirm click
+			// (dialog already closing on mobile) still sees the target.
 		}
 	}
 
@@ -232,8 +242,22 @@
 
 	/** Sale del mapa; si no hay historial (p. ej. app restaurada aquí), va al inicio. */
 	function leaveMap() {
-		if (canGoBack()) history.back();
-		else void goto("/", { replaceState: true });
+		try {
+			if (canGoBack()) {
+				history.back();
+				// Fallback: if history.back did not navigate away (WebView quirks),
+				// force home after a short tick.
+				window.setTimeout(() => {
+					if (location.pathname.startsWith("/map")) {
+						void goto("/", { replaceState: true });
+					}
+				}, 120);
+			} else {
+				void goto("/", { replaceState: true });
+			}
+		} catch {
+			void goto("/", { replaceState: true });
+		}
 	}
 
 	// System back closes the innermost open panel before leaving the map.
@@ -274,9 +298,9 @@
 <main
 	class="relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
-	<!-- Glass header -->
+	<!-- Glass header — z above Leaflet panes (max ~1000) so back/list always receive taps -->
 	<header
-		class="relative z-20 flex items-center gap-1.5 border-b border-border/40 bg-background/95 px-3 py-2.5"
+		class="relative z-[1100] flex items-center gap-1.5 border-b border-border/40 bg-background/95 px-3 py-2.5 pointer-events-auto"
 	>
 		<Button
 			variant="ghost"
@@ -284,7 +308,10 @@
 			class="size-10 shrink-0 rounded-full text-foreground"
 			aria-label={t("common.back")}
 			title={t("common.back")}
-			onclick={leaveMap}
+			onclick={(event) => {
+				event.stopPropagation();
+				leaveMap();
+			}}
 		>
 			<CaretLeftIcon class="size-5" weight="bold" />
 		</Button>
@@ -303,7 +330,8 @@
 				aria-label={t("map.list")}
 				title={t("map.list")}
 				aria-pressed={listOpen}
-				onclick={() => {
+				onclick={(event) => {
+					event.stopPropagation();
 					openCluster = null;
 					if (overlays.mode !== "NORMAL") overlays.cancelCreation();
 					listOpen = !listOpen;
@@ -319,8 +347,8 @@
 
 	<!-- `isolate` encierra los z-index de Leaflet y del HUD (hasta 1000): sin
 	     esto quedan por encima de los diálogos (z-50) y tapan sus botones. -->
-	<div class="relative isolate min-h-0 flex-1">
-		<div class="h-full w-full">
+	<div class="relative isolate min-h-0 flex-1 overflow-hidden">
+		<div class="absolute inset-0 z-0 h-full w-full">
 			<Map
 				options={{
 					center: [25, 0],
@@ -432,9 +460,9 @@
 			</Map>
 		</div>
 
-		<!-- Floating map controls -->
+		<!-- Floating map controls — above map tiles, receive taps -->
 		<div
-			class="pointer-events-none absolute end-3 top-3 z-1000 flex flex-col gap-2"
+			class="pointer-events-none absolute end-3 top-3 z-[1000] flex flex-col gap-2"
 		>
 			<Button
 				variant="secondary"
@@ -443,7 +471,10 @@
 				aria-label={t("map.fitAll")}
 				title={t("map.fitAll")}
 				disabled={!hasPoints}
-				onclick={fitAll}
+				onclick={(event) => {
+					event.stopPropagation();
+					fitAll();
+				}}
 			>
 				<ArrowsOutIcon class="size-5" />
 			</Button>
@@ -454,11 +485,26 @@
 				aria-label={t("map.locate")}
 				title={customLocation ? t("map.locate") : t("map.noLocation")}
 				disabled={!customLocation}
-				onclick={goToMyLocation}
+				onclick={(event) => {
+					event.stopPropagation();
+					goToMyLocation();
+				}}
 			>
 				<CrosshairIcon class="size-5" />
 			</Button>
 		</div>
+
+		{#if refreshStatus}
+			<div
+				class="pointer-events-none absolute inset-x-0 top-3 z-[1000] flex justify-center px-4"
+			>
+				<div
+					class="rounded-full border border-border/60 bg-card/95 px-3 py-1.5 text-xs font-medium shadow-lg"
+				>
+					{refreshStatus}
+				</div>
+			</div>
+		{/if}
 
 		<MapHud
 			{overlays}
@@ -495,5 +541,11 @@
 		border-radius: 8px 0 0 0;
 		font-size: 10px !important;
 		padding: 2px 6px !important;
+	}
+
+	/* Keep map tiles from painting above chrome; constrain touch target to map box */
+	:global(.leaflet-container) {
+		z-index: 0 !important;
+		touch-action: pan-x pan-y;
 	}
 </style>

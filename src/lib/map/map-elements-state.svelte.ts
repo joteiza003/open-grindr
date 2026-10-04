@@ -11,6 +11,8 @@ export class MapElementsState {
 	mode = $state<InteractionMode>("NORMAL");
 	selectedMarkerId = $state<string | null>(null);
 	error = $state<string | null>(null);
+	/** True while re-triangulating saved profile markers on open. */
+	refreshing = $state(false);
 
 	#backend: MapElementsBackend;
 
@@ -65,6 +67,64 @@ export class MapElementsState {
 		this.markers = [];
 		await this.#persist();
 		this.clearSelection();
+	}
+
+	/**
+	 * Updates coordinates (and optional display fields) of an existing marker
+	 * without changing its id. Used when re-triangulating a saved profile pin.
+	 */
+	async updateMarker(
+		id: string,
+		patch: Partial<
+			Pick<
+				MapMarker,
+				| "latitude"
+				| "longitude"
+				| "title"
+				| "mediaHash"
+				| "displayName"
+			>
+		>,
+	): Promise<void> {
+		const index = this.markers.findIndex((marker) => marker.id === id);
+		if (index < 0) return;
+		const current = this.markers[index]!;
+		const next: MapMarker = { ...current, ...patch };
+		this.markers = [
+			...this.markers.slice(0, index),
+			next,
+			...this.markers.slice(index + 1),
+		];
+		await this.#persist();
+	}
+
+	/**
+	 * Removes duplicate pins for the same profileId, keeping the newest by
+	 * createdAt (or the first if dates are equal).
+	 */
+	async dedupeProfileMarkers(): Promise<void> {
+		const byProfile = new Map<number, MapMarker>();
+		const withoutProfile: MapMarker[] = [];
+		for (const marker of this.markers) {
+			if (marker.profileId === undefined) {
+				withoutProfile.push(marker);
+				continue;
+			}
+			const prev = byProfile.get(marker.profileId);
+			if (!prev) {
+				byProfile.set(marker.profileId, marker);
+				continue;
+			}
+			const newer =
+				Date.parse(marker.createdAt) >= Date.parse(prev.createdAt)
+					? marker
+					: prev;
+			byProfile.set(marker.profileId, newer);
+		}
+		const next = [...withoutProfile, ...byProfile.values()];
+		if (next.length === this.markers.length) return;
+		this.markers = next;
+		await this.#persist();
 	}
 
 	resetInteraction(): void {
