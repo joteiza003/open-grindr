@@ -12,7 +12,8 @@ export type MarkerCluster =
 	  };
 
 const CLUSTER_PIXEL_RADIUS = 48;
-const NO_CLUSTER_ZOOM = 17;
+/** From this zoom on every pin is drawn on its own. */
+export const NO_CLUSTER_ZOOM = 17;
 
 export function clusterMarkers(
 	markers: MapMarker[],

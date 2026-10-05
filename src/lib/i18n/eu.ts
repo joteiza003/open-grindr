@@ -2,6 +2,7 @@ import type { MessageKey } from "./en";
 import { euChatBulk } from "./eu.chatbulk";
 import { euExtra } from "./eu.extra";
 import { euFeatures } from "./eu.features";
+import { euMap } from "./eu.map";
 import { euMore } from "./eu.more";
 import { euProfile } from "./eu.profile";
 
@@ -553,4 +554,5 @@ export const eu: Record<MessageKey, string> = {
 	...euExtra,
 	...euProfile,
 	...euChatBulk,
+	...euMap,
 };

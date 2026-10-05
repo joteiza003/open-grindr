@@ -1,22 +1,35 @@
 import { SvelteMap } from "svelte/reactivity";
 
-import type { InteractionMode, MapMarker } from "$lib/model/map-elements";
+import type { MapMarker } from "$lib/model/map-elements";
 import {
 	appDataMapElementsBackend,
 	type MapElementsBackend,
 } from "./map-elements-library";
+import { trace } from "./map-trace";
 
-/** Reactive view-model for persistent map overlays. Independent of geohash. */
+/** A write that takes longer than this is noted in the diagnostics. */
+const SLOW_SAVE_MS = 3_000;
+
+/**
+ * Reactive list of the pins saved on the map.
+ *
+ * Every change updates the list in memory first and writes it to storage
+ * afterwards. The screen never waits for the disk: on Android storage goes
+ * through the same worker pool as media requests, and when that pool is busy a
+ * write can stall for seconds. Writes are coalesced, so the file always ends up
+ * holding the latest list no matter how many changes happen in a row.
+ */
 export class MapElementsState {
 	markers = $state<MapMarker[]>([]);
 	loading = $state(true);
-	mode = $state<InteractionMode>("NORMAL");
-	selectedMarkerId = $state<string | null>(null);
-	error = $state<string | null>(null);
-	/** True while re-triangulating saved profile markers on open. */
+	/** True while re-triangulating saved profile pins. */
 	refreshing = $state(false);
+	/** Called when the pins could not be written. The list in memory is kept. */
+	onSaveError: ((error: unknown) => void) | undefined;
 
 	#backend: MapElementsBackend;
+	#dirty = false;
+	#writing: Promise<void> | null = null;
 
 	constructor(backend: MapElementsBackend = appDataMapElementsBackend) {
 		this.#backend = backend;
@@ -32,50 +45,29 @@ export class MapElementsState {
 			this.markers = [];
 		} finally {
 			this.loading = false;
-			this.resetInteraction();
 		}
 	}
 
-	getMarkers(): MapMarker[] {
-		return this.markers;
+	markerById(id: string): MapMarker | undefined {
+		return this.markers.find((marker) => marker.id === id);
 	}
 
-	cancelCreation(): void {
-		this.resetInteraction();
-	}
-
-	/** Tocar el mapa vacío quita la selección. */
-	handleMapClick(): void {
-		this.clearSelection();
-	}
-
-	selectMarker(id: string): void {
-		this.mode = "SELECTED_MARKER";
-		this.selectedMarkerId = id;
-	}
-
-	clearSelection(): void {
-		this.mode = "NORMAL";
-		this.selectedMarkerId = null;
-	}
-
-	async deleteMarker(id: string): Promise<void> {
+	/** Resolves once the change reached storage; the list is already updated. */
+	deleteMarker(id: string): Promise<void> {
 		this.markers = this.markers.filter((marker) => marker.id !== id);
-		await this.#persist();
-		this.clearSelection();
+		return this.persist();
 	}
 
-	async deleteAllMarkers(): Promise<void> {
+	deleteAllMarkers(): Promise<void> {
 		this.markers = [];
-		await this.#persist();
-		this.clearSelection();
+		return this.persist();
 	}
 
 	/**
 	 * Updates coordinates (and optional display fields) of an existing marker
 	 * without changing its id. Used when re-triangulating a saved profile pin.
 	 */
-	async updateMarker(
+	updateMarker(
 		id: string,
 		patch: Partial<
 			Pick<
@@ -85,22 +77,21 @@ export class MapElementsState {
 		>,
 	): Promise<void> {
 		const index = this.markers.findIndex((marker) => marker.id === id);
-		if (index < 0) return;
-		const current = this.markers[index]!;
-		const next: MapMarker = { ...current, ...patch };
+		if (index < 0) return Promise.resolve();
+		const next: MapMarker = { ...this.markers[index]!, ...patch };
 		this.markers = [
 			...this.markers.slice(0, index),
 			next,
 			...this.markers.slice(index + 1),
 		];
-		await this.#persist();
+		return this.persist();
 	}
 
 	/**
 	 * Removes duplicate pins for the same profileId, keeping the newest by
-	 * createdAt (or the first if dates are equal).
+	 * createdAt (or the later one if dates are equal).
 	 */
-	async dedupeProfileMarkers(): Promise<void> {
+	dedupeProfileMarkers(): Promise<void> {
 		const byProfile = new SvelteMap<number, MapMarker>();
 		const withoutProfile: MapMarker[] = [];
 		for (const marker of this.markers) {
@@ -120,18 +111,58 @@ export class MapElementsState {
 			byProfile.set(marker.profileId, newer);
 		}
 		const next = [...withoutProfile, ...byProfile.values()];
-		if (next.length === this.markers.length) return;
+		if (next.length === this.markers.length) return Promise.resolve();
 		this.markers = next;
-		await this.#persist();
+		return this.persist();
 	}
 
-	resetInteraction(): void {
-		this.mode = "NORMAL";
-		this.selectedMarkerId = null;
-		this.error = null;
+	/** Writes the current list; calls made while a write runs share it. */
+	persist(): Promise<void> {
+		this.#dirty = true;
+		this.#writing ??= this.#drain();
+		return this.#writing;
 	}
 
-	async #persist(): Promise<void> {
-		await this.#backend.save({ version: 1, markers: this.markers });
+	async #drain(): Promise<void> {
+		try {
+			while (this.#dirty) {
+				this.#dirty = false;
+				const began = performance.now();
+				const watchdog = setTimeout(
+					() =>
+						trace(
+							`saving pins: no answer after ${SLOW_SAVE_MS} ms`,
+						),
+					SLOW_SAVE_MS,
+				);
+				try {
+					await this.#backend.save({
+						version: 1,
+						markers: $state.snapshot(this.markers),
+					});
+					trace(
+						`saved pins in ${Math.round(performance.now() - began)} ms`,
+					);
+				} catch (error) {
+					this.#reportSaveError(error);
+				} finally {
+					clearTimeout(watchdog);
+				}
+			}
+		} finally {
+			// Same step as the last `#dirty` check: a change made right after
+			// the loop ended starts a new write instead of joining a finished one.
+			this.#writing = null;
+		}
+	}
+
+	#reportSaveError(error: unknown): void {
+		console.error("[map-elements] Failed to save", error);
+		trace("saving pins failed");
+		try {
+			this.onSaveError?.(error);
+		} catch (callbackError) {
+			console.error("[map-elements] onSaveError threw", callbackError);
+		}
 	}
 }

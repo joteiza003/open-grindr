@@ -11,12 +11,18 @@ import { flushSync } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-	goto: vi.fn(),
+	writeText: vi.fn<(text: string) => Promise<void>>(() => Promise.resolve()),
+	goto: vi.fn<(...args: unknown[]) => Promise<void>>(() => Promise.resolve()),
 	openExternalLink: vi.fn(),
 	savedLocations: [] as unknown[],
 	markersFile: { version: 1, markers: [] as unknown[] },
+	/** When true, writing to storage never answers (a starved Android IPC pool). */
+	saveStalls: false,
 }));
 
+vi.mock("@tauri-apps/plugin-clipboard-manager", () => ({
+	writeText: mocks.writeText,
+}));
 vi.mock("$app/navigation", () => ({
 	goto: mocks.goto,
 	afterNavigate: () => {},
@@ -31,6 +37,7 @@ vi.mock("$lib/app-data/preferences.svelte", () => ({
 vi.mock("$lib/chat/saved-locations-library", () => ({
 	loadSavedLocations: () => Promise.resolve([...mocks.savedLocations]),
 	deleteSavedLocation: (id: string) => {
+		if (mocks.saveStalls) return new Promise<void>(() => {});
 		mocks.savedLocations = mocks.savedLocations.filter(
 			(item) => (item as { localId: string }).localId !== id,
 		);
@@ -50,6 +57,7 @@ vi.mock("$lib/map/map-elements-library", async (importOriginal) => ({
 				markers: [...mocks.markersFile.markers],
 			}),
 		save: (file: { markers: unknown[] }) => {
+			if (mocks.saveStalls) return new Promise<void>(() => {});
 			mocks.markersFile = { version: 1, markers: file.markers };
 			return Promise.resolve();
 		},
@@ -91,7 +99,9 @@ async function settle() {
 
 beforeEach(() => {
 	mocks.goto.mockReset();
+	mocks.goto.mockImplementation(() => Promise.resolve());
 	mocks.openExternalLink.mockReset();
+	mocks.saveStalls = false;
 	mocks.savedLocations = [location("l1", "Ane"), location("l2", "Mikel")];
 	mocks.markersFile = {
 		version: 1,
@@ -153,7 +163,7 @@ describe("the map screen", () => {
 		vi.unstubAllGlobals();
 	});
 
-	it("still deletes when the dialog closes before the confirm click lands, as on a real phone", async () => {
+	it("still deletes when Svelte flushes its effects between the press and the click, as on a real phone", async () => {
 		render(MapPage);
 		await settle();
 		await openList();
@@ -165,8 +175,8 @@ describe("the map screen", () => {
 		);
 		const dialog = await screen.findByRole("alertdialog");
 		const confirm = within(dialog).getByRole("button", { name: "Delete" });
-		// En un dedo real, los efectos de Svelte se ejecutan entre el cierre del
-		// diálogo y el clic delegado; lo reproducimos aquí.
+		// En un dedo real, los efectos de Svelte se ejecutan entre la pulsación
+		// y el clic delegado; lo reproducimos aquí.
 		confirm.addEventListener("click", () => flushSync());
 
 		await fireEvent.click(confirm);
@@ -400,6 +410,246 @@ describe("the map screen", () => {
 
 		await vi.waitFor(() => {
 			expect(screen.getByText(/appear here/)).toBeTruthy();
+		});
+	});
+});
+
+describe("when storage stalls, as with a starved Android IPC pool", () => {
+	beforeEach(() => {
+		mocks.saveStalls = true;
+	});
+
+	it("deletes a pin and leaves the card at once, without waiting for the disk", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Café"));
+
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "Delete" }),
+		);
+		await confirmDeletion();
+
+		await vi.waitFor(() => {
+			expect(screen.queryByRole("alertdialog")).toBeNull();
+			expect(
+				screen.queryByRole("button", { name: "Directions" }),
+			).toBeNull();
+		});
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Saved items" }),
+		);
+		await vi.waitFor(() => {
+			expect(list().queryByText("Café")).toBeNull();
+		});
+		expect(list().getByText("Beach")).toBeTruthy();
+	});
+
+	it("still closes the card and leaves the map", async () => {
+		const back = vi.spyOn(history, "back").mockImplementation(() => {});
+		vi.stubGlobal("navigation", { canGoBack: true });
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Beach"));
+
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "Close" }),
+		);
+		await vi.waitFor(() => {
+			expect(
+				screen.queryByRole("button", { name: "Directions" }),
+			).toBeNull();
+		});
+
+		await fireEvent.click(screen.getByRole("button", { name: "Back" }));
+		expect(back).toHaveBeenCalledTimes(1);
+
+		back.mockRestore();
+		vi.unstubAllGlobals();
+	});
+
+	it("deletes a shared location from its card", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Ane"));
+
+		const card = await screen.findByRole("region", { name: "Ane" });
+		await fireEvent.click(
+			within(card).getByRole("button", { name: "Delete" }),
+		);
+		await confirmDeletion();
+
+		await vi.waitFor(() => {
+			expect(screen.queryByRole("region", { name: "Ane" })).toBeNull();
+		});
+	});
+});
+
+describe("the cards", () => {
+	it("shows a shared location with its directions and no profile or refresh actions", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Mikel"));
+
+		const card = await screen.findByRole("region", { name: "Mikel" });
+		expect(
+			within(card).getByRole("button", { name: "Directions" }),
+		).toBeTruthy();
+		expect(
+			within(card).queryByRole("button", { name: /View profile/ }),
+		).toBeNull();
+		expect(
+			within(card).queryByRole("button", { name: "Update" }),
+		).toBeNull();
+
+		await fireEvent.click(
+			within(card).getByRole("button", { name: "Directions" }),
+		);
+		expect(String(mocks.openExternalLink.mock.calls[0]?.[0])).toContain(
+			"destination=43.32,-1.97",
+		);
+	});
+
+	it("offers to update only the pins that belong to a profile", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+
+		await fireEvent.click(list().getByText("Café"));
+		await screen.findByRole("region", { name: "Café" });
+		expect(screen.queryByRole("button", { name: "Update" })).toBeNull();
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Saved items" }),
+		);
+		await fireEvent.click(list().getByText("Beach"));
+		expect(
+			await screen.findByRole("button", { name: "Update" }),
+		).toBeTruthy();
+	});
+
+	it("goes to the profile of a profile pin", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Beach"));
+
+		await fireEvent.click(
+			await screen.findByRole("button", { name: "View profile" }),
+		);
+		expect(mocks.goto).toHaveBeenCalledWith("/profile/55");
+	});
+
+	it("closes the card when the bare map is tapped", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Café"));
+		await screen.findByRole("region", { name: "Café" });
+
+		await fireEvent.click(document.querySelector(".leaflet-container")!);
+
+		await vi.waitFor(() => {
+			expect(screen.queryByRole("region", { name: "Café" })).toBeNull();
+		});
+	});
+
+	it("disables the refresh button when no pin belongs to a profile", async () => {
+		mocks.markersFile = { version: 1, markers: [pin("p1", "Café")] };
+		render(MapPage);
+		await settle();
+
+		const refresh = screen.getByRole("button", {
+			name: "Update positions",
+		});
+		await vi.waitFor(() => {
+			expect((refresh as HTMLButtonElement).disabled).toBe(true);
+		});
+	});
+
+	it("closes the card with the Escape key", async () => {
+		render(MapPage);
+		await settle();
+		await openList();
+		await fireEvent.click(list().getByText("Café"));
+		await screen.findByRole("region", { name: "Café" });
+
+		await fireEvent.keyDown(window, { key: "Escape" });
+
+		await vi.waitFor(() => {
+			expect(screen.queryByRole("region", { name: "Café" })).toBeNull();
+		});
+	});
+});
+
+describe("the hidden diagnostics", () => {
+	async function openDiagnostics() {
+		await fireEvent.pointerDown(
+			screen.getByRole("heading", { name: "Map" }),
+		);
+		await new Promise((resolve) => setTimeout(resolve, 900));
+		return screen.findByRole("region", { name: "Map diagnostics" });
+	}
+
+	it("opens when the title is pressed and held, and shows what happened", async () => {
+		render(MapPage);
+		await settle();
+
+		const panel = within(await openDiagnostics());
+
+		expect(panel.getByText(/map screen opened/)).toBeTruthy();
+		expect(panel.getByText(/body pointer-events/)).toBeTruthy();
+	});
+
+	it("does not open on a quick tap of the title", async () => {
+		render(MapPage);
+		await settle();
+
+		const title = screen.getByRole("heading", { name: "Map" });
+		await fireEvent.pointerDown(title);
+		await fireEvent.pointerUp(title);
+		await new Promise((resolve) => setTimeout(resolve, 900));
+
+		expect(
+			screen.queryByRole("region", { name: "Map diagnostics" }),
+		).toBeNull();
+	});
+
+	it("copies the report and closes", async () => {
+		render(MapPage);
+		await settle();
+		const panel = within(await openDiagnostics());
+
+		await fireEvent.click(
+			panel.getByRole("button", { name: "Copy report" }),
+		);
+		await vi.waitFor(() =>
+			expect(mocks.writeText).toHaveBeenCalledTimes(1),
+		);
+		expect(mocks.writeText.mock.calls[0]![0]).toContain(
+			"map screen opened",
+		);
+
+		await fireEvent.click(panel.getByRole("button", { name: "Close" }));
+		expect(
+			screen.queryByRole("region", { name: "Map diagnostics" }),
+		).toBeNull();
+	});
+
+	it("closes with the system back gesture", async () => {
+		render(MapPage);
+		await settle();
+		await openDiagnostics();
+
+		[...backGestureEventHandlers].at(-1)!();
+
+		await vi.waitFor(() => {
+			expect(
+				screen.queryByRole("region", { name: "Map diagnostics" }),
+			).toBeNull();
 		});
 	});
 });
