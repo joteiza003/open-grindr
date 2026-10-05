@@ -5,8 +5,11 @@
 	import { onDestroy, tick } from "svelte";
 	import { toast } from "svelte-sonner";
 
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import { sortInbox } from "$lib/chat/inbox-sort";
 	import { markAllConversationsRead } from "$lib/chat/mark-all-conversations";
+	import { markedUnreadIds } from "$lib/chat/marked-unread.svelte";
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
@@ -97,10 +100,19 @@
 	// Con una lista de favoritos elegida solo se ven los chats de sus miembros.
 	const shownEntries = $derived.by(() => {
 		const allowed = favoriteListFilter.allowedIds();
-		if (allowed === null) return conversations.entries;
-		return conversations.entries.filter((entry) =>
-			entry.data.participants.some((p) => allowed.has(p.profileId)),
-		);
+		const visible =
+			allowed === null
+				? conversations.entries
+				: conversations.entries.filter((entry) =>
+						entry.data.participants.some((p) =>
+							allowed.has(p.profileId),
+						),
+					);
+		return sortInbox(visible, {
+			sort: preferencesSnapshot().chat.inboxSort,
+			markedUnread: new Set(markedUnreadIds()),
+			now: Date.now(),
+		});
 	});
 
 	const selectedEntries = $derived(

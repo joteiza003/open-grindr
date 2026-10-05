@@ -17,6 +17,7 @@
 		onclick,
 		onMenu,
 		overlay,
+		order = null,
 	}: {
 		src: string | null;
 		video: boolean;
@@ -28,6 +29,7 @@
 		onclick: () => void;
 		onMenu?: (tile: HTMLButtonElement) => void;
 		overlay?: Snippet;
+		order?: number | null;
 	} = $props();
 
 	const label = $derived(`${video ? "Video" : "Photo"} ${index + 1}`);
@@ -114,5 +116,5 @@
 			imgClass="bg-card-foreground/10"
 		/>
 	{/if}
-	<MediaTileOverlay {video} {selected} {overlay} />
+	<MediaTileOverlay {video} {selected} {overlay} {order} />
 </button>

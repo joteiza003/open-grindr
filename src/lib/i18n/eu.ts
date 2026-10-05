@@ -1,6 +1,8 @@
 import type { MessageKey } from "./en";
 import { euChatBulk } from "./eu.chatbulk";
 import { euExtra } from "./eu.extra";
+import { euExtra2 } from "./eu.extra2";
+import { euExtra3 } from "./eu.extra3";
 import { euFeatures } from "./eu.features";
 import { euMap } from "./eu.map";
 import { euMore } from "./eu.more";
@@ -339,7 +341,8 @@ export const eu: Record<MessageKey, string> = {
 	"map.yourLocation": "Zure kokapena",
 	"map.customPosition":
 		"Kokapen pertsonalizatua — gordetako geruzetatik independentea.",
-	"map.empty": "Hemen agertzen dira kokatutako profilen pinak eta txatetan partekatutako kokalekuak.",
+	"map.empty":
+		"Hemen agertzen dira kokatutako profilen pinak eta txatetan partekatutako kokalekuak.",
 	"map.markers": "markatzaile",
 	"map.deleteTitle": "Elementu hau ezabatu?",
 	"map.deleteBody":
@@ -552,6 +555,8 @@ export const eu: Record<MessageKey, string> = {
 	...euFeatures,
 	...euMore,
 	...euExtra,
+	...euExtra2,
+	...euExtra3,
 	...euProfile,
 	...euChatBulk,
 	...euMap,

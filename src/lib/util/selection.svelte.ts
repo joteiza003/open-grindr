@@ -37,6 +37,16 @@ export class SelectionSet<T> {
 		}
 	}
 
+	/** Posición (desde 1) en el orden en que se eligió, o `null` si no está elegido. */
+	orderOf(item: T): number | null {
+		let position = 1;
+		for (const selected of this.#selected) {
+			if (selected === item) return position;
+			position++;
+		}
+		return null;
+	}
+
 	values(): T[] {
 		return [...this.#selected];
 	}

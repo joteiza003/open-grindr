@@ -15,6 +15,12 @@
 		browse.cardGap !== null ? `${browse.cardGap}px` : undefined,
 	);
 
+	const columnsVar = $derived(
+		browse.gridColumns !== null
+			? `repeat(${browse.gridColumns}, minmax(0, 1fr))`
+			: undefined,
+	);
+
 	const now = Date.now();
 	const sample = [
 		{
@@ -61,6 +67,7 @@
 		class={["photo-grid", `photo-grid-${cardVariant}`]}
 		style:--radius-grid={cardRadiusVar}
 		style:gap={cardGapVar}
+		style:grid-template-columns={columnsVar}
 		aria-hidden="true"
 	>
 		{#each sample as person (person.id)}

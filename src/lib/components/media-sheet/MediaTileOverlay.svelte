@@ -8,7 +8,13 @@
 		video,
 		selected,
 		overlay,
-	}: { video: boolean; selected: boolean; overlay?: Snippet } = $props();
+		order = null,
+	}: {
+		video: boolean;
+		selected: boolean;
+		overlay?: Snippet;
+		order?: number | null;
+	} = $props();
 </script>
 
 {#if video}
@@ -20,7 +26,7 @@
 	</div>
 {/if}
 {#if selected}
-	<SelectionOverlay />
+	<SelectionOverlay {order} />
 {:else}
 	{@render overlay?.()}
 {/if}

@@ -1,5 +1,7 @@
 import { enChatBulk } from "./en.chatbulk";
 import { enExtra } from "./en.extra";
+import { enExtra2 } from "./en.extra2";
+import { enExtra3 } from "./en.extra3";
 import { enFeatures } from "./en.features";
 import { enMap } from "./en.map";
 import { enMore } from "./en.more";
@@ -344,7 +346,8 @@ export const en = {
 	"map.title": "Map",
 	"map.yourLocation": "Your location",
 	"map.customPosition": "Custom position — independent from saved overlays.",
-	"map.empty": "Pins from located profiles and locations shared in chats appear here.",
+	"map.empty":
+		"Pins from located profiles and locations shared in chats appear here.",
 	"map.markers": "markers",
 	"map.deleteTitle": "Delete this item?",
 	"map.deleteBody":
@@ -559,6 +562,8 @@ export const en = {
 	...enFeatures,
 	...enMore,
 	...enExtra,
+	...enExtra2,
+	...enExtra3,
 	...enProfile,
 	...enChatBulk,
 	...enMap,

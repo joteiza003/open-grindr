@@ -5,6 +5,7 @@ import { type AudioLike, VoicePlayback } from "./playback.svelte";
 class FakeAudio implements AudioLike {
 	currentTime = 0;
 	duration = Number.NaN;
+	playbackRate = 1;
 	readonly listeners = new Map<string, (() => void)[]>();
 	readonly play = vi.fn(() => Promise.resolve());
 	readonly pause = vi.fn();
@@ -153,5 +154,32 @@ describe("VoicePlayback", () => {
 		expect(playback.positionMs).toBe(4000);
 		playback.seek(-5);
 		expect(playback.positionMs).toBe(0);
+	});
+});
+
+describe("VoicePlayback speed", () => {
+	it("cycles 1x, 1.5x, 2x and back to 1x", () => {
+		const { playback } = player();
+		expect(playback.rate).toBe(1);
+		playback.cycleRate();
+		expect(playback.rate).toBe(1.5);
+		playback.cycleRate();
+		expect(playback.rate).toBe(2);
+		playback.cycleRate();
+		expect(playback.rate).toBe(1);
+	});
+
+	it("applies the chosen speed to the audio, now and when it is created", async () => {
+		const { playback, created } = player();
+		playback.cycleRate();
+		await playback.toggle();
+		expect(created[0]?.playbackRate).toBe(1.5);
+		playback.cycleRate();
+		expect(created[0]?.playbackRate).toBe(2);
+	});
+
+	it("exposes the address of the audio it plays", () => {
+		expect(player("blob:voice").playback.audioUrl).toContain("voice");
+		expect(player(null).playback.audioUrl).toBeNull();
 	});
 });

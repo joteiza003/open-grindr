@@ -4,7 +4,7 @@
 		PaperPlaneRightIcon,
 		TrashIcon,
 	} from "phosphor-svelte";
-	import { onDestroy } from "svelte";
+	import { onDestroy, untrack } from "svelte";
 	import { toast } from "svelte-sonner";
 
 	import { showErrorToast } from "$lib/api/error-toast";
@@ -22,6 +22,21 @@
 	import PrimaryComposerButton from "../PrimaryComposerButton.svelte";
 
 	const recorder = new VoiceRecorder();
+
+	// Onda en directo: las últimas lecturas del micrófono, una barra por lectura.
+	const LIVE_BARS = 40;
+	let liveLevels = $state<number[]>([]);
+	$effect(() => {
+		if (!recorder.recording) {
+			liveLevels = [];
+			return;
+		}
+		void recorder.elapsedMs;
+		const level = recorder.level;
+		untrack(() => {
+			liveLevels = [...liveLevels, level].slice(-LIVE_BARS);
+		});
+	});
 	const composer = getMessageComposerContext();
 	const { disabled } = $derived(composer());
 
@@ -113,13 +128,16 @@
 				{formatVoiceDuration(recorder.elapsedMs)}
 			</span>
 			<div
-				class="flex h-6 min-w-0 flex-1 items-center"
+				class="flex h-8 min-w-0 flex-1 items-center justify-end gap-px"
+				data-slot="voice-live-waveform"
 				aria-hidden="true"
 			>
-				<div
-					class="h-1.5 rounded-full bg-primary transition-[width] duration-100"
-					style:width="{Math.max(4, recorder.level * 100)}%"
-				></div>
+				{#each liveLevels as level, index (index)}
+					<span
+						class="w-0.5 shrink-0 rounded-full bg-primary"
+						style:height="{Math.max(8, level * 100)}%"
+					></span>
+				{/each}
 			</div>
 			<Button
 				size="icon"

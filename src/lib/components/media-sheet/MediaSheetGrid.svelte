@@ -125,6 +125,7 @@
 			{video}
 			{index}
 			selected={isSelected}
+			order={selected.orderOf(key)}
 			clickable={isSelected || selected.canSelectMore}
 			busy={deleting.has(key)}
 			lifted={menu.isLifted(key)}

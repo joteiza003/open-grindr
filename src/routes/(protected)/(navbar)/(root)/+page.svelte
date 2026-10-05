@@ -7,6 +7,7 @@
 	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
 	import { gridState } from "$lib/grid/grid-state.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
+	import FavoritesOnlineStrip from "./FavoritesOnlineStrip.svelte";
 	import { revealedGridScrollTop } from "./grid-reveal";
 	import Grid from "./Grid.svelte";
 	import LocationChooser from "./LocationEmpty.svelte";
@@ -63,6 +64,7 @@
 						? "calc(0.5rem + var(--content-pb) + var(--bar-content-gap) + 4.5rem)"
 						: undefined}
 				>
+					<FavoritesOnlineStrip />
 					<Grid {geohash} />
 				</div>
 			</div>

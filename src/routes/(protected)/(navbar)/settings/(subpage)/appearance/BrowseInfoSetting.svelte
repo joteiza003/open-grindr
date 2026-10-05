@@ -60,6 +60,15 @@
 	}
 />
 <SwitchField
+	title={t("favoritesStrip.setting")}
+	description={t("favoritesStrip.settingHint")}
+	disabled={!preferencesLoaded()}
+	bind:checked={
+		() => browse.showFavoritesStrip,
+		(showFavoritesStrip: boolean) => patch({ showFavoritesStrip })
+	}
+/>
+<SwitchField
 	title={t("indicators.favorite")}
 	description={t("indicators.favoriteHint")}
 	disabled={!preferencesLoaded()}

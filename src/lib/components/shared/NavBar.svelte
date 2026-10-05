@@ -18,7 +18,6 @@
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
 	import { Badge } from "$lib/components/ui/badge";
-	import { navBadge } from "./nav-badge";
 	import { tabsListVariants } from "$lib/components/ui/tabs";
 	import { savedFilters } from "$lib/grid/saved-filters-state.svelte";
 	import { t } from "$lib/i18n";
@@ -28,6 +27,8 @@
 	import { isWithin } from "$lib/util/pathname";
 	import { isPlainClick } from "$lib/util/plain-click";
 	import { bottomChrome } from "$lib/util/screen-chrome.svelte";
+	import { isDoubleTap, scrollMainToTop } from "$lib/util/scroll-top";
+	import { navBadge } from "./nav-badge";
 
 	let { ourProfileId }: { ourProfileId: number } = $props();
 
@@ -130,6 +131,9 @@
 			islandWidth / visibleTabs.length >= MIN_LABEL_WIDTH_PX,
 	);
 
+	// Último toque en una pestaña ya activa (el manejador se recrea al repintar).
+	let lastTap: { href: string; at: number } | null = null;
+
 	function tabNavigation({
 		href,
 		landsOn = href,
@@ -143,6 +147,17 @@
 			const current = page.url.pathname;
 			if (current === landsOn) {
 				event.preventDefault();
+				// Doble toque en la pestaña activa: la lista vuelve al principio.
+				const now = Date.now();
+				if (
+					lastTap?.href === href &&
+					isDoubleTap({ lastAt: lastTap.at, now })
+				) {
+					scrollMainToTop();
+					lastTap = null;
+				} else {
+					lastTap = { href, at: now };
+				}
 				return;
 			}
 			if (!isWithin({ pathname: current, root: href })) return;

@@ -3,6 +3,7 @@
 	import {
 		BellIcon,
 		BellSimpleSlashIcon,
+		EnvelopeSimpleIcon,
 		EyeIcon,
 		PushPinIcon,
 		PushPinSlashIcon,
@@ -10,8 +11,12 @@
 	} from "phosphor-svelte";
 
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
-	import { typing } from "$lib/chat/typing-state.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import {
+		isMarkedUnread,
+		toggleMarkedUnread,
+	} from "$lib/chat/marked-unread.svelte";
+	import { typing } from "$lib/chat/typing-state.svelte";
 	import FavoriteStar from "$lib/components/profile/FavoriteStar.svelte";
 	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
 	import ProfileItem from "$lib/components/profile/ProfileItem.svelte";
@@ -177,6 +182,14 @@
 						/>
 					</span>
 				</span>
+				{#if conversation.data.unreadCount === 0 && isMarkedUnread(conversationId)}
+					<span
+						data-slot="marked-unread"
+						role="img"
+						aria-label={t("chat.markedUnread")}
+						class="size-2.5 rounded-full bg-primary"
+					></span>
+				{/if}
 				{#if conversation.data.unreadCount > 0}
 					<Badge
 						variant={conversation.data.muted
@@ -230,6 +243,14 @@
 						<PushPinIcon weight="fill" class="size-5" />
 						{t("chat.pin")}
 					{/if}
+				</ContextMenu.Item>
+				<ContextMenu.Item
+					onSelect={() => void toggleMarkedUnread(conversationId)}
+				>
+					<EnvelopeSimpleIcon weight="fill" class="size-5" />
+					{isMarkedUnread(conversationId)
+						? t("chat.markRead")
+						: t("chat.markUnread")}
 				</ContextMenu.Item>
 				<ContextMenu.Item onSelect={toggleMuted}>
 					{#if conversation.data.muted}

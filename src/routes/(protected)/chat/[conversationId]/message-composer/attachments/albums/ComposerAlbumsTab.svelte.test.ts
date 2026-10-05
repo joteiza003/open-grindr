@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
 	getMyAlbums: vi.fn(),
+	getAlbumStorageLimits: vi.fn(() => new Promise(() => {})),
 	getAlbumShares: vi.fn(),
 	shareAlbum: vi.fn(),
 	unshareAlbum: vi.fn(),

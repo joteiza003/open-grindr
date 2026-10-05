@@ -6,6 +6,7 @@
 	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { albumShares } from "$lib/chat/album-shares.svelte";
 	import AlbumExpirationPicker from "$lib/components/album/AlbumExpirationPicker.svelte";
+	import AlbumLimitsCounter from "$lib/components/album/AlbumLimitsCounter.svelte";
 	import AlbumTile from "$lib/components/album/AlbumTile.svelte";
 	import MediaGrid from "$lib/components/shared/MediaGrid.svelte";
 	import * as Empty from "$lib/components/ui/empty";
@@ -147,6 +148,9 @@
 </script>
 
 <div class="flex flex-col gap-3">
+	{#if albums !== null}
+		<AlbumLimitsCounter count={albums.length} class="px-1" />
+	{/if}
 	{#if mode === "sharing"}
 		<AlbumExpirationPicker class="px-1" />
 	{/if}

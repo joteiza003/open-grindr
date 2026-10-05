@@ -16,7 +16,13 @@
 		messageIsStarred,
 		toggleStarred,
 	} from "$lib/chat/starred-state.svelte";
+	import {
+		type SavablePhoto,
+		savePhotoToLibrary,
+	} from "$lib/chat/archive-photo";
+	import { showErrorToast } from "$lib/api/error-toast";
 	import { t } from "$lib/i18n";
+	import { toast } from "svelte-sonner";
 	import { phraseSourceText } from "$lib/model/messaging/frequent-phrases";
 	import { firedByTouch } from "$lib/platform/touch-origin";
 	import { observeIntersection } from "$lib/util/observe-intersection";
@@ -28,6 +34,7 @@
 		wheelInputMode,
 	} from "$lib/util/swipe-to-reply.svelte";
 	import type { ApiResponseMessage } from "$lib/model/messaging/messages";
+	import { getConversationState } from "../../conversation-state.svelte";
 	import AlbumMessage from "./AlbumMessage.svelte";
 	import AudioMessage from "./AudioMessage.svelte";
 	import { type MessageRefs, setMessageContext } from "./context";
@@ -107,6 +114,28 @@
 	}));
 
 	const ACTIONS_GAP_PX = 4;
+
+	const conversationState = $derived(getConversationState()());
+
+	async function savePhoto(photo: SavablePhoto) {
+		const profile = conversationState.profile;
+		try {
+			await savePhotoToLibrary({
+				photo,
+				conversationId: conversationState.conversationId,
+				profileSnapshot: {
+					profileId: profile?.profileId ?? photo.senderId,
+					displayName: profile?.name ?? null,
+					age: null,
+					distance: profile?.distance ?? null,
+				},
+			});
+			toast.success(t("albumsKit.savedPhoto"));
+		} catch (error) {
+			console.error(error);
+			showErrorToast({ label: t("albumsKit.saveFailed"), error });
+		}
+	}
 
 	let contextMenuOpen = $state(false);
 	let menuOpener: HTMLElement | null = null;
@@ -504,6 +533,19 @@
 		{onReply}
 		{onReport}
 		{onReact}
+		onSavePhoto={message.type === "Image" &&
+		!message.unsent &&
+		status !== "pending" &&
+		status !== "error"
+			? () =>
+					void savePhoto({
+						messageId: message.messageId,
+						senderId: message.senderId,
+						timestamp: message.timestamp,
+						mediaId: message.body.mediaId,
+						url: message.body.url,
+					})
+			: undefined}
 		starred={messageIsStarred(message.messageId)}
 		onToggleStar={message.unsent ||
 		status === "pending" ||

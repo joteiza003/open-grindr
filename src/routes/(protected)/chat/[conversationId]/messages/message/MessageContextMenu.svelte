@@ -5,6 +5,7 @@
 		ArrowUUpLeftIcon,
 		ChatCircleTextIcon,
 		CopyIcon,
+		DownloadSimpleIcon,
 		FlagIcon,
 		StarIcon,
 		TrashIcon,
@@ -32,6 +33,7 @@
 		onReact,
 		starred = false,
 		onToggleStar,
+		onSavePhoto,
 		...props
 	}: ComponentProps<typeof ContextMenu> & {
 		textContent?: string;
@@ -46,6 +48,7 @@
 		onReact?: (reactionId: number) => void;
 		starred?: boolean;
 		onToggleStar?: () => void;
+		onSavePhoto?: () => void;
 	} = $props();
 </script>
 
@@ -133,6 +136,18 @@
 			>
 				<StarIcon weight={starred ? "fill" : "regular"} />
 				{starred ? t("chatSettings.unstar") : t("chatSettings.star")}
+			</Button>
+		{/if}
+		{#if onSavePhoto}
+			<Button
+				variant="ghost"
+				onclick={() => {
+					onSavePhoto();
+					props.onClose();
+				}}
+			>
+				<DownloadSimpleIcon />
+				{t("albumsKit.savePhoto")}
 			</Button>
 		{/if}
 		{#if onCopyError}

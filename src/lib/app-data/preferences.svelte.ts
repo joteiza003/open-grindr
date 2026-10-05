@@ -12,7 +12,10 @@ import {
 import { DEFAULT_LOOK, lookSchema } from "$lib/appearance/looks";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
+import { inboxSortSchema } from "$lib/chat/inbox-sort";
+import { MAX_STARRED, starredMessageSchema } from "$lib/chat/starred";
 import { swipeActionSchema } from "$lib/chat/swipe-actions";
+import { favoriteListSchema, MAX_FAVORITE_LISTS } from "$lib/favorites/lists";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
 import { baseLayerSchema, DEFAULT_BASE_LAYER } from "$lib/map/base-layers";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
@@ -27,8 +30,6 @@ import {
 	DEFAULT_NOTIFICATION_MODULES,
 	normalizeNotificationModules,
 } from "$lib/model/notification-modules";
-import { starredMessageSchema, MAX_STARRED } from "$lib/chat/starred";
-import { favoriteListSchema, MAX_FAVORITE_LISTS } from "$lib/favorites/lists";
 import {
 	MAX_SILENCES,
 	silenceEntrySchema,
@@ -103,6 +104,8 @@ const preferencesSchema = z.object({
 		.catch([]),
 	// Conversaciones donde se activaron las estadísticas del chat.
 	chatStatsEnabled: z.array(z.string()).max(500).default([]).catch([]),
+	// Chats marcados como no leídos a mano (solo en este dispositivo).
+	chatMarkedUnread: z.array(z.string()).max(200).default([]).catch([]),
 	// Última tanda de novedades que ya se enseñó (vacío = ninguna).
 	whatsNewSeen: z.string().default(""),
 	// Modo una mano: la barra de controles de la cuadrícula baja al pulgar.
@@ -155,12 +158,34 @@ const preferencesSchema = z.object({
 			showOnlineStatus: z.boolean().default(true),
 			// Insignias de la tarjeta: estrella de favorito y chat reciente.
 			showFavoriteBadge: z.boolean().default(true),
+			// Franja de favoritos en línea sobre la cuadrícula.
+			showFavoritesStrip: z.boolean().default(true),
 			showChatBadge: z.boolean().default(true),
 			nameStyle: z.enum(["solid", "gradient", "none"]).default("solid"),
 			// null = use the design default (keeps the tuned grid + its e2e
 			// corner test untouched); a number overrides it in pixels.
 			cardRadius: z.number().min(0).max(40).nullable().default(null),
 			cardGap: z.number().min(0).max(24).nullable().default(null),
+			// Columnas fijas de la cuadrícula (2 a 5); null = según el ancho.
+			gridColumns: z
+				.int()
+				.min(2)
+				.max(5)
+				.nullable()
+				.default(null)
+				.catch(null),
+			// Saludo del super like del carrusel: textos y fotos (ids del cajón
+			// de medios del chat) que se envían, en este orden.
+			greetingMessages: z
+				.array(z.string().trim().min(1).max(500))
+				.max(5)
+				.default(["Hola", "¿Qué tal?"])
+				.catch(["Hola", "¿Qué tal?"]),
+			greetingMediaIds: z
+				.array(z.int().nonnegative())
+				.max(5)
+				.default([])
+				.catch([]),
 		})
 		.default({
 			viewMode: "grid",
@@ -173,10 +198,14 @@ const preferencesSchema = z.object({
 			showAge: true,
 			showOnlineStatus: true,
 			showFavoriteBadge: true,
+			showFavoritesStrip: true,
 			showChatBadge: true,
 			nameStyle: "solid",
 			cardRadius: null,
 			cardGap: null,
+			gridColumns: null,
+			greetingMessages: ["Hola", "¿Qué tal?"],
+			greetingMediaIds: [],
 		}),
 	chat: z
 		.object({
@@ -188,6 +217,8 @@ const preferencesSchema = z.object({
 			// Acciones al deslizar una conversación en la lista (solo táctil).
 			swipeRight: swipeActionSchema.default("pin").catch("pin"),
 			swipeLeft: swipeActionSchema.default("mute").catch("mute"),
+			// Orden del buzón: reciente, no leídos primero o en línea primero.
+			inboxSort: inboxSortSchema.default("recent").catch("recent"),
 			// Caducidad con la que se comparten los álbumes desde ahora.
 			albumExpiration: albumExpirationTypeSchema
 				.default("INDEFINITE")
@@ -218,6 +249,7 @@ const preferencesSchema = z.object({
 			albumExpiration: "INDEFINITE",
 			swipeRight: "pin",
 			swipeLeft: "mute",
+			inboxSort: "recent",
 			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,
@@ -378,6 +410,7 @@ const accountPreferenceKeys = [
 	"temporarySilences",
 	"favoriteLists",
 	"starredMessages",
+	"chatMarkedUnread",
 	"chatStatsEnabled",
 ] as const;
 

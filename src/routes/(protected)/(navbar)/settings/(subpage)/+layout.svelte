@@ -54,6 +54,10 @@
 			back: "/settings",
 		},
 		[`${base}/stats`]: { title: () => t("stats.title"), back: "/settings" },
+		[`${base}/greeting`]: {
+			title: () => t("greeting.title"),
+			back: "/settings",
+		},
 		[`${base}/phrases`]: {
 			title: () => t("phrases.settings"),
 			back: "/settings",

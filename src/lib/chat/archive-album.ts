@@ -61,9 +61,11 @@ export async function saveAlbumToLibrary({
 	const storageId = crypto.randomUUID();
 
 	const written: string[] = [];
+	let sizeBytes = 0;
 	const write = async (path: string, bytes: Uint8Array) => {
 		written.push(path);
 		await writeMediaFile(path, bytes);
+		sizeBytes += bytes.byteLength;
 	};
 
 	const items: SavedAlbum["items"] = [];
@@ -159,6 +161,8 @@ export async function saveAlbumToLibrary({
 		profileSnapshot,
 		coverPath,
 		items,
+		kind: "album",
+		sizeBytes,
 		tags: [],
 		favorite: false,
 		hidden: false,

@@ -1,6 +1,8 @@
 import type { MessageKey } from "./en";
 import { esChatBulk } from "./es.chatbulk";
 import { esExtra } from "./es.extra";
+import { esExtra2 } from "./es.extra2";
+import { esExtra3 } from "./es.extra3";
 import { esFeatures } from "./es.features";
 import { esMap } from "./es.map";
 import { esMore } from "./es.more";
@@ -351,7 +353,8 @@ export const es: Record<MessageKey, string> = {
 	"map.yourLocation": "Tu ubicación",
 	"map.customPosition":
 		"Posición personalizada — independiente de las capas guardadas.",
-	"map.empty": "Aquí aparecen los pines de perfiles localizados y las ubicaciones que te comparten en los chats.",
+	"map.empty":
+		"Aquí aparecen los pines de perfiles localizados y las ubicaciones que te comparten en los chats.",
 	"map.markers": "marcadores",
 	"map.deleteTitle": "¿Eliminar este elemento?",
 	"map.deleteBody":
@@ -566,6 +569,8 @@ export const es: Record<MessageKey, string> = {
 	...esFeatures,
 	...esMore,
 	...esExtra,
+	...esExtra2,
+	...esExtra3,
 	...esProfile,
 	...esChatBulk,
 	...esMap,

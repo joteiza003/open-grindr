@@ -5,11 +5,15 @@ export type AudioLike = {
 	src: string;
 	currentTime: number;
 	duration: number;
+	playbackRate?: number;
 	play(): Promise<void>;
 	pause(): void;
 	addEventListener(type: string, listener: () => void): void;
 	removeEventListener(type: string, listener: () => void): void;
 };
+
+/** Velocidades de reproducción, en el orden en que se recorren. */
+export const PLAYBACK_RATES = [1, 1.5, 2] as const;
 
 /** Plays one voice message; starting another one pauses the first. */
 export class VoicePlayback {
@@ -19,6 +23,8 @@ export class VoicePlayback {
 	positionMs = $state(0);
 	durationMs = $state(0);
 	failed = $state(false);
+	/** Velocidad de reproducción elegida (1x, 1.5x o 2x). */
+	rate = $state<number>(1);
 
 	#url: string | null;
 	#create: (src: string) => AudioLike;
@@ -40,6 +46,22 @@ export class VoicePlayback {
 		this.#url = url === null || url === "" ? null : url;
 		this.durationMs = lengthMs ?? 0;
 		this.#create = createAudio;
+	}
+
+	/** Dirección real del audio (la misma que se reproduce), o `null` sin audio. */
+	get audioUrl(): string | null {
+		return this.#url === null
+			? null
+			: proxyMediaUrl(this.#url, { as: "video" });
+	}
+
+	/** Pasa a la siguiente velocidad: 1x, 1.5x, 2x y vuelta a 1x. */
+	cycleRate(): void {
+		const index = PLAYBACK_RATES.indexOf(
+			this.rate as (typeof PLAYBACK_RATES)[number],
+		);
+		this.rate = PLAYBACK_RATES[(index + 1) % PLAYBACK_RATES.length] ?? 1;
+		if (this.#audio !== null) this.#audio.playbackRate = this.rate;
 	}
 
 	get playable(): boolean {
@@ -108,6 +130,7 @@ export class VoicePlayback {
 			this.playing = false;
 			if (VoicePlayback.#active === this) VoicePlayback.#active = null;
 		});
+		audio.playbackRate = this.rate;
 		this.#audio = audio;
 		return audio;
 	}

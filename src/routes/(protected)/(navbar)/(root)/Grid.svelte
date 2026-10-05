@@ -40,6 +40,13 @@
 			: undefined,
 	);
 
+	// Columnas elegidas por la persona; sin elegir, las fija el ancho.
+	const gridColumnsVar = $derived(
+		browsePreferences.gridColumns !== null
+			? `repeat(${browsePreferences.gridColumns}, minmax(0, 1fr))`
+			: undefined,
+	);
+
 	const pendingSkeletons = $derived(
 		gridState.loadingMore ? PAGE_SKELETONS : 0,
 	);
@@ -82,6 +89,7 @@
 			style:padding-bottom="{view.paddingBottomPx}px"
 			style:--radius-grid={cardRadiusVar}
 			style:gap={cardGapVar}
+			style:grid-template-columns={gridColumnsVar}
 			data-rows-above={view.hasRowsAbove || undefined}
 			data-rows-below={view.hasRowsBelow || undefined}
 		>

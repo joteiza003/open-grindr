@@ -5,19 +5,20 @@
 	import AlbumsLink from "./AlbumsLink.svelte";
 	import AppearanceSettingsLink from "./AppearanceSettingsLink.svelte";
 	import AppSettingsLink from "./AppSettingsLink.svelte";
-	import DiscreetModeSetting from "./DiscreetModeSetting.svelte";
-	import MapLink from "./MapLink.svelte";
+	import GreetingLink from "./GreetingLink.svelte";
 	import ListsLink from "./ListsLink.svelte";
+	import MapLink from "./MapLink.svelte";
 	import NavigationLink from "./NavigationLink.svelte";
 	import PhrasesLink from "./PhrasesLink.svelte";
 	import ProfileLink from "./ProfileLink.svelte";
+	import QuickSettings from "./QuickSettings.svelte";
 	import SavedAlbumsLink from "./SavedAlbumsLink.svelte";
 	import SignOutButton from "./SignOutButton.svelte";
-	import Socials from "./Socials.svelte";
 	import SilencesLink from "./SilencesLink.svelte";
+	import Socials from "./Socials.svelte";
 	import StatsLink from "./StatsLink.svelte";
-	import WhatsNewLink from "./WhatsNewLink.svelte";
 	import TranslationLink from "./TranslationLink.svelte";
+	import WhatsNewLink from "./WhatsNewLink.svelte";
 
 	const { data }: import("./$types").PageProps = $props();
 </script>
@@ -31,7 +32,7 @@
 			<div class="m-auto flex w-full max-w-120 flex-col gap-3">
 				<ProfileLink id={data.ourProfileId} />
 				<AlbumsLink ourProfileId={data.ourProfileId} />
-				<DiscreetModeSetting />
+				<QuickSettings />
 				<span role="separator"></span>
 				<div class="og-settings-group">
 					<AccountSettingsLink />
@@ -43,6 +44,7 @@
 					<SilencesLink />
 					<WhatsNewLink />
 					<PhrasesLink />
+					<GreetingLink />
 					<StatsLink />
 					<TranslationLink />
 					<AppSettingsLink />

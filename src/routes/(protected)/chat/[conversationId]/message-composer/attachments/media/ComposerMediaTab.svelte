@@ -12,6 +12,14 @@
 		getDrawerMedia,
 	} from "$lib/api/messaging/drawer";
 	import { uploadRefusalMessage } from "$lib/api/methods";
+	import { createRealAlbumFromDrawer } from "$lib/albums/promote-to-real";
+	import {
+		createPhotoAlbum,
+		mutateStoredPhotoAlbums,
+		upsertPhotoAlbum,
+	} from "$lib/chat/photo-albums-library";
+	import { Button } from "$lib/components/ui/button";
+	import { t } from "$lib/i18n";
 	import MediaSheetGrid from "$lib/components/media-sheet/MediaSheetGrid.svelte";
 	import { mediaFileKindOf } from "$lib/platform/media-file";
 	import { pickMultipleMedia } from "$lib/platform/media-picker";
@@ -97,6 +105,66 @@
 		onSelectionChange({ count: selected.size, label: "Send" });
 	}
 
+	function defaultAlbumName(): string {
+		return t("albumsKit.defaultName", {
+			date: new Date().toLocaleDateString(),
+		});
+	}
+
+	function selectedInOrder(): DrawerMedia[] {
+		const byId = new Map((media ?? []).map((item) => [item.id, item]));
+		return selected
+			.values()
+			.map((id) => byId.get(id))
+			.filter((item): item is DrawerMedia => item !== undefined);
+	}
+
+	async function saveAsLocalAlbum() {
+		const imageIds = selectedInOrder().map((item) => String(item.id));
+		if (imageIds.length === 0) return;
+		try {
+			const album = createPhotoAlbum({
+				name: defaultAlbumName(),
+				imageIds,
+			});
+			await mutateStoredPhotoAlbums((current) =>
+				upsertPhotoAlbum(current, album),
+			);
+			toast.success(t("albumsKit.saveLocalDone"));
+		} catch (err) {
+			console.error(err);
+			toast.error(t("albumsKit.failed"));
+		}
+	}
+
+	async function createRealAlbum() {
+		const mediaIds = selectedInOrder().map((item) => item.id);
+		if (mediaIds.length === 0) return;
+		try {
+			const result = await createRealAlbumFromDrawer({
+				name: defaultAlbumName(),
+				mediaIds,
+			});
+			if (result.status === "no-room") {
+				toast.error(t("albumsKit.noRoom"));
+			} else if (result.added < result.total) {
+				toast.success(
+					t("albumsKit.createRealTrimmed", {
+						count: result.added,
+						total: result.total,
+					}),
+				);
+			} else {
+				toast.success(
+					t("albumsKit.createRealDone", { count: result.added }),
+				);
+			}
+		} catch (err) {
+			console.error(err);
+			toast.error(t("albumsKit.failed"));
+		}
+	}
+
 	function describe(item: DrawerMedia) {
 		const video = mediaFileKindOf(item.contentType) === "video";
 		return {
@@ -108,7 +176,7 @@
 
 	export function submitSelection() {
 		if (media === null) return;
-		const items = media.filter((item) => selected.has(item.id));
+		const items = selectedInOrder();
 		const sendAsExpiring = expiring;
 		selected.clear();
 		onClose();
@@ -120,6 +188,25 @@
 		);
 	}
 </script>
+
+{#if selected.size > 0}
+	<div data-slot="selection-actions" class="flex flex-wrap gap-2 px-3 pb-2">
+		<Button
+			variant="secondary"
+			size="sm"
+			onclick={() => void saveAsLocalAlbum()}
+		>
+			{t("albumsKit.saveLocal")}
+		</Button>
+		<Button
+			variant="secondary"
+			size="sm"
+			onclick={() => void createRealAlbum()}
+		>
+			{t("albumsKit.createReal")}
+		</Button>
+	</div>
+{/if}
 
 <MediaSheetGrid
 	items={media}

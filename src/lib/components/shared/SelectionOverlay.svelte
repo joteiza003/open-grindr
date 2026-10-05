@@ -1,8 +1,14 @@
 <script lang="ts">
 	import SelectionCheck from "./SelectionCheck.svelte";
 
-	let { class: className }: { class?: import("svelte/elements").ClassValue } =
-		$props();
+	let {
+		class: className,
+		order = null,
+	}: {
+		class?: import("svelte/elements").ClassValue;
+		/** Si se indica, se muestra este número en vez de la marca (orden de envío). */
+		order?: number | null;
+	} = $props();
 </script>
 
 <div
@@ -11,5 +17,15 @@
 		className,
 	]}
 >
-	<SelectionCheck />
+	{#if order !== null}
+		<span
+			data-slot="selection-order"
+			aria-hidden="true"
+			class="grid size-7 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-foreground tabular-nums"
+		>
+			{order}
+		</span>
+	{:else}
+		<SelectionCheck />
+	{/if}
 </div>

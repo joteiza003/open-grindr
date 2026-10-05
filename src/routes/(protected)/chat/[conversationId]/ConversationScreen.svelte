@@ -3,6 +3,7 @@
 
 	import ChatBackground from "$lib/appearance/ChatBackground.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import { clearMarkedUnread } from "$lib/chat/marked-unread.svelte";
 	import * as Card from "$lib/components/ui/card";
 	import { setScreenLeaving } from "$lib/platform/back-gesture-event.svelte";
 	import type { MessageDraft } from "$lib/model/messaging/messages";
@@ -38,6 +39,11 @@
 				}),
 		),
 	);
+
+	// Abrir el chat quita la marca de "no leído" puesta a mano.
+	$effect(() => {
+		if (!leaving) void clearMarkedUnread(conversationId);
+	});
 
 	$effect(() => {
 		const id = conversationId;

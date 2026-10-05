@@ -2,6 +2,7 @@
 	import { untrack } from "svelte";
 
 	import { getMyAlbumsState } from "$lib/albums/my-albums-state.svelte";
+	import AlbumLimitsCounter from "$lib/components/album/AlbumLimitsCounter.svelte";
 	import AlbumTile from "$lib/components/album/AlbumTile.svelte";
 	import AddTile from "$lib/components/shared/AddTile.svelte";
 	import MediaGrid from "$lib/components/shared/MediaGrid.svelte";
@@ -22,6 +23,14 @@
 <svelte:head>
 	<title>My albums</title>
 </svelte:head>
+
+{#if myAlbums.albums !== null && myAlbums.maxAlbums !== null}
+	<AlbumLimitsCounter
+		count={myAlbums.albums.length}
+		maxAlbums={myAlbums.maxAlbums}
+		class="px-1 pb-2"
+	/>
+{/if}
 
 <MediaGrid
 	items={myAlbums.albums}

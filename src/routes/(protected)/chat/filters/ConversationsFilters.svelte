@@ -12,6 +12,7 @@
 	import type { ConversationFilterValues } from "$lib/model/messaging/conversation-filters";
 	import ChatSearchDialog from "../ChatSearchDialog.svelte";
 	import DistanceQuickFilter from "./DistanceQuickFilter.svelte";
+	import InboxSortChip from "./InboxSortChip.svelte";
 	import PositionQuickFilter from "./PositionQuickFilter.svelte";
 
 	let {
@@ -56,6 +57,7 @@
 	</Button>
 	<ChatSearchDialog bind:open={searchOpen} />
 	<FavoriteListFilterChip />
+	<InboxSortChip />
 	<ToggleGroup.Root
 		type="multiple"
 		variant="default"

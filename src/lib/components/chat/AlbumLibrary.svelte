@@ -7,6 +7,7 @@
 	import { openSavedAlbum } from "$lib/chat/album-viewer";
 	import { SavedAlbumsState } from "$lib/chat/saved-albums-state.svelte";
 	import AlbumCard from "$lib/components/chat/AlbumCard.svelte";
+	import LibraryStorage from "$lib/components/chat/LibraryStorage.svelte";
 	import * as AlertDialog from "$lib/components/ui/alert-dialog";
 	import { Button } from "$lib/components/ui/button";
 	import { Input } from "$lib/components/ui/input";
@@ -73,6 +74,11 @@
 			/>
 		</Button>
 	</div>
+
+	<LibraryStorage
+		albums={library.albums}
+		onDeleteMany={(ids) => library.removeMany(ids)}
+	/>
 
 	{#if library.allTags.length > 0}
 		<div class="flex flex-wrap gap-1.5">

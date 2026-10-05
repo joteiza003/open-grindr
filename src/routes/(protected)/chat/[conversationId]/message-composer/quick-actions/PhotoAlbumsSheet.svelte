@@ -1,9 +1,11 @@
 <script lang="ts">
 	import ImagesIcon from "phosphor-svelte/lib/ImagesIcon";
+	import CloudArrowUpIcon from "phosphor-svelte/lib/CloudArrowUpIcon";
 	import PencilSimpleIcon from "phosphor-svelte/lib/PencilSimpleIcon";
 	import PlusIcon from "phosphor-svelte/lib/PlusIcon";
 	import { toast } from "svelte-sonner";
 
+	import { createRealAlbumFromDrawer } from "$lib/albums/promote-to-real";
 	import { showErrorToast } from "$lib/api/error-toast";
 	import {
 		type DrawerMedia,
@@ -45,12 +47,6 @@
 	let loading = $state(false);
 	// null = album list; otherwise the editor (album null means "new").
 	let editing = $state<{ album: PhotoAlbum | null } | null>(null);
-	let progress = $state<{
-		albumId: string;
-		sent: number;
-		total: number;
-		failed: number;
-	} | null>(null);
 
 	const sending = $derived(albumSendLock.inflightAlbumId !== null);
 
@@ -121,12 +117,6 @@
 		}
 		if (!albumSendLock.tryBegin(album.id)) return;
 		open = false;
-		progress = {
-			albumId: album.id,
-			sent: 0,
-			total: items.length,
-			failed: 0,
-		};
 		if (missing > 0) {
 			toast.warning(
 				t("chat.albums.sendingPartial", {
@@ -135,47 +125,56 @@
 					missing,
 				}),
 			);
-		} else {
-			toast.message(
-				t("chat.albums.sending", { sent: 0, total: items.length }),
-			);
 		}
+		let failed = 0;
 		try {
 			for (const item of items) {
 				try {
 					await composer().sendMessages([
 						mediaMessageDraft({ item, expiring: false }),
 					]);
-					progress = progress
-						? { ...progress, sent: progress.sent + 1 }
-						: progress;
 				} catch (error) {
 					console.error(error);
-					progress = progress
-						? { ...progress, failed: progress.failed + 1 }
-						: progress;
-				}
-				if (progress) {
-					toast.message(
-						t("chat.albums.sending", {
-							sent: progress.sent,
-							total: progress.total,
-						}),
-					);
+					failed++;
 				}
 			}
-			if (progress && progress.failed > 0) {
+			if (failed > 0) {
 				toast.error(
-					progress.failed === 1
+					failed === 1
 						? t("chat.albums.failedOne")
-						: t("chat.albums.failedMany", {
-								count: progress.failed,
-							}),
+						: t("chat.albums.failedMany", { count: failed }),
 				);
 			}
 		} finally {
 			albumSendLock.end(album.id);
-			progress = null;
+		}
+	}
+
+	async function promote(album: PhotoAlbum) {
+		const { items } = orderedAlbumMedia({ album, drawer });
+		if (items.length === 0) return;
+		try {
+			const result = await createRealAlbumFromDrawer({
+				name: album.name,
+				mediaIds: items.map((item) => item.id),
+			});
+			if (result.status === "no-room") {
+				toast.error(t("albumsKit.noRoom"));
+			} else if (result.added < result.total) {
+				toast.success(
+					t("albumsKit.createRealTrimmed", {
+						count: result.added,
+						total: result.total,
+					}),
+				);
+			} else {
+				toast.success(
+					t("albumsKit.createRealDone", { count: result.added }),
+				);
+			}
+		} catch (error) {
+			console.error(error);
+			toast.error(t("albumsKit.failed"));
 		}
 	}
 </script>
@@ -285,6 +284,18 @@
 									</span>
 								</button>
 
+								<Button
+									type="button"
+									variant="ghost"
+									size="icon"
+									class="size-9 shrink-0 rounded-full"
+									aria-label={t("albumsKit.promote")}
+									title={t("albumsKit.promote")}
+									disabled={sending || available === 0}
+									onclick={() => void promote(album)}
+								>
+									<CloudArrowUpIcon class="size-4" />
+								</Button>
 								<Button
 									type="button"
 									variant="ghost"
