@@ -2,7 +2,6 @@
 	import MapClusterPanel from "$lib/components/map-elements/MapClusterPanel.svelte";
 	import MapConfirmSheet from "$lib/components/map-elements/MapConfirmSheet.svelte";
 	import MapListPanel from "$lib/components/map-elements/MapListPanel.svelte";
-	import MapTracePanel from "$lib/components/map-elements/MapTracePanel.svelte";
 	import PlaceCard from "$lib/components/map-elements/PlaceCard.svelte";
 	import { t } from "$lib/i18n";
 	import {
@@ -46,7 +45,10 @@
 	></button>
 {/if}
 
-<div class="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3">
+<div
+	class="pointer-events-none absolute inset-x-0 bottom-3 z-30 px-3"
+	data-map-panel={screen.panelToken}
+>
 	{#if screen.confirm}
 		<MapConfirmSheet
 			title={screen.confirmCopy.title}
@@ -104,11 +106,6 @@
 				onDirections({ latitude: place.lat, longitude: place.lon })}
 			onDelete={() =>
 				screen.requestDelete({ kind: "shared", id: place.localId })}
-		/>
-	{:else if panel.kind === "trace"}
-		<MapTracePanel
-			facts={screen.traceFacts()}
-			onClose={() => screen.closePanel()}
 		/>
 	{:else if panel.kind === "me"}
 		<PlaceCard

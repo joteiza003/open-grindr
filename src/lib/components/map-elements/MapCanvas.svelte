@@ -12,6 +12,7 @@
 		type MePoint,
 		type SharedPin,
 	} from "$lib/map/map-view";
+	import type { BaseLayerKind } from "$lib/map/base-layers";
 	import type { MapMarker } from "$lib/model/map-elements";
 
 	let {
@@ -19,6 +20,7 @@
 		shared,
 		me,
 		selection,
+		layer,
 		handlers,
 		onReady,
 	}: {
@@ -26,6 +28,8 @@
 		shared: SharedPin[];
 		me: MePoint | null;
 		selection: MapSelection;
+		/** What is drawn underneath the pins: the street map or satellite photos. */
+		layer: BaseLayerKind;
 		handlers: MapViewHandlers;
 		/** Called with the view once it exists, and with undefined when it goes. */
 		onReady?: (view: MapView | undefined) => void;
@@ -56,6 +60,7 @@
 					cluster: (count) => t("map.markerCount", { count }),
 					me: () => t("map.yourLocation"),
 				},
+				{ baseLayer: layer },
 			);
 			view = created;
 			failure = null;
@@ -97,6 +102,9 @@
 	});
 	$effect(() => {
 		view?.setSelection(selection);
+	});
+	$effect(() => {
+		view?.setBaseLayer(layer);
 	});
 </script>
 

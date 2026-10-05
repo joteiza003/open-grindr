@@ -101,6 +101,7 @@
 					variant="secondary"
 					size="sm"
 					class={actionClass}
+					data-no-dom-change
 					onclick={() => onOpenProfile(profileId)}
 				>
 					<UserIcon class="size-4" weight="bold" />
@@ -113,6 +114,7 @@
 					variant="secondary"
 					size="sm"
 					class={actionClass}
+					data-no-dom-change
 					onclick={onDirections}
 				>
 					<NavigationArrowIcon class="size-4" weight="fill" />

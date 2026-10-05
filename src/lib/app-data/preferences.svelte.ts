@@ -14,6 +14,7 @@ import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
 import { swipeActionSchema } from "$lib/chat/swipe-actions";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
+import { baseLayerSchema, DEFAULT_BASE_LAYER } from "$lib/map/base-layers";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
 import {
 	MAX_SAVED_FILTERS,
@@ -51,6 +52,10 @@ const preferencesSchema = z.object({
 		.default(null)
 		.catch(null),
 	geohash: geohashSchema.nullable().default(null),
+	// Capa del mapa: callejero o fotos de satélite.
+	mapLayer: baseLayerSchema
+		.default(DEFAULT_BASE_LAYER)
+		.catch(DEFAULT_BASE_LAYER),
 	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),

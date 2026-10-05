@@ -181,20 +181,29 @@ describe("panels", () => {
 		expect(screen.visiblePanel.kind).toBe("none");
 	});
 
-	it("opens the hidden diagnostics like any other panel, with facts about the screen", async () => {
+	it("describes what the panel area shows as one word, and facts about the screen", async () => {
 		const { screen } = await openScreen();
+		expect(screen.panelToken).toBe("none");
 
-		screen.openTrace();
-		expect(screen.visiblePanel.kind).toBe("trace");
+		screen.selectPin("p1");
+		expect(screen.panelToken).toBe("pin");
+
+		screen.toggleList();
+		expect(screen.panelToken).toBe("list");
+
+		screen.requestDelete({ kind: "pin", id: "p1" });
+		expect(screen.panelToken).toBe("confirm");
+
+		screen.cancelDelete();
+		expect(screen.panelToken).toBe("list");
+
 		expect(screen.traceFacts()).toMatchObject({
 			pins: 2,
 			"profile pins": 1,
 			"shared locations": 2,
 			refreshing: "no",
+			panel: "list",
 		});
-
-		expect(screen.back()).toBe(true);
-		expect(screen.visiblePanel.kind).toBe("none");
 	});
 
 	it("knows when there is nothing to show", async () => {

@@ -12,6 +12,13 @@ export default defineConfig(async ({ command }) => ({
 	plugins: [sveltekit(), tailwindcss()],
 	resolve: process.env.VITEST ? { conditions: ["browser"] } : undefined,
 
+	// Lets a diagnostics report say which build it came from.
+	define: {
+		__BUILD_ID__: JSON.stringify(
+			(process.env.GITHUB_SHA ?? "dev").slice(0, 7),
+		),
+	},
+
 	// OPEN_GRIND_STORE already selects the Android manifest overlay; exposing it
 	// here lets the bundle drop what a store build may not carry.
 	envPrefix: ["VITE_", "OPEN_GRIND_"],

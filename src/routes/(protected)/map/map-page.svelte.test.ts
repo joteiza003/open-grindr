@@ -591,7 +591,7 @@ describe("the hidden diagnostics", () => {
 			screen.getByRole("heading", { name: "Map" }),
 		);
 		await new Promise((resolve) => setTimeout(resolve, 900));
-		return screen.findByRole("region", { name: "Map diagnostics" });
+		return screen.findByRole("dialog", { name: "Map diagnostics" });
 	}
 
 	it("opens when the title is pressed and held, and shows what happened", async () => {
@@ -614,7 +614,7 @@ describe("the hidden diagnostics", () => {
 		await new Promise((resolve) => setTimeout(resolve, 900));
 
 		expect(
-			screen.queryByRole("region", { name: "Map diagnostics" }),
+			screen.queryByRole("dialog", { name: "Map diagnostics" }),
 		).toBeNull();
 	});
 
@@ -635,21 +635,33 @@ describe("the hidden diagnostics", () => {
 
 		await fireEvent.click(panel.getByRole("button", { name: "Close" }));
 		expect(
-			screen.queryByRole("region", { name: "Map diagnostics" }),
+			screen.queryByRole("dialog", { name: "Map diagnostics" }),
 		).toBeNull();
 	});
 
-	it("closes with the system back gesture", async () => {
-		render(MapPage);
+	it("goes away with the screen", async () => {
+		const { unmount } = render(MapPage);
 		await settle();
 		await openDiagnostics();
 
-		[...backGestureEventHandlers].at(-1)!();
+		unmount();
 
-		await vi.waitFor(() => {
-			expect(
-				screen.queryByRole("region", { name: "Map diagnostics" }),
-			).toBeNull();
-		});
+		expect(
+			screen.queryByRole("dialog", { name: "Map diagnostics" }),
+		).toBeNull();
+	});
+
+	it("labels the panel area so a watchdog can compare it with the state", async () => {
+		render(MapPage);
+		await settle();
+		const area = () => document.querySelector("[data-map-panel]");
+		expect(area()?.getAttribute("data-map-panel")).toBe("none");
+
+		await fireEvent.click(
+			screen.getByRole("button", { name: "Saved items" }),
+		);
+		await vi.waitFor(() =>
+			expect(area()?.getAttribute("data-map-panel")).toBe("list"),
+		);
 	});
 });

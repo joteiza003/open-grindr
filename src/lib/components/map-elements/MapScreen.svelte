@@ -1,12 +1,18 @@
 <script lang="ts">
 	import { goto } from "$app/navigation";
 	import { onMount } from "svelte";
+	import { toast } from "svelte-sonner";
 
-	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
+	import {
+		preferencesSnapshot,
+		setPreferences,
+	} from "$lib/app-data/preferences.svelte";
 	import MapCanvas from "$lib/components/map-elements/MapCanvas.svelte";
 	import MapControls from "$lib/components/map-elements/MapControls.svelte";
 	import MapHeader from "$lib/components/map-elements/MapHeader.svelte";
 	import MapPanels from "$lib/components/map-elements/MapPanels.svelte";
+	import { t } from "$lib/i18n";
+	import { type BaseLayerKind, otherBaseLayer } from "$lib/map/base-layers";
 	import { leaveMap } from "$lib/map/leave-map";
 	import {
 		allMapPoints,
@@ -16,7 +22,17 @@
 		sharedPins,
 	} from "$lib/map/map-page-helpers";
 	import { MapScreenState } from "$lib/map/map-screen-state.svelte";
-	import { startTrace, trace } from "$lib/map/map-trace";
+	import {
+		panelOnScreen,
+		startTrace,
+		trace,
+		traceReport,
+	} from "$lib/map/map-trace";
+	import { lastSelfHeal, reloadOnce } from "$lib/map/self-heal";
+	import {
+		closeTraceOverlay,
+		showTraceOverlay,
+	} from "$lib/map/trace-overlay";
 	import { decodeGeohash } from "$lib/model/geohash";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { openExternalLink } from "$lib/platform/link-opener";
@@ -31,10 +47,70 @@
 	let root: HTMLElement | undefined = $state();
 	let view = $state.raw<MapView>();
 	let tilesWorking = $state(true);
+	/** Bumped every second and written to the DOM: proof the screen still redraws. */
+	let heartbeat = $state(0);
+	/** Set once the layer button is used; until then the saved choice shows. */
+	let chosenLayer = $state<BaseLayerKind | null>(null);
+	const baseLayer = $derived(chosenLayer ?? preferencesSnapshot().mapLayer);
+
+	/** The map changes first; saving the choice follows and never holds it up. */
+	function toggleLayer() {
+		const next = otherBaseLayer(baseLayer);
+		chosenLayer = next;
+		setPreferences({ mapLayer: next }).catch((error: unknown) => {
+			console.error("[map] could not save the map layer", error);
+			toast.error(t("map.saveFailed"));
+		});
+	}
+
+	function showDiagnostics({ autoCopy = false } = {}) {
+		const restarted = lastSelfHeal();
+		showTraceOverlay(
+			{
+				title: t("map.traceTitle"),
+				hint: t("map.traceHint"),
+				copy: t("map.traceCopy"),
+				reload: t("map.traceReload"),
+				home: t("map.traceHome"),
+				close: t("common.close"),
+				copied: t("map.traceCopied"),
+				copyFailed: t("map.traceCopyFailed"),
+			},
+			traceReport({
+				...screen.traceFacts(),
+				// What the screen shows against what the state says: tells a screen
+				// that stopped redrawing from one that stopped being painted.
+				"panel on screen": root ? panelOnScreen(root) : "unknown",
+				"heartbeat in state": heartbeat,
+				"heartbeat on screen":
+					root?.getAttribute("data-map-heartbeat") ?? "missing",
+				...(restarted ? { "last automatic restart": restarted } : {}),
+			}),
+			{ autoCopy },
+		);
+	}
 
 	onMount(() => {
 		void screen.load();
-		return root ? startTrace(root) : undefined;
+		const beat = setInterval(() => (heartbeat += 1), 1_000);
+		const stopTrace = root
+			? startTrace(root, {
+					expectedPanel: () => screen.panelToken,
+					expectedBeat: () => heartbeat,
+					// A screen that stopped following its state cannot repair
+					// itself; start it over, or show why if that already happened.
+					onDesync: (detail) => {
+						if (!reloadOnce(detail))
+							showDiagnostics({ autoCopy: true });
+					},
+					onDeadTaps: () => showDiagnostics({ autoCopy: true }),
+				})
+			: undefined;
+		return () => {
+			clearInterval(beat);
+			stopTrace?.();
+			closeTraceOverlay();
+		};
 	});
 
 	const customLocation = $derived.by(() => {
@@ -155,6 +231,7 @@
      elsewhere in the app left `pointer-events: none` behind on <body>. -->
 <main
 	bind:this={root}
+	data-map-heartbeat={heartbeat}
 	class="pointer-events-auto relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
 	<MapHeader
@@ -164,7 +241,7 @@
 		onBack={leaveMap}
 		onRefresh={() => void screen.refreshAll()}
 		onToggleList={() => screen.toggleList()}
-		onTitleLongPress={() => screen.openTrace()}
+		onTitleLongPress={() => showDiagnostics()}
 	/>
 
 	<div class="relative min-h-0 flex-1 overflow-hidden">
@@ -173,17 +250,20 @@
 			{shared}
 			{me}
 			selection={screen.selection}
+			layer={baseLayer}
 			{handlers}
 			onReady={(instance) => (view = instance)}
 		/>
 		<MapControls
 			canFit={hasPoints}
 			canLocate={customLocation !== null}
+			layer={baseLayer}
 			status={screen.refreshStatus}
 			{tilesWorking}
 			empty={screen.empty}
 			onFit={fitAll}
 			onLocate={goToMyLocation}
+			onToggleLayer={toggleLayer}
 		/>
 		<MapPanels
 			{screen}

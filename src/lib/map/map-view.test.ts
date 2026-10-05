@@ -30,7 +30,7 @@ vi.mock("$lib/util/media-load-slots", async (importOriginal) => ({
 
 import { LoadSlots } from "$lib/util/media-load-slots";
 import type { MapMarker } from "$lib/model/map-elements";
-import { MapView, type MapViewHandlers } from "./map-view";
+import { MapView, type MapViewHandlers, type MapViewOptions } from "./map-view";
 
 const pin = (
 	id: string,
@@ -47,7 +47,7 @@ const pin = (
 	...extra,
 });
 
-function mount() {
+function mount(options?: MapViewOptions) {
 	const container = document.createElement("div");
 	Object.defineProperty(container, "clientWidth", {
 		value: 400,
@@ -66,10 +66,12 @@ function mount() {
 		onMapTap: vi.fn(),
 		onTilesChange: vi.fn(),
 	} satisfies MapViewHandlers;
-	const view = new MapView(container, handlers, {
-		cluster: (count) => `${count} pins`,
-		me: () => "You",
-	});
+	const view = new MapView(
+		container,
+		handlers,
+		{ cluster: (count) => `${count} pins`, me: () => "You" },
+		options,
+	);
 	view.setView(43.3, -1.98, 16, { animate: false });
 	return { container, handlers, view };
 }
@@ -572,6 +574,55 @@ describe("robustness", () => {
 		tiles.fire("tileload");
 		expect(handlers.onTilesChange).toHaveBeenLastCalledWith(true);
 		expect(handlers.onTilesChange).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe("base layer", () => {
+	const urls = () =>
+		mocks.tileLayers.map((layer) => (layer as { _url: string })._url);
+
+	it("starts on the street map, or on the layer it is given", () => {
+		track(mount());
+		track(mount({ baseLayer: "satellite" }));
+
+		expect(urls()[0]).toContain("tile.openstreetmap.org");
+		expect(urls()[1]).toContain("arcgisonline.com");
+	});
+
+	it("switches when asked and ignores a request for the layer already shown", () => {
+		const { container, view } = track(mount());
+
+		view.setBaseLayer("standard");
+		expect(mocks.tileLayers).toHaveLength(1);
+		view.setBaseLayer("satellite");
+		view.setBaseLayer("satellite");
+
+		expect(urls()).toHaveLength(2);
+		expect(urls()[1]).toContain("arcgisonline.com");
+		(mocks.tileLayers[1] as TileLayer).fire("load");
+		expect(
+			container.querySelector(".leaflet-control-attribution")
+				?.textContent,
+		).toContain("Esri");
+	});
+
+	it("passes on the news that the tiles of the layer on show keep failing", () => {
+		const { handlers, view } = track(mount());
+		view.setBaseLayer("satellite");
+
+		for (let i = 0; i < 4; i += 1) {
+			(mocks.tileLayers[1] as TileLayer).fire("tileerror");
+		}
+
+		expect(handlers.onTilesChange).toHaveBeenCalledWith(false);
+	});
+
+	it("ignores a request once destroyed", () => {
+		const { view } = mount();
+		view.destroy();
+
+		expect(() => view.setBaseLayer("satellite")).not.toThrow();
+		expect(mocks.tileLayers).toHaveLength(1);
 	});
 });
 

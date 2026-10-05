@@ -13,6 +13,7 @@ The app contacts each service below only for the features you use, over encrypte
 - **Google**, if you choose Fast mode for notifications: the FCM service add-on registers this device with Firebase Cloud Messaging through Google Play services or microG, and Grindr sends your notifications through it, including sender names and message text. See [Google's Privacy Policy](https://policies.google.com/privacy).
 - **Meta**, if you sign in with Facebook: what you enter on Facebook's sign-in page. See [Meta's Privacy Policy](https://www.facebook.com/privacy/policy/).
 - **OpenStreetMap**, when the app shows a map for picking your location: requests for the map tiles of the area shown. See the [OpenStreetMap Foundation's Privacy Policy](https://osmfoundation.org/wiki/Privacy_Policy).
+- **Esri**, when you switch the map to satellite view: requests for the satellite image tiles of the area shown. See [Esri's privacy page](https://www.esri.com/en-us/privacy/overview).
 - **git.opengrind.org**, if you check for updates, allow automatic update checks, or install or update an add-on: requests for release lists and files, with no account details or device identifiers. The file names can show your operating system and processor type.
 
 ## On your device

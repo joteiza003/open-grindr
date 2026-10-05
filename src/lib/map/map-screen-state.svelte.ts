@@ -20,8 +20,7 @@ export type MapPanel =
 	| { kind: "cluster"; markerIds: string[] }
 	| { kind: "pin"; id: string }
 	| { kind: "shared"; id: string }
-	| { kind: "me" }
-	| { kind: "trace" };
+	| { kind: "me" };
 
 export type DeleteTarget =
 	| { kind: "pin"; id: string }
@@ -132,6 +131,15 @@ export class MapScreenState {
 		return { title: t("map.deleteTitle"), body: t("map.deleteBody") };
 	});
 
+	/**
+	 * What the panel area shows, as one word. It is written into the DOM
+	 * (`data-map-panel`) so a watchdog can tell when the screen stopped
+	 * following this state.
+	 */
+	panelToken = $derived.by(() =>
+		this.confirm !== null ? "confirm" : this.visiblePanel.kind,
+	);
+
 	constructor({
 		pins = new MapElementsState(),
 		shared = new SavedLocationsState(),
@@ -166,11 +174,6 @@ export class MapScreenState {
 
 	selectMe(): void {
 		this.#show({ kind: "me" });
-	}
-
-	/** The hidden diagnostics panel. */
-	openTrace(): void {
-		this.#show({ kind: "trace" });
 	}
 
 	/** Facts about the screen that go with a diagnostics report. */

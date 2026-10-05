@@ -9,17 +9,18 @@ import {
 	type Map as LeafletMap,
 	type Marker as LeafletMarker,
 	point,
-	tileLayer,
 } from "leaflet";
 
 import { openExternalLink } from "$lib/platform/link-opener";
 import { profileMediaUrl } from "$lib/util/media";
 import type { MapMarker } from "$lib/model/map-elements";
+import { type BaseLayerKind, DEFAULT_BASE_LAYER } from "./base-layers";
 import {
 	clusterMarkers,
 	type MarkerCluster,
 	NO_CLUSTER_ZOOM,
 } from "./cluster-markers";
+import { MapBaseLayer } from "./map-base-layer";
 import { trace } from "./map-trace";
 import {
 	clusterContent,
@@ -34,11 +35,6 @@ import {
 } from "./pin-content";
 import { PinPhoto } from "./pin-photo";
 
-const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const TILE_ATTRIBUTION =
-	'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer nofollow noopener">OpenStreetMap</a> &nbsp;';
-/** Failed tiles in a row before the map is reported as not loading. */
-const TILE_FAILURES_BEFORE_NOTICE = 4;
 /** Extra margin around the screen where pin photos are already loaded. */
 const PHOTO_MARGIN = 0.4;
 const CLUSTER_ZOOM_PADDING = 80;
@@ -77,6 +73,8 @@ export type MapViewHandlers = {
 };
 
 export type MapViewLabels = { cluster(count: number): string; me(): string };
+
+export type MapViewOptions = { baseLayer?: BaseLayerKind };
 
 type PinEntry = {
 	model: MapMarker;
@@ -124,11 +122,13 @@ export class MapView {
 	#resizeObserver: ResizeObserver | undefined;
 	#frame = 0;
 	#destroyed = false;
+	readonly #baseLayer: MapBaseLayer;
 
 	constructor(
 		container: HTMLElement,
 		handlers: MapViewHandlers,
 		labels: MapViewLabels,
+		{ baseLayer = DEFAULT_BASE_LAYER }: MapViewOptions = {},
 	) {
 		this.#container = container;
 		this.#handlers = handlers;
@@ -141,12 +141,11 @@ export class MapView {
 		});
 		this.#map = map;
 
-		const tiles = tileLayer(TILE_URL, {
-			maxZoom: 19,
-			attribution: TILE_ATTRIBUTION,
-		}).addTo(map);
-		this.#watchTiles(tiles);
 		control.attribution({ prefix: false }).addTo(map);
+		this.#baseLayer = new MapBaseLayer(map, (working) =>
+			this.#emit(() => handlers.onTilesChange?.(working)),
+		);
+		this.#baseLayer.show(baseLayer);
 		control.scale({ imperial: false, position: "bottomleft" }).addTo(map);
 
 		map.on("click", () => this.#emit(() => handlers.onMapTap()));
@@ -165,6 +164,12 @@ export class MapView {
 
 	get zoom(): number {
 		return this.#map.getZoom();
+	}
+
+	/** Swaps what is drawn underneath the pins: the street map or satellite photos. */
+	setBaseLayer(kind: BaseLayerKind): void {
+		if (this.#destroyed || this.#baseLayer.kind === kind) return;
+		this.#safely(() => this.#baseLayer.show(kind));
 	}
 
 	// --- what is drawn ------------------------------------------------------
@@ -321,6 +326,7 @@ export class MapView {
 		this.#destroyed = true;
 		trace("map destroyed");
 		cancelAnimationFrame(this.#frame);
+		this.#baseLayer.dispose();
 		this.#resizeObserver?.disconnect();
 		this.#container.removeEventListener("click", this.#openLinksExternally);
 		for (const entry of this.#pins.values()) entry.photo?.cancel();
@@ -595,25 +601,6 @@ export class MapView {
 	}
 
 	// --- housekeeping -------------------------------------------------------
-
-	#watchTiles(tiles: ReturnType<typeof tileLayer>): void {
-		let failures = 0;
-		let working = true;
-		tiles.on("tileload", () => {
-			failures = 0;
-			if (working) return;
-			working = true;
-			trace("map tiles are loading again");
-			this.#emit(() => this.#handlers.onTilesChange?.(true));
-		});
-		tiles.on("tileerror", () => {
-			failures += 1;
-			if (failures < TILE_FAILURES_BEFORE_NOTICE || !working) return;
-			working = false;
-			trace("map tiles keep failing to load");
-			this.#emit(() => this.#handlers.onTilesChange?.(false));
-		});
-	}
 
 	#scheduleResize(): void {
 		if (this.#destroyed || this.#frame !== 0) return;
