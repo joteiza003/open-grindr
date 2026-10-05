@@ -42,6 +42,10 @@
 
 	/** Height a bottom panel takes, so a tapped pin is panned clear of it. */
 	const PANEL_CLEARANCE_PX = 240;
+	/** The panel area floats this far above the bottom edge of the map. */
+	const PANEL_GAP_PX = 12;
+	/** The Center button on a card never leaves the map zoomed out further than this. */
+	const CENTER_MIN_ZOOM = 15;
 
 	const screen = new MapScreenState();
 	let root: HTMLElement | undefined = $state();
@@ -92,6 +96,7 @@
 
 	onMount(() => {
 		void screen.load();
+		screen.profiles.start();
 		const beat = setInterval(() => (heartbeat += 1), 1_000);
 		const stopTrace = root
 			? startTrace(root, {
@@ -108,6 +113,8 @@
 			: undefined;
 		return () => {
 			clearInterval(beat);
+			screen.profiles.stop();
+			void screen.filters.flush();
 			stopTrace?.();
 			closeTraceOverlay();
 		};
@@ -128,12 +135,37 @@
 			? { latitude: customLocation.lat, longitude: customLocation.lon }
 			: null,
 	);
-	const shared = $derived(sharedPins(screen.shared.locations));
+	const shared = $derived(sharedPins(screen.visibleShared));
 	const hasPoints = $derived(
-		screen.pins.markers.length > 0 ||
-			screen.shared.locations.length > 0 ||
+		screen.visiblePins.length > 0 ||
+			screen.visibleShared.length > 0 ||
 			customLocation !== null,
 	);
+	/** How many of what exists the filters show, while they hide any. */
+	const summary = $derived(
+		screen.filtering && screen.shown < screen.total
+			? { shown: screen.shown, total: screen.total }
+			: null,
+	);
+	const profileNotice = $derived.by(() => {
+		if (!screen.filtering) return null;
+		if (screen.profiles.lookup === "failed") return "failed";
+		return screen.profiles.pending ? "loading" : null;
+	});
+
+	// Look after the profiles behind the pins: who is online, and the rest of
+	// their profile while a filter needs it. Nothing waits for the answers.
+	$effect(() => {
+		screen.profiles.track(screen.profileIds, {
+			details: screen.filters.compiled.needs.details,
+		});
+	});
+	// The filters are edited in place by the filter fields; save them shortly
+	// after the editing stops.
+	$effect(() => {
+		$state.snapshot(screen.filters.value);
+		screen.filters.saveSoon();
+	});
 
 	// Frame the map once, as soon as the view and the saved data are ready.
 	let centered = false;
@@ -184,8 +216,8 @@
 	function fitAll() {
 		view?.fitPoints(
 			allMapPoints(
-				screen.pins.markers,
-				screen.shared.locations,
+				screen.visiblePins,
+				screen.visibleShared,
 				customLocation,
 			),
 		);
@@ -194,6 +226,17 @@
 	function goToMyLocation() {
 		if (customLocation)
 			view?.focus(customLocation.lat, customLocation.lon, 13);
+	}
+
+	/** Puts a place in the middle of what the open card leaves uncovered. */
+	function centerOnPlace(place: { latitude: number; longitude: number }) {
+		const panel = root?.querySelector<HTMLElement>("[data-map-panel]");
+		view?.centerOn(place.latitude, place.longitude, {
+			bottomInset: panel
+				? panel.offsetHeight + PANEL_GAP_PX
+				: PANEL_CLEARANCE_PX,
+			minZoom: CENTER_MIN_ZOOM,
+		});
 	}
 
 	function pickPin(marker: MapMarker) {
@@ -236,21 +279,25 @@
 >
 	<MapHeader
 		listOpen={screen.visiblePanel.kind === "list"}
+		filtersOpen={screen.visiblePanel.kind === "filters"}
+		filterCount={screen.filters.count}
 		refreshDisabled={!screen.hasProfilePins || screen.pins.refreshing}
 		refreshing={screen.pins.refreshing}
 		onBack={leaveMap}
 		onRefresh={() => void screen.refreshAll()}
 		onToggleList={() => screen.toggleList()}
+		onToggleFilters={() => screen.toggleFilters()}
 		onTitleLongPress={() => showDiagnostics()}
 	/>
 
 	<div class="relative min-h-0 flex-1 overflow-hidden">
 		<MapCanvas
-			pins={screen.pins.markers}
+			pins={screen.visiblePins}
 			{shared}
 			{me}
 			selection={screen.selection}
 			layer={baseLayer}
+			online={screen.onlineProfileIds}
 			{handlers}
 			onReady={(instance) => (view = instance)}
 		/>
@@ -261,9 +308,12 @@
 			status={screen.refreshStatus}
 			{tilesWorking}
 			empty={screen.empty}
+			{summary}
+			{profileNotice}
 			onFit={fitAll}
 			onLocate={goToMyLocation}
 			onToggleLayer={toggleLayer}
+			onClearFilters={() => screen.filters.clear()}
 		/>
 		<MapPanels
 			{screen}
@@ -271,6 +321,7 @@
 			onPickPin={pickPin}
 			onPickShared={pickShared}
 			onOpenProfile={(profileId) => void goto(`/profile/${profileId}`)}
+			onCenter={centerOnPlace}
 			onDirections={(place) =>
 				openExternalLink(directionsUrl(place, customLocation))}
 			onRefreshPin={(marker) => void refreshPin(marker)}

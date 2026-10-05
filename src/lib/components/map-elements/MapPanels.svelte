@@ -1,6 +1,7 @@
 <script lang="ts">
 	import MapClusterPanel from "$lib/components/map-elements/MapClusterPanel.svelte";
 	import MapConfirmSheet from "$lib/components/map-elements/MapConfirmSheet.svelte";
+	import MapFiltersPanel from "$lib/components/map-elements/MapFiltersPanel.svelte";
 	import MapListPanel from "$lib/components/map-elements/MapListPanel.svelte";
 	import PlaceCard from "$lib/components/map-elements/PlaceCard.svelte";
 	import { t } from "$lib/i18n";
@@ -18,6 +19,7 @@
 		onPickPin,
 		onPickShared,
 		onOpenProfile,
+		onCenter,
 		onDirections,
 		onRefreshPin,
 	}: {
@@ -26,6 +28,7 @@
 		onPickPin: (marker: MapMarker) => void;
 		onPickShared: (location: SavedLocation) => void;
 		onOpenProfile: (profileId: number) => void;
+		onCenter: (place: { latitude: number; longitude: number }) => void;
 		onDirections: (place: { latitude: number; longitude: number }) => void;
 		onRefreshPin: (marker: MapMarker) => void;
 	} = $props();
@@ -59,14 +62,24 @@
 	{:else if panel.kind === "cluster"}
 		<MapClusterPanel
 			markers={screen.clusterMembers}
+			isOnline={(marker) =>
+				marker.profileId !== undefined &&
+				screen.profiles.isOnline(marker.profileId)}
 			onPick={onPickPin}
 			onClose={() => screen.closePanel()}
 		/>
+	{:else if panel.kind === "filters"}
+		<MapFiltersPanel {screen} />
 	{:else if panel.kind === "list"}
 		<MapListPanel
-			markers={screen.pins.markers}
-			locations={screen.shared.locations}
+			markers={screen.visiblePins}
+			locations={screen.visibleShared}
 			{locationLabel}
+			isOnline={(marker) =>
+				marker.profileId !== undefined &&
+				screen.profiles.isOnline(marker.profileId)}
+			hiddenCount={screen.total - screen.shown}
+			canDeleteAll={!screen.filtering}
 			onPickMarker={onPickPin}
 			onPickLocation={onPickShared}
 			onDeleteMarker={(marker) =>
@@ -86,9 +99,12 @@
 			subtitle={formatCoordinates(pin.latitude, pin.longitude)}
 			mediaHash={pin.mediaHash ?? null}
 			profileId={pin.profileId ?? null}
+			online={pin.profileId !== undefined &&
+				screen.profiles.isOnline(pin.profileId)}
 			refreshing={screen.pins.refreshing}
 			onClose={() => screen.closePanel()}
 			{onOpenProfile}
+			onCenter={() => onCenter(pin)}
 			onDirections={() => onDirections(pin)}
 			onRefresh={pin.profileId === undefined
 				? undefined
@@ -102,6 +118,8 @@
 			subtitle={formatCoordinates(place.lat, place.lon)}
 			detail={formatReceivedAt(place.receivedAt)}
 			onClose={() => screen.closePanel()}
+			onCenter={() =>
+				onCenter({ latitude: place.lat, longitude: place.lon })}
 			onDirections={() =>
 				onDirections({ latitude: place.lat, longitude: place.lon })}
 			onDelete={() =>

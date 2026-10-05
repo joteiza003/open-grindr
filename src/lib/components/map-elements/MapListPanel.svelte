@@ -11,6 +11,9 @@
 		markers,
 		locations,
 		locationLabel,
+		isOnline,
+		hiddenCount,
+		canDeleteAll,
 		onPickMarker,
 		onPickLocation,
 		onDeleteMarker,
@@ -21,6 +24,12 @@
 		markers: MapMarker[];
 		locations: SavedLocation[];
 		locationLabel: (location: SavedLocation) => string;
+		/** Whether the profile behind a pin is online right now. */
+		isOnline: (marker: MapMarker) => boolean;
+		/** How many pins and locations the filters leave out of this list. */
+		hiddenCount: number;
+		/** Deleting everything is not offered while a filter hides part of the list. */
+		canDeleteAll: boolean;
 		onPickMarker: (marker: MapMarker) => void;
 		onPickLocation: (location: SavedLocation) => void;
 		onDeleteMarker: (marker: MapMarker) => void;
@@ -39,10 +48,16 @@
 		"size-9 shrink-0 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive";
 </script>
 
-{#snippet avatarOrPin(mediaHash: string | undefined)}
+{#snippet avatarOrPin(mediaHash: string | undefined, online: boolean)}
 	{#if mediaHash}
 		<span
-			class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+			class={[
+				"size-9 shrink-0 overflow-hidden rounded-full",
+				{
+					"ring-2 ring-green-500": online,
+					"ring-1 ring-border": !online,
+				},
+			]}
 		>
 			<UserAvatar {mediaHash} class="size-9" size="md" />
 		</span>
@@ -77,21 +92,29 @@
 	<div class="max-h-60 space-y-1 overflow-y-auto overscroll-contain p-2">
 		{#if markers.length === 0 && locations.length === 0}
 			<p class="px-3 py-6 text-center text-sm text-muted-foreground">
-				{t("map.listEmpty")}
+				{hiddenCount > 0
+					? t("map.listFilteredOut")
+					: t("map.listEmpty")}
+			</p>
+		{:else if hiddenCount > 0}
+			<p class="px-3 py-1 text-xs text-muted-foreground">
+				{t("map.listHidden", { count: hiddenCount })}
 			</p>
 		{/if}
 
 		{#if markers.length > 0}
 			<div class="flex items-center justify-between pe-1">
 				<p class={heading}>{t("map.markersHeading")}</p>
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 text-xs text-destructive hover:text-destructive"
-					onclick={() => onDeleteAll("pins")}
-				>
-					{t("map.deleteAll")}
-				</Button>
+				{#if canDeleteAll}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-7 text-xs text-destructive hover:text-destructive"
+						onclick={() => onDeleteAll("pins")}
+					>
+						{t("map.deleteAll")}
+					</Button>
+				{/if}
 			</div>
 			{#each markers as marker (marker.id)}
 				<div class={row}>
@@ -100,7 +123,10 @@
 						class={rowButton}
 						onclick={() => onPickMarker(marker)}
 					>
-						{@render avatarOrPin(marker.mediaHash)}
+						{@render avatarOrPin(
+							marker.mediaHash,
+							isOnline(marker),
+						)}
 						<span
 							class="min-w-0 flex-1 truncate text-sm font-medium"
 						>
@@ -123,14 +149,16 @@
 		{#if locations.length > 0}
 			<div class="flex items-center justify-between pe-1">
 				<p class={heading}>{t("map.sharedHeading")}</p>
-				<Button
-					variant="ghost"
-					size="sm"
-					class="h-7 text-xs text-destructive hover:text-destructive"
-					onclick={() => onDeleteAll("shared")}
-				>
-					{t("map.deleteAll")}
-				</Button>
+				{#if canDeleteAll}
+					<Button
+						variant="ghost"
+						size="sm"
+						class="h-7 text-xs text-destructive hover:text-destructive"
+						onclick={() => onDeleteAll("shared")}
+					>
+						{t("map.deleteAll")}
+					</Button>
+				{/if}
 			</div>
 			{#each locations as location (location.localId)}
 				<div class={row}>
@@ -139,7 +167,7 @@
 						class={rowButton}
 						onclick={() => onPickLocation(location)}
 					>
-						{@render avatarOrPin(undefined)}
+						{@render avatarOrPin(undefined, false)}
 						<span
 							class="min-w-0 flex-1 truncate text-sm font-medium"
 						>

@@ -20,13 +20,17 @@ vi.mock("$lib/location/auto-triangulate-profile", () => ({
 }));
 
 import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
+import { defaultFilters } from "$lib/model/browse/grid/filters";
 import type { MapMarker } from "$lib/model/map-elements";
 import {
 	type MapElementsBackend,
 	memoryMapElementsBackend,
 } from "./map-elements-library";
 import { MapElementsState } from "./map-elements-state.svelte";
+import { MapFiltersState } from "./map-filters-state.svelte";
+import { MapProfilesState } from "./map-profiles.svelte";
 import { MapScreenState } from "./map-screen-state.svelte";
+import type { LiveFacts, ProfileFacts } from "./profile-facts";
 
 const marker = (id: string, title: string, extra: object = {}): MapMarker => ({
 	id,
@@ -51,10 +55,14 @@ async function openScreen({
 	markers = [marker("p1", "Café"), marker("p2", "Beach", { profileId: 55 })],
 	locations = [location("l1", "Ane"), location("l2", "Mikel")],
 	backend,
+	profiles,
+	filters,
 }: {
 	markers?: MapMarker[];
 	locations?: ReturnType<typeof location>[];
 	backend?: MapElementsBackend;
+	profiles?: MapProfilesState;
+	filters?: MapFiltersState;
 } = {}) {
 	mocks.savedLocations = locations;
 	const notify = vi.fn();
@@ -63,6 +71,8 @@ async function openScreen({
 			backend ?? memoryMapElementsBackend({ version: 1, markers }),
 		),
 		shared: new SavedLocationsState(),
+		profiles,
+		filters,
 		notify,
 	});
 	await screen.load();
@@ -449,5 +459,169 @@ describe("refreshing positions", () => {
 		expect(screen.pins.markerById("b")?.latitude).toBe(43.3);
 		expect(notify).toHaveBeenCalledWith("Updated 1 of 2 positions");
 		expect(screen.pins.refreshing).toBe(false);
+	});
+});
+
+describe("filters", () => {
+	const NOW = 1_800_000_000_000;
+	const live = (patch: Partial<LiveFacts> = {}): ProfileFacts => ({
+		live: {
+			onlineUntil: null,
+			age: 30,
+			isFavorite: false,
+			isNew: false,
+			rightNow: false,
+			lastChatTimestamp: null,
+			hasPhotos: true,
+			sexualPosition: undefined,
+			...patch,
+		},
+	});
+
+	const markers = [
+		marker("place", "Café"),
+		marker("on", "Online", { profileId: 55 }),
+		marker("off", "Offline", { profileId: 56 }),
+		marker("far", "Unknown", { profileId: 57 }),
+	];
+	const locations = [location("l1", "Ane")]; // sent by profile 7
+
+	async function filtered({
+		facts = new Map<number, ProfileFacts>([
+			[55, live({ onlineUntil: NOW + 60_000 })],
+			[56, live()],
+			[7, live()],
+		]),
+		on = true,
+	}: { facts?: Map<number, ProfileFacts>; on?: boolean } = {}) {
+		const profiles = new MapProfilesState({ clock: () => NOW });
+		for (const [id, known] of facts) profiles.facts.set(id, known);
+		profiles.lookup = "ready";
+		const filters = new MapFiltersState({ save: () => Promise.resolve() });
+		const opened = await openScreen({
+			markers,
+			locations,
+			profiles,
+			filters,
+		});
+		if (on) filters.value.isOnline = true;
+		return { ...opened, profiles, filters };
+	}
+
+	it("shows everything while no filter is on", async () => {
+		const { screen } = await filtered({ on: false });
+
+		expect(screen.filtering).toBe(false);
+		expect(screen.visiblePins).toHaveLength(4);
+		expect(screen.visibleShared).toHaveLength(1);
+		expect(screen.shown).toBe(5);
+		expect(screen.total).toBe(5);
+	});
+
+	it("shows only the pins whose profile matches, and hides the rest", async () => {
+		const { screen } = await filtered();
+
+		expect(screen.filtering).toBe(true);
+		// A place belongs to no profile, offline does not match, and nothing is
+		// known about the last one and nothing is on its way.
+		expect(screen.visiblePins.map((pin) => pin.id)).toEqual(["on"]);
+		expect(screen.shown).toBe(1);
+		expect(screen.total).toBe(5);
+	});
+
+	it("judges a shared location by the profile that sent it", async () => {
+		const { screen, profiles } = await filtered();
+		expect(screen.visibleShared).toEqual([]);
+
+		profiles.facts.set(7, live({ onlineUntil: NOW + 60_000 }));
+
+		expect(screen.visibleShared.map((place) => place.localId)).toEqual([
+			"l1",
+		]);
+	});
+
+	it("keeps a profile on the map while its answer is still on the way", async () => {
+		const { screen, profiles } = await filtered({ facts: new Map() });
+		profiles.lookup = "loading";
+
+		expect(screen.visiblePins.map((pin) => pin.id)).toEqual([
+			"on",
+			"off",
+			"far",
+		]);
+
+		profiles.lookup = "ready";
+		expect(screen.visiblePins).toEqual([]);
+	});
+
+	it("takes away a pin as soon as it is known not to match, even before the rest arrives", async () => {
+		const { screen, profiles } = await filtered({
+			facts: new Map([[56, live()]]),
+		});
+		profiles.lookup = "loading";
+
+		const ids = screen.visiblePins.map((pin) => pin.id);
+
+		expect(ids).not.toContain("off");
+		expect(ids).toContain("far");
+	});
+
+	it("keeps what is open on the map even if it does not match", async () => {
+		const { screen } = await filtered();
+
+		screen.selectPin("off");
+		expect(screen.visiblePins.map((pin) => pin.id)).toEqual(["on", "off"]);
+
+		screen.closePanel();
+		expect(screen.visiblePins.map((pin) => pin.id)).toEqual(["on"]);
+	});
+
+	it("follows the clock: a profile stops being online when its time runs out", async () => {
+		const { screen, profiles } = await filtered();
+		expect(screen.visiblePins.map((pin) => pin.id)).toEqual(["on"]);
+
+		profiles.now = NOW + 2 * 60_000;
+
+		expect(screen.visiblePins).toEqual([]);
+	});
+
+	it("comes back to everything when the filters are cleared", async () => {
+		const { screen, filters } = await filtered();
+
+		filters.clear();
+
+		expect(screen.filtering).toBe(false);
+		expect(screen.shown).toBe(5);
+	});
+
+	it("says which profiles are online, and which ones to look after", async () => {
+		const { screen } = await filtered({ on: false });
+
+		expect([...screen.onlineProfileIds]).toEqual([55]);
+		expect([...new Set(screen.profileIds)].sort((a, b) => a - b)).toEqual([
+			7, 55, 56, 57,
+		]);
+	});
+
+	it("opens, toggles and closes the filters panel like the others", async () => {
+		const { screen } = await openScreen();
+
+		screen.toggleFilters();
+		expect(screen.visiblePanel.kind).toBe("filters");
+		expect(screen.panelToken).toBe("filters");
+
+		screen.toggleFilters();
+		expect(screen.visiblePanel.kind).toBe("none");
+
+		screen.toggleFilters();
+		expect(screen.back()).toBe(true);
+		expect(screen.visiblePanel.kind).toBe("none");
+	});
+
+	it("starts from the defaults when nothing was saved", async () => {
+		const { screen } = await openScreen();
+
+		expect(screen.filters.value).toEqual(defaultFilters);
+		expect(screen.filtering).toBe(false);
 	});
 });

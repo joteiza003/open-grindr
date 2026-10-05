@@ -16,9 +16,12 @@
 		status,
 		tilesWorking,
 		empty,
+		summary,
+		profileNotice,
 		onFit,
 		onLocate,
 		onToggleLayer,
+		onClearFilters,
 	}: {
 		canFit: boolean;
 		canLocate: boolean;
@@ -28,9 +31,14 @@
 		status: string | null;
 		tilesWorking: boolean;
 		empty: boolean;
+		/** How many of what exists the filters show, while they hide any. */
+		summary: { shown: number; total: number } | null;
+		/** What is going on with the profile data the filters need. */
+		profileNotice: "loading" | "failed" | null;
 		onFit: () => void;
 		onLocate: () => void;
 		onToggleLayer: () => void;
+		onClearFilters: () => void;
 	} = $props();
 
 	const chip =
@@ -87,7 +95,7 @@
 	</Button>
 </div>
 
-{#if status || !tilesWorking}
+{#if status || !tilesWorking || summary || profileNotice}
 	<div
 		class="pointer-events-none absolute inset-x-0 top-3 z-10 flex flex-col items-center gap-2 px-16"
 		role="status"
@@ -99,6 +107,30 @@
 			<p class={[chip, "text-center text-muted-foreground"]}>
 				{t("map.tilesFailing")}
 			</p>
+		{/if}
+		{#if profileNotice}
+			<p class={[chip, "text-center text-muted-foreground"]}>
+				{profileNotice === "loading"
+					? t("map.filtersLoading")
+					: t("map.filtersFailed")}
+			</p>
+		{/if}
+		{#if summary}
+			<div class={[chip, "pointer-events-auto flex items-center gap-2"]}>
+				<span>
+					{t("map.filtered", {
+						shown: summary.shown,
+						total: summary.total,
+					})}
+				</span>
+				<button
+					type="button"
+					class="font-semibold text-primary underline-offset-2 hover:underline"
+					onclick={onClearFilters}
+				>
+					{t("map.filtersClear")}
+				</button>
+			</div>
 		{/if}
 	</div>
 {/if}

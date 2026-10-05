@@ -640,6 +640,56 @@ describe("camera", () => {
 		expect(view.zoom).toBe(14);
 	});
 
+	describe("centering on a point", () => {
+		/** Skips the animation, so the camera is where it is going at once. */
+		const withoutMotion = () =>
+			vi.stubGlobal("matchMedia", () => ({ matches: true }));
+		afterEach(() => vi.unstubAllGlobals());
+
+		it("puts it in the middle of what a bottom panel leaves uncovered", () => {
+			withoutMotion();
+			const { view } = track(mount());
+
+			view.centerOn(43.31, -1.97, { bottomInset: 200 });
+
+			// The map is 400 x 700 and the panel covers the bottom 200 px.
+			const { x, y } = view.containerPoint(43.31, -1.97);
+			expect(x).toBeCloseTo(200, 0);
+			expect(y).toBeCloseTo(250, 0);
+		});
+
+		it("is the middle of the whole map when nothing covers it", () => {
+			withoutMotion();
+			const { view } = track(mount());
+
+			view.centerOn(43.31, -1.97);
+
+			const { x, y } = view.containerPoint(43.31, -1.97);
+			expect(x).toBeCloseTo(200, 0);
+			expect(y).toBeCloseTo(350, 0);
+		});
+
+		it("zooms in to the minimum asked for, and never zooms out", () => {
+			withoutMotion();
+			const { view } = track(mount());
+			view.setView(43.3, -1.98, 10, { animate: false });
+
+			view.centerOn(43.31, -1.97, { minZoom: 15 });
+			expect(view.zoom).toBe(15);
+
+			view.setView(43.3, -1.98, 18, { animate: false });
+			view.centerOn(43.31, -1.97, { minZoom: 15 });
+			expect(view.zoom).toBe(18);
+		});
+
+		it("ignores the request once destroyed", () => {
+			const { view } = mount();
+			view.destroy();
+
+			expect(() => view.centerOn(43.31, -1.97)).not.toThrow();
+		});
+	});
+
 	it("focuses without zooming out", () => {
 		const { view } = track(mount());
 		view.focus(43.3, -1.98, 13);

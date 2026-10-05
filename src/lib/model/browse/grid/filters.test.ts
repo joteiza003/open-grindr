@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+	countActiveFilters,
 	defaultFilters,
 	FilterAcceptNSFWPics,
 	filterAcceptNSFWPicsSchema,
@@ -20,6 +21,36 @@ import {
 	tagCatalog,
 } from "$lib/model/browse/grid/filters";
 import { formatWeightKg } from "$lib/util/units";
+
+describe("countActiveFilters", () => {
+	it("counts none for the default filters", () => {
+		expect(countActiveFilters(defaultFilters)).toBe(0);
+	});
+
+	it("counts each switch that is on, whether a checkbox or a section", () => {
+		expect(
+			countActiveFilters({
+				...defaultFilters,
+				isOnline: true,
+				isFresh: true,
+				ageEnabled: true,
+				tribesEnabled: true,
+				haventChattedTodayEnabled: true,
+			}),
+		).toBe(5);
+	});
+
+	it("does not count the values of a section that is switched off", () => {
+		expect(
+			countActiveFilters({
+				...defaultFilters,
+				ageEnabled: false,
+				age: [25, 35],
+				tribes: [2, 3],
+			}),
+		).toBe(0);
+	});
+});
 
 describe("grid search filter schemas", () => {
 	it("accepts the default filter state", () => {

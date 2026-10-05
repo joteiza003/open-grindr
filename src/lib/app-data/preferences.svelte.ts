@@ -59,6 +59,9 @@ const preferencesSchema = z.object({
 	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	// Filtros del mapa (los mismos que en explorar, pero aparte); un valor
+	// ilegible se ignora en vez de romper el resto de preferencias.
+	mapFilters: gridSearchFiltersSchema.optional().catch(undefined),
 	// Filtros con nombre; un fichero con entradas viejas no debe romper el resto.
 	savedFilters: z
 		.array(savedFilterSchema)
@@ -369,6 +372,7 @@ const accountPreferenceKeys = [
 	"autoUpdateLocation",
 	"geohash",
 	"gridSearchFilters",
+	"mapFilters",
 	"notificationsEnabled",
 	"savedFilters",
 	"temporarySilences",

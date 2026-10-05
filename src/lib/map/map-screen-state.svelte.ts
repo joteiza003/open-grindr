@@ -1,9 +1,13 @@
 import { toast } from "svelte-sonner";
+import { SvelteSet } from "svelte/reactivity";
 
 import { SavedLocationsState } from "$lib/chat/saved-locations-state.svelte";
 import { t } from "$lib/i18n";
 import type { MapMarker } from "$lib/model/map-elements";
+import type { SavedLocation } from "$lib/model/messaging/saved-locations";
 import { MapElementsState } from "./map-elements-state.svelte";
+import { MapFiltersState } from "./map-filters-state.svelte";
+import { MapProfilesState } from "./map-profiles.svelte";
 import { trace } from "./map-trace";
 import type { MapSelection } from "./map-view";
 import {
@@ -17,6 +21,7 @@ import {
 export type MapPanel =
 	| { kind: "none" }
 	| { kind: "list" }
+	| { kind: "filters" }
 	| { kind: "cluster"; markerIds: string[] }
 	| { kind: "pin"; id: string }
 	| { kind: "shared"; id: string }
@@ -41,6 +46,10 @@ const NONE: MapPanel = { kind: "none" };
 export class MapScreenState {
 	readonly pins: MapElementsState;
 	readonly shared: SavedLocationsState;
+	/** Who is online and what the filters need to know about the profiles. */
+	readonly profiles: MapProfilesState;
+	/** The browse filters, applied to the pins and shared locations of profiles. */
+	readonly filters: MapFiltersState;
 
 	panel = $state.raw<MapPanel>(NONE);
 	confirm = $state.raw<DeleteTarget | null>(null);
@@ -100,6 +109,72 @@ export class MapScreenState {
 
 	hasProfilePins = $derived.by(() => this.pins.markers.some(isProfilePin));
 
+	// --- what the filters leave on the map -----------------------------------
+
+	/** True while some filter looks at the profiles behind the pins. */
+	filtering = $derived.by(() => this.filters.compiled.active);
+
+	/**
+	 * Whether the filters let a pin through. What belongs to no profile cannot
+	 * match one, and a profile that is not known yet stays on the map while
+	 * the answer is on its way. What is open stays too: it would vanish under
+	 * the finger otherwise.
+	 */
+	#passes(profileId: number | null | undefined, selected: boolean): boolean {
+		if (!this.filtering || selected) return true;
+		if (profileId === undefined || profileId === null) return false;
+		const verdict = this.filters.compiled.verdict(
+			this.profiles.facts.get(profileId),
+			this.profiles.now,
+		);
+		return verdict === "unknown"
+			? this.profiles.pending
+			: verdict === "match";
+	}
+
+	visiblePins = $derived.by<MapMarker[]>(() => {
+		if (!this.filtering) return this.pins.markers;
+		const selected = this.selectedPin?.id;
+		return this.pins.markers.filter((marker) =>
+			this.#passes(marker.profileId, marker.id === selected),
+		);
+	});
+
+	visibleShared = $derived.by<SavedLocation[]>(() => {
+		if (!this.filtering) return this.shared.locations;
+		const selected = this.selectedShared?.localId;
+		return this.shared.locations.filter((location) =>
+			this.#passes(location.senderId, location.localId === selected),
+		);
+	});
+
+	/** Pins and shared locations that exist, and how many of them the filters show. */
+	total = $derived.by(
+		() => this.pins.markers.length + this.shared.locations.length,
+	);
+	shown = $derived.by(
+		() => this.visiblePins.length + this.visibleShared.length,
+	);
+
+	/** The profiles behind pins and shared locations, to look after. */
+	profileIds = $derived.by(() => [
+		...this.pins.markers.flatMap((marker) => marker.profileId ?? []),
+		...this.shared.locations.flatMap((location) => location.senderId ?? []),
+	]);
+
+	/** Profiles with a pin that are online right now. */
+	onlineProfileIds = $derived.by(
+		() =>
+			new SvelteSet(
+				this.pins.markers.flatMap((marker) =>
+					marker.profileId !== undefined &&
+					this.profiles.isOnline(marker.profileId)
+						? marker.profileId
+						: [],
+				),
+			),
+	);
+
 	empty = $derived.by(
 		() =>
 			!this.pins.loading &&
@@ -143,18 +218,25 @@ export class MapScreenState {
 	constructor({
 		pins = new MapElementsState(),
 		shared = new SavedLocationsState(),
+		profiles = new MapProfilesState(),
+		filters = new MapFiltersState(),
 		notify = (message: string) => void toast.error(message),
 	}: {
 		pins?: MapElementsState;
 		shared?: SavedLocationsState;
+		profiles?: MapProfilesState;
+		filters?: MapFiltersState;
 		notify?: (message: string) => void;
 	} = {}) {
 		this.pins = pins;
 		this.shared = shared;
+		this.profiles = profiles;
+		this.filters = filters;
 		this.#notify = notify;
 		const saveFailed = () => notify(t("map.saveFailed"));
 		pins.onSaveError = saveFailed;
 		shared.onSaveError = saveFailed;
+		filters.onSaveError = saveFailed;
 	}
 
 	async load(): Promise<void> {
@@ -182,6 +264,9 @@ export class MapScreenState {
 			pins: this.pins.markers.length,
 			"profile pins": this.pins.markers.filter(isProfilePin).length,
 			"shared locations": this.shared.locations.length,
+			"filters on": this.filters.count,
+			"shown by filters": this.shown,
+			"profile lookup": this.profiles.lookup,
 			refreshing: this.pins.refreshing ? "yes" : "no",
 			panel: this.visiblePanel.kind,
 		};
@@ -193,6 +278,10 @@ export class MapScreenState {
 
 	toggleList(): void {
 		this.#show(this.panel.kind === "list" ? NONE : { kind: "list" });
+	}
+
+	toggleFilters(): void {
+		this.#show(this.panel.kind === "filters" ? NONE : { kind: "filters" });
 	}
 
 	closePanel(): void {

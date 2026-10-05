@@ -2,6 +2,7 @@
 	import {
 		ArrowsClockwiseIcon,
 		CaretLeftIcon,
+		FunnelIcon,
 		ListIcon,
 	} from "phosphor-svelte";
 
@@ -11,19 +12,26 @@
 
 	let {
 		listOpen,
+		filtersOpen,
+		filterCount,
 		refreshDisabled,
 		refreshing,
 		onBack,
 		onRefresh,
 		onToggleList,
+		onToggleFilters,
 		onTitleLongPress,
 	}: {
 		listOpen: boolean;
+		filtersOpen: boolean;
+		/** How many filters are on. */
+		filterCount: number;
 		refreshDisabled: boolean;
 		refreshing: boolean;
 		onBack: () => void;
 		onRefresh: () => void;
 		onToggleList: () => void;
+		onToggleFilters: () => void;
 		/** Pressing and holding the title opens the hidden diagnostics. */
 		onTitleLongPress: () => void;
 	} = $props();
@@ -64,6 +72,27 @@
 				class={["size-5", { "animate-spin": refreshing }]}
 				weight="bold"
 			/>
+		</Button>
+		<Button
+			variant={filtersOpen ? "default" : "ghost"}
+			size="icon"
+			class="relative size-10 rounded-full text-foreground"
+			aria-label={t("map.filters")}
+			title={t("map.filters")}
+			aria-pressed={filtersOpen}
+			onclick={onToggleFilters}
+		>
+			<FunnelIcon
+				class="size-5"
+				weight={filtersOpen || filterCount > 0 ? "fill" : "regular"}
+			/>
+			{#if filterCount > 0}
+				<span
+					class="absolute -end-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] leading-4 font-bold text-primary-foreground"
+				>
+					{filterCount}
+				</span>
+			{/if}
 		</Button>
 		<Button
 			variant={listOpen ? "default" : "ghost"}

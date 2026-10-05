@@ -83,6 +83,8 @@ type PinEntry = {
 	photo: PinPhoto | null;
 	onMap: boolean;
 	selected: boolean;
+	/** Drawn with the green outline of a profile that is online. */
+	online: boolean;
 };
 
 type SpotEntry<T> = {
@@ -115,6 +117,7 @@ export class MapView {
 	readonly #container: HTMLElement;
 
 	#pins = new Map<string, PinEntry>();
+	#online: ReadonlySet<number> = new Set();
 	#clusters = new Map<string, LeafletMarker>();
 	#shared = new Map<string, SpotEntry<SharedPin>>();
 	#me: SpotEntry<MePoint> | null = null;
@@ -190,6 +193,13 @@ export class MapView {
 			this.#pins.delete(id);
 		}
 		this.#safely(() => this.#sync());
+	}
+
+	/** Outlines in green the pins of the profiles that are online. */
+	setOnline(profileIds: ReadonlySet<number>): void {
+		if (this.#destroyed) return;
+		this.#online = profileIds;
+		for (const entry of this.#pins.values()) this.#applyOnline(entry);
 	}
 
 	setShared(items: SharedPin[]): void {
@@ -285,6 +295,44 @@ export class MapView {
 		});
 	}
 
+	/**
+	 * Puts a point in the middle of the part of the map that a bottom panel of
+	 * `bottomInset` pixels leaves uncovered, zooming in to at least `minZoom`.
+	 */
+	centerOn(
+		latitude: number,
+		longitude: number,
+		{
+			bottomInset = 0,
+			minZoom = 0,
+		}: { bottomInset?: number; minZoom?: number } = {},
+	): void {
+		this.#safely(() => {
+			const zoom = Math.max(this.zoom, minZoom);
+			// The map's own center sits half the panel below the middle of what
+			// can be seen, so the point lands in the middle of that.
+			const center = this.#map.unproject(
+				this.#map
+					.project([latitude, longitude], zoom)
+					.add([0, bottomInset / 2]),
+				zoom,
+			);
+			this.#map.setView(center, zoom, { animate: animationsAllowed() });
+		});
+	}
+
+	/** Where a point is drawn, in pixels from the top left corner of the map. */
+	containerPoint(
+		latitude: number,
+		longitude: number,
+	): { x: number; y: number } {
+		const { x, y } = this.#map.latLngToContainerPoint([
+			latitude,
+			longitude,
+		]);
+		return { x, y };
+	}
+
 	/** Pans just enough to keep a point clear of the panel covering the bottom. */
 	reveal(latitude: number, longitude: number, bottomInset: number): void {
 		this.#safely(() =>
@@ -374,9 +422,19 @@ export class MapView {
 			photo,
 			onMap: false,
 			selected: false,
+			online: false,
 		};
 		this.#mark(entry, selected, LAYER.pin);
+		this.#applyOnline(entry);
 		return entry;
+	}
+
+	#applyOnline(entry: PinEntry): void {
+		const { profileId } = entry.model;
+		const online = profileId !== undefined && this.#online.has(profileId);
+		if (online === entry.online) return;
+		entry.online = online;
+		entry.content.root.classList.toggle("is-online", online);
 	}
 
 	#updatePin(entry: PinEntry, model: MapMarker): void {

@@ -21,6 +21,7 @@
 		me,
 		selection,
 		layer,
+		online,
 		handlers,
 		onReady,
 	}: {
@@ -30,6 +31,8 @@
 		selection: MapSelection;
 		/** What is drawn underneath the pins: the street map or satellite photos. */
 		layer: BaseLayerKind;
+		/** Profiles online right now: their pins get a green outline. */
+		online: ReadonlySet<number>;
 		handlers: MapViewHandlers;
 		/** Called with the view once it exists, and with undefined when it goes. */
 		onReady?: (view: MapView | undefined) => void;
@@ -105,6 +108,9 @@
 	});
 	$effect(() => {
 		view?.setBaseLayer(layer);
+	});
+	$effect(() => {
+		view?.setOnline(online);
 	});
 </script>
 
@@ -184,6 +190,14 @@
 		transition:
 			transform 180ms ease,
 			border-color 180ms ease;
+	}
+
+	/* Before the selected rule, which shows a different color on top of this one. */
+	:global(.og-pin--avatar.is-online .og-pin__disc) {
+		border: 3px solid #22c55e;
+		box-shadow:
+			0 0 0 2px #ffffff,
+			0 4px 14px rgb(0 0 0 / 45%);
 	}
 
 	:global(.og-pin__initial) {

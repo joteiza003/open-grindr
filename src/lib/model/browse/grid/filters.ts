@@ -275,6 +275,39 @@ export const gridSearchFiltersSchema = z.object({
 
 export type GridSearchFilters = z.infer<typeof gridSearchFiltersSchema>;
 
+const ACTIVE_BOOLEAN_KEYS = [
+	"isFavorite",
+	"isOnline",
+	"isRightNow",
+	"isFresh",
+	"haventChattedTodayEnabled",
+] as const satisfies readonly (keyof GridSearchFilters)[];
+
+const ACTIVE_ENABLED_KEYS = [
+	"ageEnabled",
+	"genderEnabled",
+	"tagsEnabled",
+	"positionEnabled",
+	"photosEnabled",
+	"tribesEnabled",
+	"bodyTypesEnabled",
+	"heightEnabled",
+	"weightEnabled",
+	"relationshipStatusesEnabled",
+	"acceptNSFWPicsEnabled",
+	"lookingForEnabled",
+	"meetAtEnabled",
+	"healthPracticesEnabled",
+] as const satisfies readonly (keyof GridSearchFilters)[];
+
+/** How many filters are switched on, as the filter sheets count them. */
+export function countActiveFilters(filters: GridSearchFilters): number {
+	return (
+		ACTIVE_BOOLEAN_KEYS.filter((key) => filters[key]).length +
+		ACTIVE_ENABLED_KEYS.filter((key) => filters[key]).length
+	);
+}
+
 export const defaultFilters: GridSearchFilters = gridSearchFiltersSchema.parse(
 	{},
 );

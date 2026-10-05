@@ -8,10 +8,13 @@
 
 	let {
 		markers,
+		isOnline,
 		onPick,
 		onClose,
 	}: {
 		markers: MapMarker[];
+		/** Whether the profile behind a pin is online right now. */
+		isOnline: (marker: MapMarker) => boolean;
 		onPick: (marker: MapMarker) => void;
 		onClose: () => void;
 	} = $props();
@@ -46,7 +49,13 @@
 			>
 				{#if marker.mediaHash}
 					<span
-						class="size-9 shrink-0 overflow-hidden rounded-full ring-1 ring-border"
+						class={[
+							"size-9 shrink-0 overflow-hidden rounded-full",
+							{
+								"ring-2 ring-green-500": isOnline(marker),
+								"ring-1 ring-border": !isOnline(marker),
+							},
+						]}
 					>
 						<UserAvatar
 							mediaHash={marker.mediaHash}

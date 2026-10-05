@@ -3,6 +3,7 @@
 		ArrowsClockwiseIcon,
 		MapPinIcon,
 		NavigationArrowIcon,
+		TargetIcon,
 		TrashIcon,
 		UserIcon,
 		XIcon,
@@ -18,9 +19,11 @@
 		detail = null,
 		mediaHash = null,
 		profileId = null,
+		online = false,
 		refreshing = false,
 		onClose,
 		onOpenProfile,
+		onCenter,
 		onDirections,
 		onRefresh,
 		onDelete,
@@ -32,15 +35,18 @@
 		mediaHash?: string | null;
 		/** Profile this place belongs to, when it came from triangulation. */
 		profileId?: number | null;
+		/** The profile is online right now. */
+		online?: boolean;
 		refreshing?: boolean;
 		onClose: () => void;
 		onOpenProfile?: (profileId: number) => void;
+		onCenter?: () => void;
 		onDirections?: () => void;
 		onRefresh?: () => void;
 		onDelete?: () => void;
 	} = $props();
 
-	const actionClass = "h-10 gap-1.5 rounded-xl";
+	const actionClass = "h-10 min-w-26 flex-1 gap-1.5 rounded-xl";
 </script>
 
 <section
@@ -54,7 +60,10 @@
 				type="button"
 				tabindex="-1"
 				aria-hidden="true"
-				class="size-14 shrink-0 overflow-hidden rounded-2xl ring-2 ring-border transition-opacity active:opacity-80"
+				class={[
+					"size-14 shrink-0 overflow-hidden rounded-2xl ring-2 transition-opacity active:opacity-80",
+					{ "ring-green-500": online, "ring-border": !online },
+				]}
 				onclick={() => onOpenProfile(profileId)}
 			>
 				<UserAvatar {mediaHash} class="size-14" size="md" />
@@ -68,8 +77,17 @@
 		{/if}
 
 		<div class="min-w-0 flex-1">
-			<h2 class="truncate text-sm leading-tight font-semibold">
-				{title}
+			<h2
+				class="flex items-center gap-1.5 text-sm leading-tight font-semibold"
+			>
+				<span class="truncate">{title}</span>
+				{#if online}
+					<span
+						class="size-2 shrink-0 rounded-full bg-green-500"
+						title={t("map.online")}
+					></span>
+					<span class="sr-only">{t("map.online")}</span>
+				{/if}
 			</h2>
 			<p
 				class="mt-0.5 line-clamp-2 text-xs break-words text-muted-foreground tabular-nums"
@@ -94,8 +112,8 @@
 		</Button>
 	</div>
 
-	{#if onOpenProfile || onDirections || onRefresh || onDelete}
-		<div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+	{#if onOpenProfile || onCenter || onDirections || onRefresh || onDelete}
+		<div class="flex flex-wrap gap-2">
 			{#if profileId !== null && onOpenProfile}
 				<Button
 					variant="secondary"
@@ -106,6 +124,22 @@
 				>
 					<UserIcon class="size-4" weight="bold" />
 					<span class="truncate text-xs">{t("map.viewProfile")}</span>
+				</Button>
+			{/if}
+
+			{#if onCenter}
+				<!-- Centering a view that is already centered changes nothing on
+				     screen, so the dead-tap watchdog must not count it. -->
+				<Button
+					variant="secondary"
+					size="sm"
+					class={actionClass}
+					title={t("map.centerTitle")}
+					data-no-dom-change
+					onclick={onCenter}
+				>
+					<TargetIcon class="size-4" weight="bold" />
+					<span class="truncate text-xs">{t("map.center")}</span>
 				</Button>
 			{/if}
 
