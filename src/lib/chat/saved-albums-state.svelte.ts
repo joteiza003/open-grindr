@@ -89,6 +89,11 @@ export class SavedAlbumsState {
 		this.albums = this.albums.filter((a) => a.localId !== localId);
 	}
 
+	async removeMany(localIds: string[]): Promise<void> {
+		for (const localId of localIds) await deleteSavedAlbum(localId);
+		this.albums = this.albums.filter((a) => !localIds.includes(a.localId));
+	}
+
 	#replace(album: SavedAlbum): void {
 		this.albums = this.albums.map((a) =>
 			a.localId === album.localId ? album : a,

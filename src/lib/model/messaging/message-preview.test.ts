@@ -110,7 +110,31 @@ describe("previewFromMessage", () => {
 			albumId: null,
 			imageHash: null,
 		});
-		expect(previewLabel(preview)).toBe("Expiring photo");
+		expect(previewLabel(preview)).toBe("Expiring image");
+	});
+
+	it("labels a chat video the way its bubble does", () => {
+		const preview = previewFromMessage({
+			type: "Video",
+			body: {
+				mediaId: 12,
+				url: "https://cdns.grindr.com/videos/chat/clip.mp4",
+				contentType: "video/mp4",
+				length: 8000,
+				maxViews: 2,
+				viewsRemaining: 2,
+				looping: false,
+			},
+			messageId: "msg-5",
+			conversationId: "conversation-1",
+			senderId: 42,
+			timestamp: 1_710_000_000_000,
+			unsent: false,
+			reactions: [],
+		});
+
+		expect(previewLabel(preview)).toBe("Expiring video");
+		expect(previewLabel({ type: "PrivateVideo" })).toBe("Expiring video");
 	});
 });
 
@@ -128,18 +152,23 @@ describe("quoteLabel", () => {
 
 	it.each([
 		["Unsent", "Unsent message"],
-		["Audio", "Voice message"],
 		["Giphy", "GIF"],
 		["Location", "Location"],
+		["NonExpiringVideo", "Video"],
 		["Unknown", "Message"],
 	])("names a %s quote rather than rendering nothing", (type, expected) => {
 		expect(previewLabel(preview(type))).toBeNull();
 		expect(quoteLabel(preview(type))).toBe(expected);
 	});
 
+	it("labels a voice message in the inbox as well as in a quote", () => {
+		expect(previewLabel(preview("Audio"))).toBe("Voice message");
+		expect(quoteLabel(preview("Audio"))).toBe("Voice message");
+	});
+
 	it("defers to the inbox wording for a type the preview already names", () => {
-		expect(previewLabel(preview("ExpiringImage"))).toBe("Expiring photo");
-		expect(quoteLabel(preview("ExpiringImage"))).toBe("Expiring photo");
+		expect(previewLabel(preview("ExpiringImage"))).toBe("Expiring image");
+		expect(quoteLabel(preview("ExpiringImage"))).toBe("Expiring image");
 	});
 
 	it("does not render an empty pill for a blank text message", () => {

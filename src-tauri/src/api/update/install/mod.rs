@@ -6,9 +6,58 @@ pub use android::AndroidUpdater;
 mod desktop;
 
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, Runtime};
 
-use super::baseline::Baseline;
-use super::component::Component;
+use super::baseline::{Baseline, InstallKind};
+use super::component::{self, Component};
+use super::release::Candidate;
+
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
+const MEDIA_UPLOAD: &str = "mediaUpload";
+
+#[cfg_attr(not(target_os = "android"), allow(dead_code))]
+#[derive(Debug, Clone, Copy)]
+enum TransferPurpose {
+	Update {
+		package_name: &'static str,
+		kind: InstallKind,
+	},
+	MediaUpload,
+}
+
+pub struct TransferHold<'a, R: Runtime> {
+	app: &'a AppHandle<R>,
+	purpose: TransferPurpose,
+}
+
+impl<'a, R: Runtime> TransferHold<'a, R> {
+	pub fn update(app: &'a AppHandle<R>, candidate: &Candidate) -> Self {
+		let package_name = component::by_key(&candidate.component)
+			.map_or(component::SELF_PACKAGE, Component::install_target);
+		Self::begin(
+			app,
+			TransferPurpose::Update {
+				package_name,
+				kind: candidate.kind,
+			},
+		)
+	}
+
+	pub fn media_upload(app: &'a AppHandle<R>) -> Self {
+		Self::begin(app, TransferPurpose::MediaUpload)
+	}
+
+	fn begin(app: &'a AppHandle<R>, purpose: TransferPurpose) -> Self {
+		platform::begin_transfer(app, purpose);
+		Self { app, purpose }
+	}
+}
+
+impl<R: Runtime> Drop for TransferHold<'_, R> {
+	fn drop(&mut self) {
+		platform::end_transfer(self.app, self.purpose);
+	}
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(
@@ -129,24 +178,26 @@ use android as platform;
 use desktop as platform;
 
 pub use platform::{
-	begin_transfer, end_transfer, enforce_home, install, install_pending,
-	open_install_permission_settings, sweep_replaced, take_outcome,
-	watch_install,
+	enforce_home, install, install_pending, open_install_permission_settings,
+	sweep_replaced, take_outcome, watch_install,
 };
 
 #[cfg(test)]
 mod pins {
-	use std::ops::Range;
-
 	use super::{suffix_for, Unsupported};
+	use crate::pin_support::{
+		addon_gate_verdicts, assert_rejections_classify_as, braced_block,
+		camel_case, is_identifier, kotlin_constant, kotlin_package,
+		source_tokens, spaced_match, squashed, ADDON_GATE, MANIFEST,
+	};
 
 	const KEYS: &str = include_str!("../../../../../KEYS.md");
 	const LINUX_BUILD: &str = include_str!("../../../../../ci/linux/build.sh");
 	const GATE: &str = include_str!(
 		"../../../../android-logic/src/main/kotlin/org/opengrind/update/InstallGate.kt"
 	);
-	const MANIFEST: &str = include_str!(
-		"../../../../gen/android/app/src/main/AndroidManifest.xml"
+	const PLAY_OVERLAY: &str = include_str!(
+		"../../../../gen/android/app/src/play/AndroidManifest.xml"
 	);
 
 	fn hex64(line: &str) -> bool {
@@ -164,6 +215,9 @@ mod pins {
 	const COMPONENTS_TS: &str =
 		include_str!("../../../../../src/lib/updates/components.ts");
 
+	const CAPABILITY_TS: &str =
+		include_str!("../../../../../src/lib/updates/capability.svelte.ts");
+
 	const INSTALLER: &str = include_str!(
 		"../../../../gen/android/app/src/main/java/org/opengrind/update/ApkInstaller.kt"
 	);
@@ -180,8 +234,12 @@ mod pins {
 		"../../../../gen/android/app/src/main/java/org/opengrind/TokenHandoffActivity.kt"
 	);
 
-	const ADDON_GATE: &str = include_str!(
-		"../../../../android-logic/src/main/kotlin/org/opengrind/addon/AddonGate.kt"
+	const TRANSFER_TITLE: &str = include_str!(
+		"../../../../android-logic/src/main/kotlin/org/opengrind/update/TransferTitle.kt"
+	);
+
+	const TRANSFER_SERVICE: &str = include_str!(
+		"../../../../gen/android/app/src/main/java/org/opengrind/update/TransferService.kt"
 	);
 
 	const RECAPTCHA_PLUGIN: &str = include_str!(
@@ -193,27 +251,27 @@ mod pins {
 	const MINT_TOKEN_PERMISSION: &str =
 		"org.opengrind.recaptcha.permission.MINT_TOKEN";
 
+	const ADDON_NAMES: &str = include_str!(
+		"../../../../gen/android/app/src/main/java/org/opengrind/addon/AddonNames.kt"
+	);
+
+	const ANDROID_STRINGS: &str = include_str!(
+		"../../../../gen/android/app/src/main/res/values/strings.xml"
+	);
+
+	const SIGNING_CERTIFICATES: &str = include_str!(
+		"../../../../gen/android/app/src/main/java/org/opengrind/addon/PackageSigningCertificates.kt"
+	);
+
+	const ADDON_LAUNCH_CHECK: &str = include_str!(
+		"../../../../gen/android/app/src/main/java/org/opengrind/addon/AddonLaunchCheck.kt"
+	);
+
 	const REQUEST_TOKEN_PERMISSION: &str =
 		"org.opengrind.google_oauth.permission.REQUEST_TOKEN";
 	const REQUEST_TOKEN_ACTION: &str =
 		"org.opengrind.google_oauth.action.REQUEST_TOKEN";
-	const RECEIVE_TOKEN_PERMISSION: &str =
-		"org.opengrind.permission.RECEIVE_GOOGLE_TOKEN";
 	const TOKEN_EXTRA: &str = "org.opengrind.google_oauth.extra.TOKEN";
-
-	fn squashed(source: &str) -> String {
-		source.split_whitespace().collect()
-	}
-
-	fn kotlin_constant<'a>(source: &'a str, file: &str, name: &str) -> &'a str {
-		let start = spaced_match(source, &format!("const val {name} = \""))
-			.unwrap_or_else(|| panic!("{file} no longer declares {name}"))
-			.end;
-		let length = source[start..]
-			.find('"')
-			.unwrap_or_else(|| panic!("{file} {name} is not a string literal"));
-		&source[start..start + length]
-	}
 
 	fn bridge_function(name: &str) -> &'static str {
 		let start = ANDROID_BRIDGE
@@ -224,6 +282,28 @@ mod pins {
 				panic!("android.rs {name} has no closing brace")
 			});
 		&ANDROID_BRIDGE[start..start + length]
+	}
+
+	fn xml_elements(source: &str) -> impl Iterator<Item = (&str, &str)> {
+		source.match_indices('<').filter_map(|(at, _)| {
+			let end = source[at..].find('>').map_or(source.len(), |i| at + i);
+			let element = &source[at + 1..end];
+			let tag = element
+				.split(|c: char| c.is_whitespace() || c == '/')
+				.next()?;
+			tag.starts_with(|c: char| c.is_ascii_alphabetic())
+				.then_some((tag, element))
+		})
+	}
+
+	fn xml_attribute<'a>(element: &'a str, name: &str) -> Option<&'a str> {
+		let assignment = format!("{name}=\"");
+		element.match_indices(&assignment).find_map(|(at, _)| {
+			let value = &element[at + assignment.len()..];
+			element[..at]
+				.ends_with(char::is_whitespace)
+				.then(|| value.split('"').next().unwrap_or_default())
+		})
 	}
 
 	fn manifest_element(tag: &str, name: &str) -> &'static str {
@@ -240,98 +320,6 @@ mod pins {
 			.unwrap_or_else(|| {
 				panic!("the manifest has no <{tag}> named {name}")
 			})
-	}
-
-	fn source_tokens(source: &str) -> Vec<&str> {
-		let mut tokens = Vec::new();
-		let mut word_start = None;
-		for (at, character) in source.char_indices() {
-			match (is_identifier(character), word_start) {
-				(true, None) => word_start = Some(at),
-				(false, Some(start)) => {
-					tokens.push(&source[start..at]);
-					word_start = None;
-				}
-				_ => {}
-			}
-			if !is_identifier(character) && !character.is_whitespace() {
-				tokens.push(&source[at..at + character.len_utf8()]);
-			}
-		}
-		if let Some(start) = word_start {
-			tokens.push(&source[start..]);
-		}
-		tokens
-	}
-
-	fn spaced_match(source: &str, header: &str) -> Option<Range<usize>> {
-		let tokens = source_tokens(header);
-		let first = *tokens.first()?;
-		source.match_indices(first).find_map(|(start, _)| {
-			if first.starts_with(is_identifier)
-				&& source[..start].ends_with(is_identifier)
-			{
-				return None;
-			}
-			let mut end = start;
-			for token in &tokens {
-				let rest = &source[end..];
-				let token_start = end + rest.len() - rest.trim_start().len();
-				if !source[token_start..].starts_with(token) {
-					return None;
-				}
-				end = token_start + token.len();
-				if token.starts_with(is_identifier)
-					&& source[end..].starts_with(is_identifier)
-				{
-					return None;
-				}
-			}
-			Some(start..end)
-		})
-	}
-
-	#[test]
-	fn a_spaced_match_ignores_layout_but_not_names() {
-		let source = "fun installPending(invoke: Invoke) {}\n\tfun install (\n\t\tinvoke : Invoke\n\t) {}";
-		let found = spaced_match(source, "fun install(invoke: Invoke)")
-			.expect("a reformatted declaration is still the declaration");
-		assert!(source[found].starts_with("fun install ("));
-		assert_eq!(spaced_match(source, "fun instal(invoke: Invoke)"), None);
-		assert_eq!(
-			spaced_match("funinstall(invoke: Invoke)", "fun install("),
-			None
-		);
-		assert_eq!(
-			spaced_match("class InstallArgsX", "class InstallArgs"),
-			None
-		);
-		assert_eq!(
-			spaced_match("internalclass InstallArgs", "class InstallArgs"),
-			None
-		);
-	}
-
-	fn braced_block<'a>(source: &'a str, file: &str, header: &str) -> &'a str {
-		let open = spaced_match(source, header)
-			.and_then(|found| {
-				source[found.end..].find('{').map(|brace| found.end + brace)
-			})
-			.unwrap_or_else(|| panic!("{file} no longer declares {header}"));
-		let mut depth = 0;
-		for (offset, character) in source[open..].char_indices() {
-			match character {
-				'{' => depth += 1,
-				'}' => {
-					depth -= 1;
-					if depth == 0 {
-						return &source[open + 1..open + offset];
-					}
-				}
-				_ => {}
-			}
-		}
-		panic!("{file} {header} has no closing brace")
 	}
 
 	fn gate_verdicts() -> Vec<String> {
@@ -479,6 +467,18 @@ mod pins {
 	}
 
 	#[test]
+	fn the_install_permission_is_probed_only_where_the_manifest_requests_it() {
+		assert!(
+			spaced_match(
+				PROBE,
+				"fun canInstallNow(context: Context): Boolean = infoOf(context, context.packageName, PackageManager.GET_PERMISSIONS)?.requestedPermissions?.contains(Manifest.permission.REQUEST_INSTALL_PACKAGES) == true && context.packageManager.canRequestPackageInstalls()"
+			)
+			.is_some(),
+			"InstallProbe.canInstallNow calls canRequestPackageInstalls without checking the manifest requests REQUEST_INSTALL_PACKAGES, and Android throws a SecurityException where it does not"
+		);
+	}
+
+	#[test]
 	fn the_sign_in_handoff_matches_the_companion_contract() {
 		use super::super::component;
 
@@ -495,15 +495,15 @@ mod pins {
 		);
 
 		assert!(
-			manifest_element("permission", RECEIVE_TOKEN_PERMISSION)
-				.contains("android:protectionLevel=\"signature\""),
-			"{RECEIVE_TOKEN_PERMISSION} is no longer a signature permission, so any app could hand over a token"
+			!manifest_element("activity", ".TokenHandoffActivity")
+				.contains("android:permission="),
+			"TokenHandoffActivity requires a permission again, which a Play-signed install can never grant the companion"
 		);
 		assert!(
-			manifest_element("activity", ".TokenHandoffActivity").contains(
-				&format!("android:permission=\"{RECEIVE_TOKEN_PERMISSION}\"")
-			),
-			"TokenHandoffActivity is no longer guarded by {RECEIVE_TOKEN_PERMISSION}"
+			squashed(TOKEN_HANDOFF).contains(&squashed(
+				"AddonGate.acceptsCaller( callingPackage = callingPackage, addonPackage = COMPANION_PACKAGE, certificates = packageManager.signingCertificates(), )"
+			)),
+			"TokenHandoffActivity no longer checks its caller through AddonGate.acceptsCaller, yet any app may start it"
 		);
 
 		assert!(
@@ -563,10 +563,6 @@ mod pins {
 		}
 	}
 
-	fn is_identifier(character: char) -> bool {
-		character.is_alphanumeric() || character == '_'
-	}
-
 	fn declaration_at(source: &str, file: &str, header: &str) -> usize {
 		spaced_match(source, header)
 			.unwrap_or_else(|| panic!("{file} no longer declares {header}"))
@@ -580,19 +576,6 @@ mod pins {
 	) -> &'a str {
 		let at = declaration_at(source, file, header);
 		braced_block(&source[at..], file, header)
-	}
-
-	fn camel_case(snake: &str) -> String {
-		let mut parts = snake.split('_');
-		let mut camel = parts.next().unwrap_or_default().to_owned();
-		for part in parts {
-			let mut characters = part.chars();
-			if let Some(first) = characters.next() {
-				camel.extend(first.to_uppercase());
-				camel.push_str(characters.as_str());
-			}
-		}
-		camel
 	}
 
 	struct PluginPair {
@@ -776,49 +759,53 @@ mod pins {
 		RECAPTCHA_PAIR.assert_requests_carry_the_parsed_fields(&["mintToken"]);
 	}
 
-	#[test]
-	fn the_frontend_component_table_matches_the_rust_one() {
-		use super::super::component;
-
+	fn components_ts_constant(name: &str) -> String {
 		let source = squashed(COMPONENTS_TS);
-		let constant = |name: &str| {
-			let declaration = format!("exportconst{name}=\"");
-			let start = source.find(&declaration).unwrap_or_else(|| {
-				panic!("components.ts no longer declares {name} as a string")
-			}) + declaration.len();
-			source[start..]
-				.split('"')
-				.next()
-				.unwrap_or_default()
-				.to_owned()
-		};
-		let table_start = source
-			.find("COMPONENT_PACKAGE={")
-			.expect("components.ts no longer declares COMPONENT_PACKAGE")
-			+ "COMPONENT_PACKAGE={".len();
-		let table = &source[table_start..];
-		let table =
-			&table[..table.find('}').expect("COMPONENT_PACKAGE is not closed")];
+		let declaration = format!("exportconst{name}=\"");
+		let start = source.find(&declaration).unwrap_or_else(|| {
+			panic!("components.ts no longer declares {name} as a string")
+		}) + declaration.len();
+		source[start..]
+			.split('"')
+			.next()
+			.unwrap_or_default()
+			.to_owned()
+	}
 
-		let mut declared: Vec<(String, String)> = table
+	fn components_ts_table(name: &str) -> Vec<(String, String)> {
+		let source = squashed(COMPONENTS_TS);
+		let opening = format!("{name}={{");
+		let start = source.find(&opening).unwrap_or_else(|| {
+			panic!("components.ts no longer declares {name}")
+		}) + opening.len();
+		let table = &source[start..];
+		let table = &table[..table
+			.find('}')
+			.unwrap_or_else(|| panic!("{name} is not closed"))];
+		let mut entries: Vec<(String, String)> = table
 			.split(',')
 			.filter(|entry| !entry.is_empty())
 			.map(|entry| {
-				let (key, package) =
-					entry.split_once(':').unwrap_or_else(|| {
-						panic!("COMPONENT_PACKAGE entry {entry} is not key: package")
-					});
+				let (key, value) = entry.split_once(':').unwrap_or_else(|| {
+					panic!("{name} entry {entry} is not key: value")
+				});
 				let key = match key
 					.strip_prefix('[')
-					.and_then(|name| name.strip_suffix(']'))
+					.and_then(|constant| constant.strip_suffix(']'))
 				{
-					Some(name) => constant(name),
+					Some(constant) => components_ts_constant(constant),
 					None => key.trim_matches(['"', '\'']).to_owned(),
 				};
-				(key, package.trim_matches(['"', '\'']).to_owned())
+				(key, value.trim_matches(['"', '\'']).to_owned())
 			})
 			.collect();
-		declared.sort();
+		entries.sort();
+		entries
+	}
+
+	#[test]
+	fn the_frontend_component_table_matches_the_rust_one() {
+		use super::super::component;
 
 		let mut expected: Vec<(String, String)> = component::ALL
 			.iter()
@@ -832,9 +819,49 @@ mod pins {
 		expected.sort();
 
 		assert_eq!(
-			declared, expected,
+			components_ts_table("COMPONENT_PACKAGE"),
+			expected,
 			"install outcomes are routed by COMPONENT_PACKAGE, so it must name every component's install target"
 		);
+	}
+
+	#[test]
+	fn every_addon_is_named_the_same_in_the_app_and_in_its_download_notification(
+	) {
+		use super::super::component;
+
+		let names = components_ts_table("ADDON_NAME");
+		let mut addons: Vec<&str> = component::ALL
+			.iter()
+			.filter(|component| !component.is_self())
+			.map(|component| component.key)
+			.collect();
+		addons.sort_unstable();
+		assert_eq!(
+			names
+				.iter()
+				.map(|(key, _)| key.as_str())
+				.collect::<Vec<_>>(),
+			addons,
+			"ADDON_NAME must name every add-on the component table knows"
+		);
+
+		for (key, name) in names {
+			let resource = format!("addon_name_{}", key.replace('-', "_"));
+			assert!(
+				squashed(ANDROID_STRINGS).contains(&squashed(&format!(
+					"<string name=\"{resource}\">{name}</string>"
+				))),
+				"strings.xml {resource} does not match ADDON_NAME, so the download notification names the add-on differently from the rest of the app"
+			);
+			let package = component::by_key(&key).unwrap().install_target();
+			assert!(
+				squashed(ADDON_NAMES).contains(&squashed(&format!(
+					"\"{package}\"->R.string.{resource}"
+				))),
+				"AddonNames.kt does not map {package} to {resource}"
+			);
+		}
 	}
 
 	#[test]
@@ -872,6 +899,61 @@ mod pins {
 			.collect()
 	}
 
+	fn quoted_list(
+		source: &str,
+		file: &str,
+		opening: &str,
+		closing: char,
+	) -> Vec<String> {
+		let source = squashed(source);
+		let start = source
+			.find(opening)
+			.unwrap_or_else(|| panic!("{file} no longer declares {opening}"))
+			+ opening.len();
+		let list = &source[start..];
+		let list = &list[..list
+			.find(closing)
+			.unwrap_or_else(|| panic!("{opening} in {file} is not closed"))];
+		list.split(',')
+			.filter(|entry| !entry.is_empty())
+			.map(|entry| {
+				entry
+					.strip_prefix('"')
+					.and_then(|entry| entry.strip_suffix('"'))
+					.unwrap_or_else(|| {
+						panic!("{entry} in {file} is not a string literal")
+					})
+					.to_owned()
+			})
+			.collect()
+	}
+
+	#[test]
+	fn every_fdroid_client_the_frontend_names_is_an_external_updater() {
+		let updaters = quoted_list(
+			GATE,
+			"InstallGate.kt",
+			"valEXTERNAL_UPDATERS=setOf(",
+			')',
+		);
+		let clients = quoted_list(
+			CAPABILITY_TS,
+			"capability.svelte.ts",
+			"constFDROID_CLIENTS=newSet([",
+			']',
+		);
+		assert!(
+			!clients.is_empty(),
+			"capability.svelte.ts lists no F-Droid client"
+		);
+		for client in &clients {
+			assert!(
+				updaters.contains(client),
+				"{client} never reaches the frontend as externallyManaged, so its installs would miss the F-Droid notice"
+			);
+		}
+	}
+
 	#[test]
 	fn the_kotlin_install_allowlist_matches_the_component_table() {
 		use super::super::component;
@@ -899,17 +981,47 @@ mod pins {
 		}
 	}
 
-	fn gate_verdict_names() -> Vec<&'static str> {
-		braced_block(ADDON_GATE, "AddonGate.kt", "enum class Verdict")
-			.split(',')
-			.map(str::trim)
-			.filter(|name| !name.is_empty())
-			.collect()
+	#[test]
+	fn add_ons_are_trusted_by_their_pinned_release_certificate_whoever_signed_this_build(
+	) {
+		assert!(
+			squashed(ADDON_LAUNCH_CHECK).contains(&squashed(
+				"certificates = packageManager.signingCertificates(),"
+			)) && !ADDON_LAUNCH_CHECK.contains("checkSignatures"),
+			"AddonLaunchCheck.kt no longer trusts an add-on by its pinned certificate, so a Play-signed build refuses every official add-on"
+		);
+		assert!(
+			spaced_match(
+				SIGNING_CERTIFICATES,
+				"hasSigningCertificate(packageName, sha256, PackageManager.CERT_INPUT_SHA256)"
+			)
+			.is_some(),
+			"PackageSigningCertificates.kt no longer answers AddonGate from PackageManager.hasSigningCertificate"
+		);
+		assert!(
+			spaced_match(
+				ADDON_GATE,
+				"private val releaseCertSha256: ByteArray = InstallGate.RELEASE_CERT_SHA256"
+			)
+			.is_some(),
+			"AddonGate.kt no longer pins the add-on signer to InstallGate.RELEASE_CERT_SHA256"
+		);
+		for (file, plugin, package) in [
+			("GoogleOauthPlugin.kt", SIGN_IN_PLUGIN, "COMPANION_PACKAGE"),
+			("RecaptchaPlugin.kt", RECAPTCHA_PLUGIN, "ADDON_PACKAGE"),
+		] {
+			assert!(
+				squashed(plugin).contains(&squashed(&format!(
+					"when (AddonLaunchCheck.decide(activity, intent, {package}))"
+				))),
+				"{file} no longer checks {package} through AddonLaunchCheck before sending it the request"
+			);
+		}
 	}
 
 	#[test]
 	fn every_addon_plugin_answers_every_gate_verdict() {
-		let verdicts = gate_verdict_names();
+		let verdicts = addon_gate_verdicts();
 		assert!(
 			verdicts.contains(&"Launch") && verdicts.len() > 1,
 			"AddonGate.Verdict was not parsed: {verdicts:?}"
@@ -938,7 +1050,7 @@ mod pins {
 
 		let file = "RecaptchaPlugin.kt";
 		let plugin = squashed(RECAPTCHA_PLUGIN);
-		let refusals = gate_verdict_names()
+		let refusals = addon_gate_verdicts()
 			.into_iter()
 			.filter(|verdict| *verdict != "Launch");
 		for verdict in refusals {
@@ -988,11 +1100,10 @@ mod pins {
 			),
 			"{file} no longer passes the add-on's error and its detail through"
 		);
-		assert!(
-			squashed(RECAPTCHA_BRIDGE).contains(
-				"RecaptchaError::from_rejection(response.message.as_deref(),response.code.as_deref(),)"
-			),
-			"recaptcha/android.rs no longer classifies the rejection marker with its detail"
+		assert_rejections_classify_as(
+			"recaptcha/android.rs",
+			RECAPTCHA_BRIDGE,
+			"RecaptchaError",
 		);
 	}
 
@@ -1037,11 +1148,7 @@ mod pins {
 			);
 		}
 		let registered = squashed(RECAPTCHA_BRIDGE);
-		let package = RECAPTCHA_PLUGIN
-			.lines()
-			.find_map(|line| line.strip_prefix("package "))
-			.expect("RecaptchaPlugin.kt declares no package")
-			.trim();
+		let package = kotlin_package(RECAPTCHA_PLUGIN, file);
 		assert!(
 			registered.contains(&format!(
 				"register_android_plugin(\"{package}\",\"RecaptchaPlugin\",)"
@@ -1116,5 +1223,92 @@ mod pins {
 				"{component} must not be exported"
 			);
 		}
+	}
+
+	#[test]
+	fn the_play_overlay_removes_the_updater_the_main_manifest_declares() {
+		use super::super::component::SELF_PACKAGE;
+
+		let qualified = |name: &str| match name.strip_prefix('.') {
+			Some(relative) => format!("{SELF_PACKAGE}.{relative}"),
+			None => name.to_owned(),
+		};
+		let declared = |source: &'static str| {
+			xml_elements(source).filter_map(move |(tag, element)| {
+				xml_attribute(element, "android:name")
+					.map(|name| (tag, qualified(name), element))
+			})
+		};
+		let removed: Vec<(&str, String)> = declared(PLAY_OVERLAY)
+			.filter(|(_, _, element)| {
+				xml_attribute(element, "tools:node") == Some("remove")
+			})
+			.map(|(tag, name, _)| (tag, name))
+			.collect();
+
+		for (tag, name) in &removed {
+			assert!(
+				declared(MANIFEST).any(|(main_tag, main_name, _)| {
+					main_tag == *tag && main_name == *name
+				}),
+				"the Play overlay removes <{tag}> {name}, which the main manifest does not declare, so whatever replaced it ships on Play"
+			);
+		}
+		assert!(
+			removed.contains(&(
+				"uses-permission",
+				"android.permission.REQUEST_INSTALL_PACKAGES".to_owned()
+			)),
+			"the Play overlay no longer removes REQUEST_INSTALL_PACKAGES"
+		);
+
+		let update_package = kotlin_package(PLUGIN, "UpdatePlugin.kt");
+		let updater: Vec<(&str, String)> = declared(MANIFEST)
+			.filter(|(tag, name, _)| {
+				["activity", "service", "receiver", "provider"].contains(tag)
+					&& name.starts_with(&format!("{update_package}."))
+			})
+			.map(|(tag, name, _)| (tag, name))
+			.collect();
+		assert!(
+			!updater.is_empty(),
+			"the main manifest declares no component from {update_package}"
+		);
+		for (tag, name) in updater {
+			assert!(
+				removed.contains(&(tag, name.clone())),
+				"the Play overlay keeps the updater's <{tag}> {name}"
+			);
+		}
+	}
+
+	#[test]
+	fn a_media_upload_holds_the_transfer_service_under_its_own_title() {
+		assert_eq!(
+			kotlin_constant(TRANSFER_TITLE, "TransferTitle.kt", "MEDIA_UPLOAD"),
+			super::MEDIA_UPLOAD,
+			"the upload purpose the bridge sends is not the one TransferTitle reads"
+		);
+		let service = squashed(TRANSFER_SERVICE);
+		assert!(
+			service.contains(
+				"funstart(context:Context,transfer:Transfer,){holds.begin(transfer)context.startForegroundService("
+			),
+			"TransferService no longer restarts on every hold"
+		);
+		assert!(
+			service.contains(
+				"funstop(context:Context,transfer:Transfer,){holds.end(transfer)ContextCompat.getMainExecutor(context).execute{running?.get()?.settle()}}"
+			) && !service.contains("stopService("),
+			"TransferService is stopped from outside instead of stopping itself on the main thread"
+		);
+		assert!(
+			service.contains(
+				"}catch(e:Exception){stopIfLatest(startId)returnSTART_NOT_STICKY}foregroundStartId=startIdsettle()"
+			) && service.contains(
+				"privatefunsettle(){valstartId=foregroundStartId?:returnvalshowing=holds.newest()if(showing==null){stopIfLatest(startId)return}"
+			),
+			"TransferService can stop before it entered the foreground or while a transfer still runs"
+		);
 	}
 }

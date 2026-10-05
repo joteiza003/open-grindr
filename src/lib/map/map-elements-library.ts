@@ -5,7 +5,6 @@ import {
 } from "$lib/app-data";
 import {
 	emptyMapElementsFile,
-	type MapCircle,
 	type MapElementsFile,
 	type MapMarker,
 	parseMapElementsFile,
@@ -41,7 +40,6 @@ async function saveToAppData(file: MapElementsFile): Promise<void> {
 	const content = new TextEncoder().encode(
 		JSON.stringify({
 			version: 1,
-			circles: file.circles,
 			markers: file.markers,
 		} satisfies MapElementsFile),
 	);
@@ -58,21 +56,18 @@ export function memoryMapElementsBackend(
 ): MapElementsBackend {
 	let current: MapElementsFile = {
 		version: 1,
-		circles: [...seed.circles],
 		markers: [...seed.markers],
 	};
 	return {
 		load() {
 			return Promise.resolve({
 				version: 1 as const,
-				circles: [...current.circles],
 				markers: [...current.markers],
 			});
 		},
 		save(file) {
 			current = {
 				version: 1,
-				circles: [...file.circles],
 				markers: [...file.markers],
 			};
 			return Promise.resolve();
@@ -92,40 +87,8 @@ export async function saveMapElements(
 ): Promise<void> {
 	await backend.save({
 		version: 1,
-		circles: file.circles,
 		markers: file.markers,
 	});
-}
-
-export async function addCircle(
-	circle: MapCircle,
-	backend: MapElementsBackend = appDataMapElementsBackend,
-): Promise<MapElementsFile> {
-	const file = await backend.load();
-	const next = {
-		version: 1 as const,
-		circles: [
-			...file.circles.filter((item) => item.id !== circle.id),
-			circle,
-		],
-		markers: file.markers,
-	};
-	await backend.save(next);
-	return next;
-}
-
-export async function deleteCircle(
-	id: string,
-	backend: MapElementsBackend = appDataMapElementsBackend,
-): Promise<MapElementsFile> {
-	const file = await backend.load();
-	const next = {
-		version: 1 as const,
-		circles: file.circles.filter((item) => item.id !== id),
-		markers: file.markers,
-	};
-	await backend.save(next);
-	return next;
 }
 
 export async function addMarker(
@@ -135,7 +98,6 @@ export async function addMarker(
 	const file = await backend.load();
 	const next = {
 		version: 1 as const,
-		circles: file.circles,
 		markers: [
 			...file.markers.filter((item) => item.id !== marker.id),
 			marker,
@@ -152,7 +114,6 @@ export async function deleteMarker(
 	const file = await backend.load();
 	const next = {
 		version: 1 as const,
-		circles: file.circles,
 		markers: file.markers.filter((item) => item.id !== id),
 	};
 	await backend.save(next);

@@ -1,5 +1,9 @@
 <script lang="ts">
+	import { goto } from "$app/navigation";
+
+	import { openProfilePreview } from "$lib/components/profile/profile-preview-state.svelte";
 	import ProfileMiniCard from "$lib/components/profile/ProfileMiniCard.svelte";
+	import { isPlainClick } from "$lib/util/plain-click";
 
 	let {
 		id,
@@ -17,6 +21,8 @@
 		showDistance = true,
 		showAge = true,
 		showOnlineStatus = true,
+		showFavoriteBadge = true,
+		showChatBadge = true,
 		nameStyle = "solid",
 	}: {
 		id: number;
@@ -34,8 +40,25 @@
 		showDistance?: boolean;
 		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		showFavoriteBadge?: boolean;
+		showChatBadge?: boolean;
 		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
+
+	function openInPager(event: MouseEvent) {
+		if (!isPlainClick(event)) return;
+		event.preventDefault();
+		void goto(`/profile/${id}`, { state: { profileOrigin: "browse" } });
+	}
+
+	function preview() {
+		openProfilePreview(id, {
+			displayName,
+			age,
+			distance,
+			mediaHash: medias?.[0]?.mediaHash ?? null,
+		});
+	}
 </script>
 
 <ProfileMiniCard
@@ -53,6 +76,10 @@
 	{showDistance}
 	{showAge}
 	{showOnlineStatus}
+	{showFavoriteBadge}
+	{showChatBadge}
 	{nameStyle}
 	href="/profile/{id}"
+	onclick={openInPager}
+	onLongPress={preview}
 />

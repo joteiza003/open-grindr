@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="disguise_calculator">Kalkulagailua</string>
+	<string name="disguise_notes">Oharrak</string>
+	<string name="disguise_weather">Eguraldia</string>
+	<string name="disguise_clock">Erlojua</string>
+</resources>

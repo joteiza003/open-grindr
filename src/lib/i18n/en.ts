@@ -1,6 +1,15 @@
+import { enChatBulk } from "./en.chatbulk";
+import { enExtra } from "./en.extra";
+import { enExtra2 } from "./en.extra2";
+import { enExtra3 } from "./en.extra3";
+import { enFeatures } from "./en.features";
+import { enMap } from "./en.map";
+import { enMore } from "./en.more";
+import { enProfile } from "./en.profile";
+
 export const en = {
 	"nav.browse": "Browse",
-	"nav.rightNow": "Right Now",
+	"nav.carrousel": "Carrousel",
 	"nav.interest": "Interest",
 	"nav.inbox": "Inbox",
 	"nav.me": "Me",
@@ -87,6 +96,38 @@ export const en = {
 	"translate.clearCache": "Clear translation cache",
 	"translate.cleared": "Translation cache cleared",
 	"translate.settings": "Translation",
+	"voice.record": "Record voice message",
+	"voice.recording": "Recording",
+	"voice.cancel": "Discard recording",
+	"voice.send": "Send voice message",
+	"voice.play": "Play voice message",
+	"voice.pause": "Pause voice message",
+	"voice.seek": "Position in the voice message",
+	"voice.playFailed": "Couldn't play this voice message",
+	"voice.denied":
+		"Microphone access is off. Allow it in Android settings to record.",
+	"voice.tooShort": "That recording was too short",
+	"voice.unavailable": "Voice messages are only available on Android",
+	"voice.failed": "Couldn't record",
+	"voice.sendFailed": "Couldn't send the voice message",
+	"icon.title": "Discreet app icon",
+	"icon.intro":
+		"Swap the icon and name on your home screen for an everyday app.",
+	"icon.default": "Euskal Grindr",
+	"icon.calculator": "Calculator",
+	"icon.notes": "Notes",
+	"icon.weather": "Weather",
+	"icon.clock": "Clock",
+	"icon.inUse": "In use",
+	"icon.confirmTitle": "Change the app icon?",
+	"icon.confirmBody":
+		"The icon and name on your home screen will change to “{name}”. It can take a few seconds and your launcher may refresh.",
+	"icon.confirm": "Change icon",
+	"icon.changed": "Icon changed to {name}",
+	"icon.failed": "Couldn't change the icon",
+	"icon.androidOnly": "The discreet icon is only available on Android.",
+	"icon.limits":
+		"Android's app list and recent apps can still show the real name.",
 	"translate.modelMissing":
 		"That language isn't downloaded. Get it in Translation → Offline languages.",
 	"translate.unsupported": "That language can't be translated offline.",
@@ -206,7 +247,7 @@ export const en = {
 	"appearance.chatStyle": "Chat style",
 	"appearance.chatStyleHint":
 		"Restyle the inbox and the conversation to match another messenger.",
-	"appearance.styleDefault": "Grindr +",
+	"appearance.styleDefault": "Euskal Grindr",
 	"appearance.styleWhatsapp": "WhatsApp",
 	"appearance.whatsappNote":
 		"WhatsApp style sets bubble colors, list density, tails and the empty wallpaper. Your saved colors return when you switch back.",
@@ -303,57 +344,56 @@ export const en = {
 	"onboarding.start": "Get started",
 
 	"map.title": "Map",
-	"map.addCircle": "Add circumference",
-	"map.addMarker": "Add marker",
 	"map.yourLocation": "Your location",
 	"map.customPosition": "Custom position — independent from saved overlays.",
 	"map.empty":
-		"Add a circumference or a marker. Shared chat locations also appear here. Changing your custom location will not move saved overlays.",
-	"map.tapCircle": "Tap the map to place the circumference center.",
-	"map.tapMarker": "Tap the map to place the marker.",
+		"Pins from located profiles and locations shared in chats appear here.",
 	"map.markers": "markers",
 	"map.deleteTitle": "Delete this item?",
 	"map.deleteBody":
 		"It will be removed from the map and from local storage. This cannot be undone.",
-	"map.circle": "Circumference",
-	"map.circleEdit": "Edit circumference",
-	"map.circleAria": "Configure circumference",
-	"map.markerAria": "Configure marker",
-	"map.marker": "Marker",
-	"map.nameOptional": "Name (optional)",
-	"map.circleNamePlaceholder": "North area",
-	"map.markerTitle": "Title",
-	"map.markerPlaceholder": "Meeting place",
-	"map.radius": "Radius",
-	"map.radiusAria": "Radius in kilometres",
-	"map.color": "Color",
-	"map.colorAria": "Color {color}",
-	"map.customColor": "Custom color",
-	"map.update": "Update",
-	"map.dragHint":
-		"Drag the center dot to move it and the edge dot to resize.",
-	"map.latitude": "Latitude",
-	"map.longitude": "Longitude",
-	"map.diameter": "Diameter",
-	"map.area": "Area",
-	"map.containsYou": "Your custom location is inside this circle.",
-	"map.outsideYou": "{distance} from the edge to your custom location.",
-	"map.fromYou": "{distance} from your custom location.",
 	"map.fitAll": "Show everything",
 	"map.locate": "Go to my location",
 	"map.noLocation": "You have no custom location set.",
 	"map.list": "Saved items",
 	"map.listEmpty": "Nothing saved yet.",
-	"map.circlesHeading": "Circumferences",
 	"map.markersHeading": "Markers",
-	"map.unnamedCircle": "Circumference",
-	"map.cancelAria": "Cancel",
 	"map.closeCluster": "Close group",
 	"map.deleteAria": "Delete",
-	"map.newMarker": "New marker",
 	"map.markerCount": "{count} markers",
-	"map.resizeHandle": "Resize",
-	"map.moveHandle": "Move",
+	"map.viewProfile": "View profile",
+	"map.directions": "Directions",
+	"map.sharedHeading": "Shared locations",
+	"discreet.title": "Discreet mode",
+	"discreet.description":
+		"Hide photos and videos in chats until you tap them.",
+	"discreet.photo": "Photo, tap to open",
+	"discreet.video": "Video, tap to open",
+	"discreet.album": "Album, tap to open",
+	"discreet.hide": "Hide",
+	"browse.viewList": "List",
+	"browse.viewTinder": "Discover",
+	"browse.viewLabel": "Browse view",
+	"browse.tinder.radius": "Radius",
+	"browse.tinder.radiusAria": "Search radius",
+	"browse.tinder.empty": "No more profiles within {distance}",
+	"browse.tinder.emptyHint":
+		"Try a bigger radius or bring back the profiles you skipped.",
+	"browse.tinder.reset": "Bring back skipped",
+	"browse.tinder.reject": "Hide",
+	"browse.tinder.skip": "Skip",
+	"browse.tinder.like": "Like",
+	"browse.tinder.superlike": "Super like (say hi)",
+	"browse.tinder.favorite": "Favorite and say hi",
+	"browse.tinder.greetFailed": "Couldn't send the greeting",
+	"browse.tinder.greeted": "Greeting sent",
+	"browse.tinder.loading": "Finding profiles…",
+	"browse.tinder.openProfile": "Open profile",
+	"browse.list.unread": "{count} unread",
+	"filters.min": "Min",
+	"filters.max": "Max",
+	"filters.noMin": "No min",
+	"filters.noMax": "No max",
 
 	"profile.photos": "Photos",
 	"profileNote.add": "Add note",
@@ -480,17 +520,18 @@ export const en = {
 	"credits.android": "Android libraries",
 	"update.unsupported.externallyManaged":
 		"Updates are managed by the store that installed the app",
-	"update.unsupported.foreignSigner": "This build was not signed by Grindr +",
+	"update.unsupported.foreignSigner":
+		"This build was not signed by Euskal Grindr",
 	"update.unsupported.foreignTarget":
-		"The installed app isn't signed by Grindr +",
+		"The installed app isn't signed by Euskal Grindr",
 	"update.unsupported.undetermined":
-		"Grindr + can't tell whether it may update itself",
+		"Euskal Grindr can't tell whether it may update itself",
 	"update.unsupported.noReleaseArtifacts":
 		"No release is published for this platform",
 	"update.unsupported.sandboxed":
 		"The sandbox this app runs in manages its own updates",
 	"update.unsupported.locationNotWritable":
-		"Grindr + can't install the update in its directory",
+		"Euskal Grindr can't install the update in its directory",
 	"update.error.network": "Couldn't reach the release server",
 	"update.error.server": "The release server refused the request",
 	"update.error.malformedIndex":
@@ -507,16 +548,25 @@ export const en = {
 	"update.error.canceled": "Update canceled",
 	"update.error.nothingStaged": "No update is ready to install",
 	"update.error.needsUnknownSources":
-		"Grindr + needs permission to install updates",
+		"Euskal Grindr needs permission to install updates",
 	"update.error.needsManualInstall":
-		"Quit Grindr +, then drag it onto Applications",
+		"Quit Euskal Grindr, then drag it onto Applications",
 	"update.error.install": "Couldn't install the update",
 	"update.error.checkTooSoon": "Already checked for updates recently",
 	"update.error.autoChecksDisabled": "Automatic update checks are turned off",
-	"update.error.unknownComponent": "Grindr + doesn't know that component",
+	"update.error.unknownComponent":
+		"Euskal Grindr doesn't know that component",
 	"update.error.busy": "Another download is already running",
-	"update.noRelease.app": "No Grindr + release is published yet",
+	"update.noRelease.app": "No Euskal Grindr release is published yet",
 	"update.noRelease.oauth": "No Google OAuth app release is published yet",
+	...enFeatures,
+	...enMore,
+	...enExtra,
+	...enExtra2,
+	...enExtra3,
+	...enProfile,
+	...enChatBulk,
+	...enMap,
 } as const;
 
 export type MessageKey = keyof typeof en;

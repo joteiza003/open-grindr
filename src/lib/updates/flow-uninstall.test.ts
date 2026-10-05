@@ -73,7 +73,7 @@ describe("an add-on uninstalled while its update is on screen", () => {
 		["awaits install permission", awaitingPermission("update")],
 		["may install at once", ready("update")],
 	])(
-		"clears a downloaded update tapped after the add-on was uninstalled while Open Grind %s",
+		"clears a downloaded update tapped after the add-on was uninstalled while Euskal Grindr %s",
 		async (_, downloaded) => {
 			readiness["google-oauth"] = downloaded;
 			const { flow, view } = await flowFor("google-oauth");
@@ -218,7 +218,7 @@ describe("an update offer withdrawn after the add-on was uninstalled", () => {
 	});
 });
 
-describe("an add-on that changed outside Open Grind before its download started", () => {
+describe("an add-on that changed outside Euskal Grindr before its download started", () => {
 	it.each<[CheckResult, string[]]>([
 		[upToDate, ["show:downloading", "dismiss", "upToDate"]],
 		[

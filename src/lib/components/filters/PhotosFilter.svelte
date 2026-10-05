@@ -6,11 +6,18 @@
 	import type { filterPhotosSchema } from "$lib/model/browse/grid/filters";
 	import FilterBoolean from "./FilterBoolean.svelte";
 
+	type PhotoKind = z.infer<typeof filterPhotosSchema>[number];
+
 	let {
 		checked = $bindable(),
 		value = $bindable(),
-	}: { checked: boolean; value: z.infer<typeof filterPhotosSchema> } =
-		$props();
+		kinds = ["has-photos", "has-face-pics", "has-albums"],
+	}: {
+		checked: boolean;
+		value: z.infer<typeof filterPhotosSchema>;
+		/** Which of the photo filters to offer. */
+		kinds?: PhotoKind[];
+	} = $props();
 </script>
 
 <div class="flex min-w-0 flex-col gap-2">
@@ -26,18 +33,24 @@
 				(v: typeof value) => ((checked = v.length > 0), (value = v))
 			}
 		>
-			<ToggleGroup.Item value="has-photos">
-				<ImageIcon />
-				Has Photos
-			</ToggleGroup.Item>
-			<ToggleGroup.Item value="has-face-pics">
-				<SmileyWinkIcon />
-				Has Face Pics
-			</ToggleGroup.Item>
-			<ToggleGroup.Item value="has-albums">
-				<FolderLockIcon />
-				Has Album(s)
-			</ToggleGroup.Item>
+			{#if kinds.includes("has-photos")}
+				<ToggleGroup.Item value="has-photos">
+					<ImageIcon />
+					Has Photos
+				</ToggleGroup.Item>
+			{/if}
+			{#if kinds.includes("has-face-pics")}
+				<ToggleGroup.Item value="has-face-pics">
+					<SmileyWinkIcon />
+					Has Face Pics
+				</ToggleGroup.Item>
+			{/if}
+			{#if kinds.includes("has-albums")}
+				<ToggleGroup.Item value="has-albums">
+					<FolderLockIcon />
+					Has Album(s)
+				</ToggleGroup.Item>
+			{/if}
 		</ToggleGroup.Root>
 	</div>
 </div>

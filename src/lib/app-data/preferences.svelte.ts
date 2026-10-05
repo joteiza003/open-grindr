@@ -9,11 +9,31 @@ import {
 	DEFAULT_BUBBLE_OUT,
 	DEFAULT_CHAT_BACKGROUND_COLOR,
 } from "$lib/appearance/chat-colors";
+import { DEFAULT_LOOK, lookSchema } from "$lib/appearance/looks";
 import { backdropBlurCalibrationSchema } from "$lib/blur/calibration/decide";
 import { backdropBlurQualitySchema } from "$lib/blur/quality";
+import { inboxSortSchema } from "$lib/chat/inbox-sort";
+import { MAX_STARRED, starredMessageSchema } from "$lib/chat/starred";
+import { swipeActionSchema } from "$lib/chat/swipe-actions";
+import { favoriteListSchema, MAX_FAVORITE_LISTS } from "$lib/favorites/lists";
 import { DEFAULT_LOCALE, localeSchema } from "$lib/i18n/locales";
+import { baseLayerSchema, DEFAULT_BASE_LAYER } from "$lib/map/base-layers";
 import { gridSearchFiltersSchema } from "$lib/model/browse/grid/filters";
+import {
+	MAX_SAVED_FILTERS,
+	savedFilterSchema,
+} from "$lib/model/browse/grid/saved-filters";
 import { geohashSchema } from "$lib/model/geohash";
+import { albumExpirationTypeSchema } from "$lib/model/messaging/albums";
+import { DEFAULT_NAV_TABS, normalizeNavTabs } from "$lib/model/nav-tabs";
+import {
+	DEFAULT_NOTIFICATION_MODULES,
+	normalizeNotificationModules,
+} from "$lib/model/notification-modules";
+import {
+	MAX_SILENCES,
+	silenceEntrySchema,
+} from "$lib/safety/temporary-silence";
 import { unitSystemSchema } from "$lib/util/units";
 import {
 	existsAppDataFile,
@@ -33,9 +53,63 @@ const preferencesSchema = z.object({
 		.default(null)
 		.catch(null),
 	geohash: geohashSchema.nullable().default(null),
+	// Capa del mapa: callejero o fotos de satélite.
+	mapLayer: baseLayerSchema
+		.default(DEFAULT_BASE_LAYER)
+		.catch(DEFAULT_BASE_LAYER),
 	hapticFeedback: z.boolean().default(true),
 	onboardingComplete: z.boolean().default(false),
 	gridSearchFilters: gridSearchFiltersSchema.optional(),
+	// Filtros del mapa (los mismos que en explorar, pero aparte); un valor
+	// ilegible se ignora en vez de romper el resto de preferencias.
+	mapFilters: gridSearchFiltersSchema.optional().catch(undefined),
+	// Filtros con nombre; un fichero con entradas viejas no debe romper el resto.
+	savedFilters: z
+		.array(savedFilterSchema)
+		.max(MAX_SAVED_FILTERS)
+		.default([])
+		.catch([]),
+	notificationsEnabled: z.boolean().default(false),
+	// Barra de navegación: pestañas visibles, en orden.
+	navTabs: z
+		.array(z.unknown())
+		.default([...DEFAULT_NAV_TABS])
+		.transform(normalizeNavTabs)
+		.catch([...DEFAULT_NAV_TABS]),
+	// Pestaña Notificaciones: módulos visibles, en orden.
+	notificationModules: z
+		.array(z.unknown())
+		.default([...DEFAULT_NOTIFICATION_MODULES])
+		.transform(normalizeNotificationModules)
+		.catch([...DEFAULT_NOTIFICATION_MODULES]),
+	// Silencios y ocultaciones temporales de perfiles, con su caducidad.
+	temporarySilences: z
+		.array(silenceEntrySchema)
+		.max(MAX_SILENCES)
+		.default([])
+		.catch([]),
+	// Listas propias de favoritos (solo en este dispositivo).
+	favoriteLists: z
+		.array(favoriteListSchema)
+		.max(MAX_FAVORITE_LISTS)
+		.default([])
+		.catch([]),
+	// Lunes (AAAA-MM-DD) del último resumen semanal que se ocultó.
+	weeklyDismissedWeek: z.string().default(""),
+	// Mensajes destacados (referencias locales, con un trozo del texto).
+	starredMessages: z
+		.array(starredMessageSchema)
+		.max(MAX_STARRED)
+		.default([])
+		.catch([]),
+	// Conversaciones donde se activaron las estadísticas del chat.
+	chatStatsEnabled: z.array(z.string()).max(500).default([]).catch([]),
+	// Chats marcados como no leídos a mano (solo en este dispositivo).
+	chatMarkedUnread: z.array(z.string()).max(200).default([]).catch([]),
+	// Última tanda de novedades que ya se enseñó (vacío = ninguna).
+	whatsNewSeen: z.string().default(""),
+	// Modo una mano: la barra de controles de la cuadrícula baja al pulgar.
+	oneHandMode: z.boolean().default(false),
 	revealMessageRead: z.boolean().default(false),
 	revealProfileViews: z.boolean().default(false),
 	stayOnline: z.boolean().default(true),
@@ -43,12 +117,16 @@ const preferencesSchema = z.object({
 	locale: localeSchema.default(DEFAULT_LOCALE),
 	appearance: z
 		.object({
+			// Look de fábrica: paquete de tema/acento/densidad con su propio
+			// material de superficie. Sin `look` guardado → "lumen".
+			look: lookSchema.default(DEFAULT_LOOK),
 			theme: z.enum(["system", "dark", "light"]).default("system"),
 			accent: accentSchema.default(DEFAULT_ACCENT),
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			animations: z.boolean().default(true),
 		})
 		.default({
+			look: DEFAULT_LOOK,
 			theme: "system",
 			accent: DEFAULT_ACCENT,
 			density: "comfortable",
@@ -56,7 +134,21 @@ const preferencesSchema = z.object({
 		}),
 	browse: z
 		.object({
-			viewMode: z.enum(["grid", "compact", "detailed"]).default("grid"),
+			viewMode: z
+				.enum(["grid", "compact", "detailed", "list", "tinder"])
+				.default("grid"),
+			// Modo Tinder: radio (km) que limita los perfiles de la baraja.
+			tinderRadiusKm: z.number().min(0.1).max(500).default(10),
+			// Perfiles descartados (se ocultan de toda la exploración) y
+			// aceptados en el modo Tinder. Acotados para no crecer sin fin.
+			rejectedProfileIds: z
+				.array(z.int().positive())
+				.max(5000)
+				.default([]),
+			acceptedProfileIds: z
+				.array(z.int().positive())
+				.max(5000)
+				.default([]),
 			cardDensity: z
 				.enum(["comfortable", "dense"])
 				.default("comfortable"),
@@ -64,27 +156,73 @@ const preferencesSchema = z.object({
 			showDistance: z.boolean().default(true),
 			showAge: z.boolean().default(true),
 			showOnlineStatus: z.boolean().default(true),
+			// Insignias de la tarjeta: estrella de favorito y chat reciente.
+			showFavoriteBadge: z.boolean().default(true),
+			// Franja de favoritos en línea sobre la cuadrícula.
+			showFavoritesStrip: z.boolean().default(true),
+			showChatBadge: z.boolean().default(true),
 			nameStyle: z.enum(["solid", "gradient", "none"]).default("solid"),
 			// null = use the design default (keeps the tuned grid + its e2e
 			// corner test untouched); a number overrides it in pixels.
 			cardRadius: z.number().min(0).max(40).nullable().default(null),
 			cardGap: z.number().min(0).max(24).nullable().default(null),
+			// Columnas fijas de la cuadrícula (2 a 5); null = según el ancho.
+			gridColumns: z
+				.int()
+				.min(2)
+				.max(5)
+				.nullable()
+				.default(null)
+				.catch(null),
+			// Saludo del super like del carrusel: textos y fotos (ids del cajón
+			// de medios del chat) que se envían, en este orden.
+			greetingMessages: z
+				.array(z.string().trim().min(1).max(500))
+				.max(5)
+				.default(["Hola", "¿Qué tal?"])
+				.catch(["Hola", "¿Qué tal?"]),
+			greetingMediaIds: z
+				.array(z.int().nonnegative())
+				.max(5)
+				.default([])
+				.catch([]),
 		})
 		.default({
 			viewMode: "grid",
+			tinderRadiusKm: 10,
+			rejectedProfileIds: [],
+			acceptedProfileIds: [],
 			cardDensity: "comfortable",
 			showName: true,
 			showDistance: true,
 			showAge: true,
 			showOnlineStatus: true,
+			showFavoriteBadge: true,
+			showFavoritesStrip: true,
+			showChatBadge: true,
 			nameStyle: "solid",
 			cardRadius: null,
 			cardGap: null,
+			gridColumns: null,
+			greetingMessages: ["Hola", "¿Qué tal?"],
+			greetingMediaIds: [],
 		}),
 	chat: z
 		.object({
 			density: z.enum(["comfortable", "compact"]).default("comfortable"),
 			mediaPreview: z.boolean().default(true),
+			// Modo discreto: las fotos/vídeos del chat se ocultan tras un
+			// aviso y solo se abren al pulsarlos.
+			discreetMode: z.boolean().default(false),
+			// Acciones al deslizar una conversación en la lista (solo táctil).
+			swipeRight: swipeActionSchema.default("pin").catch("pin"),
+			swipeLeft: swipeActionSchema.default("mute").catch("mute"),
+			// Orden del buzón: reciente, no leídos primero o en línea primero.
+			inboxSort: inboxSortSchema.default("recent").catch("recent"),
+			// Caducidad con la que se comparten los álbumes desde ahora.
+			albumExpiration: albumExpirationTypeSchema
+				.default("INDEFINITE")
+				.catch("INDEFINITE"),
 			style: z.enum(["default", "whatsapp"]).default("default"),
 			bubbleOut: bubbleColorSchema.default(DEFAULT_BUBBLE_OUT),
 			bubbleIn: bubbleColorSchema.default(DEFAULT_BUBBLE_IN),
@@ -107,6 +245,11 @@ const preferencesSchema = z.object({
 		.default({
 			density: "comfortable",
 			mediaPreview: true,
+			discreetMode: false,
+			albumExpiration: "INDEFINITE",
+			swipeRight: "pin",
+			swipeLeft: "mute",
+			inboxSort: "recent",
 			style: "default",
 			bubbleOut: DEFAULT_BUBBLE_OUT,
 			bubbleIn: DEFAULT_BUBBLE_IN,
@@ -261,6 +404,14 @@ const accountPreferenceKeys = [
 	"autoUpdateLocation",
 	"geohash",
 	"gridSearchFilters",
+	"mapFilters",
+	"notificationsEnabled",
+	"savedFilters",
+	"temporarySilences",
+	"favoriteLists",
+	"starredMessages",
+	"chatMarkedUnread",
+	"chatStatsEnabled",
 ] as const;
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {

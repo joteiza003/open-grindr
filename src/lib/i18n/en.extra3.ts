@@ -1,0 +1,35 @@
+// Textos de la tanda de álbumes: selección numerada, álbum local/real, límites, guardar fotos y almacenamiento.
+export const enExtra3 = {
+	"albumsKit.saveLocal": "Save as local album",
+	"albumsKit.saveLocalDone": "Local album saved",
+	"albumsKit.createReal": "Create real album",
+	"albumsKit.createRealDone": "Real album created with {count} photos",
+	"albumsKit.createRealTrimmed":
+		"Real album created with {count} of {total} photos (your account limit)",
+	"albumsKit.noRoom": "You've reached your account's limit of real albums.",
+	"albumsKit.failed": "Couldn't create the album",
+	"albumsKit.defaultName": "Album {date}",
+	"albumsKit.promote": "Make it a real album",
+	"albumsKit.limits": "{albums} of {maxAlbums} albums",
+	"albumsKit.savePhoto": "Save photo",
+	"albumsKit.savedPhoto": "Photo saved to your library",
+	"albumsKit.saveFailed": "Couldn't save the photo",
+	"albumsKit.storageTitle": "Storage",
+	"albumsKit.storageUsed": "{size} used by {count} saved items",
+	"albumsKit.deleteContact": "Delete everything from {name}",
+	"albumsKit.deleteContactDone": "Deleted",
+	"albumsKit.export": "Export to a folder",
+	"albumsKit.exported": "Library exported",
+	"albumsKit.exportFailed": "Couldn't export the library",
+	"greeting.title": "Carousel super like greeting",
+	"greeting.messages": "Messages",
+	"greeting.hint":
+		"These messages are sent, in this order, when you super like someone in the carousel. Photos go after the messages.",
+	"greeting.messageN": "Message {n}",
+	"greeting.add": "Add message",
+	"greeting.remove": "Remove message",
+	"greeting.restore": "Restore default",
+	"greeting.photos": "Photos to send",
+	"greeting.photosHint":
+		"Pick up to {max}. They are sent in the order you tap them.",
+} as const;

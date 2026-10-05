@@ -2,6 +2,7 @@
 	import { CaretLeftIcon } from "phosphor-svelte";
 
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
+	import BackLink from "$lib/components/navigation/BackLink.svelte";
 	import { t } from "$lib/i18n";
 </script>
 
@@ -9,13 +10,13 @@
 	class="relative flex h-dvh w-full flex-col pt-(--safe-area-top) pb-(--safe-area-bottom)"
 >
 	<header class="flex items-center gap-2 px-4 pt-3 pb-2">
-		<a
+		<BackLink
 			href="/settings"
+			label={t("common.back")}
 			class="grid size-9 shrink-0 place-items-center rounded-full text-foreground transition-colors can-hover:hover:bg-muted"
-			aria-label={t("common.back")}
 		>
 			<CaretLeftIcon class="size-5" />
-		</a>
+		</BackLink>
 		<h1 class="text-xl font-semibold tracking-tight">
 			{t("settings.albums")}
 		</h1>

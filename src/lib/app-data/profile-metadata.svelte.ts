@@ -43,6 +43,7 @@ const localProfileMetadataSchema = z.object({
 	note: z.string().optional(),
 	phone: z.string().optional(),
 	lastViewed: z.number().optional(),
+	visits: z.number().int().nonnegative().optional(),
 	lastInteraction: z.number().optional(),
 	hidden: z.boolean().optional(),
 });
@@ -264,7 +265,10 @@ export async function recordProfileView(
 	profileId: number,
 	at: number = Date.now(),
 ): Promise<void> {
-	await updateProfileMetadata(profileId, { lastViewed: at });
+	await updateProfileMetadata(profileId, {
+		lastViewed: at,
+		visits: (profileMetadata(profileId).visits ?? 0) + 1,
+	});
 }
 
 /** Record a local interaction (e.g. opened chat, tapped) for sorting. */

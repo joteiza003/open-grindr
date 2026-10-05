@@ -21,7 +21,7 @@ use tauri::{AppHandle, Emitter, Manager, Wry};
 
 pub use download::Progress;
 pub use error::UpdateError;
-pub use install::enforce_home;
+pub use install::{enforce_home, TransferHold};
 
 use baseline::{Baseline, InstallKind};
 use release::Candidate;
@@ -102,7 +102,7 @@ pub fn plugin() -> tauri::plugin::TauriPlugin<Wry> {
 		.build()
 }
 
-const INSTALL_EVENT: &str = "update:install";
+const INSTALL_EVENT: &str = "updater:install";
 
 fn watch_installs(app: &AppHandle) {
 	let sink = app.clone();

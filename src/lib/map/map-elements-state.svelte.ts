@@ -1,43 +1,35 @@
-import { SvelteDate } from "svelte/reactivity";
+import { SvelteMap } from "svelte/reactivity";
 
-import {
-	type CircleDraft,
-	DEFAULT_CIRCLE_COLOR,
-	DEFAULT_RADIUS_KM,
-	type InteractionMode,
-	type MapCircle,
-	type MapMarker,
-	type MarkerDraft,
-} from "$lib/model/map-elements";
-import {
-	clampRadius,
-	normalizeName,
-	radiusFromPoint,
-	roundRadius,
-	validateColor,
-	validateCoordinates,
-	validateName,
-	validateRadius,
-	validateTitle,
-} from "./geographic";
+import type { MapMarker } from "$lib/model/map-elements";
 import {
 	appDataMapElementsBackend,
 	type MapElementsBackend,
 } from "./map-elements-library";
+import { trace } from "./map-trace";
 
-/** Reactive view-model for persistent map overlays. Independent of geohash. */
+/** A write that takes longer than this is noted in the diagnostics. */
+const SLOW_SAVE_MS = 3_000;
+
+/**
+ * Reactive list of the pins saved on the map.
+ *
+ * Every change updates the list in memory first and writes it to storage
+ * afterwards. The screen never waits for the disk: on Android storage goes
+ * through the same worker pool as media requests, and when that pool is busy a
+ * write can stall for seconds. Writes are coalesced, so the file always ends up
+ * holding the latest list no matter how many changes happen in a row.
+ */
 export class MapElementsState {
-	circles = $state<MapCircle[]>([]);
 	markers = $state<MapMarker[]>([]);
 	loading = $state(true);
-	mode = $state<InteractionMode>("NORMAL");
-	circleDraft = $state<CircleDraft | null>(null);
-	markerDraft = $state<MarkerDraft | null>(null);
-	selectedCircleId = $state<string | null>(null);
-	selectedMarkerId = $state<string | null>(null);
-	error = $state<string | null>(null);
+	/** True while re-triangulating saved profile pins. */
+	refreshing = $state(false);
+	/** Called when the pins could not be written. The list in memory is kept. */
+	onSaveError: ((error: unknown) => void) | undefined;
 
 	#backend: MapElementsBackend;
+	#dirty = false;
+	#writing: Promise<void> | null = null;
 
 	constructor(backend: MapElementsBackend = appDataMapElementsBackend) {
 		this.#backend = backend;
@@ -47,274 +39,130 @@ export class MapElementsState {
 		this.loading = true;
 		try {
 			const file = await this.#backend.load();
-			this.circles = file.circles;
 			this.markers = file.markers;
 		} catch (error) {
 			console.error("[map-elements] Failed to load", error);
-			this.circles = [];
 			this.markers = [];
 		} finally {
 			this.loading = false;
-			this.resetInteraction();
 		}
 	}
 
-	getCircles(): MapCircle[] {
-		return this.circles;
+	markerById(id: string): MapMarker | undefined {
+		return this.markers.find((marker) => marker.id === id);
 	}
 
-	getMarkers(): MapMarker[] {
-		return this.markers;
-	}
-
-	beginAddCircle(): void {
-		this.mode = "ADD_CIRCLE";
-		this.circleDraft = null;
-		this.markerDraft = null;
-		this.selectedCircleId = null;
-		this.selectedMarkerId = null;
-		this.error = null;
-	}
-
-	beginAddMarker(): void {
-		this.mode = "ADD_MARKER";
-		this.circleDraft = null;
-		this.markerDraft = null;
-		this.selectedCircleId = null;
-		this.selectedMarkerId = null;
-		this.error = null;
-	}
-
-	cancelCreation(): void {
-		this.resetInteraction();
-	}
-
-	handleMapClick(latitude: number, longitude: number): void {
-		const coordError = validateCoordinates(latitude, longitude);
-		if (coordError) {
-			this.error = coordError;
-			return;
-		}
-		if (this.mode === "ADD_CIRCLE") {
-			this.circleDraft = {
-				latitude,
-				longitude,
-				radiusKm: DEFAULT_RADIUS_KM,
-				color: DEFAULT_CIRCLE_COLOR,
-				name: "",
-			};
-			this.mode = "CIRCLE_CONFIGURATION";
-			this.error = null;
-			return;
-		}
-		if (this.mode === "ADD_MARKER") {
-			this.markerDraft = { latitude, longitude, title: "" };
-			this.mode = "MARKER_CONFIGURATION";
-			this.error = null;
-			return;
-		}
-		if (
-			this.mode === "CIRCLE_CONFIGURATION" ||
-			this.mode === "MARKER_CONFIGURATION"
-		) {
-			return;
-		}
-		this.clearSelection();
-	}
-
-	updateCircleDraft(patch: Partial<CircleDraft>): void {
-		if (!this.circleDraft) return;
-		const next = { ...this.circleDraft, ...patch };
-		if (patch.radiusKm !== undefined) {
-			next.radiusKm = roundRadius(clampRadius(patch.radiusKm));
-		}
-		this.circleDraft = next;
-		this.error = null;
-	}
-
-	/** Move the circle draft centre (drag handle or typed coordinates). */
-	moveCircleDraft(latitude: number, longitude: number): void {
-		if (!this.circleDraft) return;
-		const coordError = validateCoordinates(latitude, longitude);
-		if (coordError) {
-			this.error = coordError;
-			return;
-		}
-		this.circleDraft = { ...this.circleDraft, latitude, longitude };
-		this.error = null;
-	}
-
-	/** Set the draft radius from a dragged edge handle. */
-	resizeCircleDraftTo(latitude: number, longitude: number): void {
-		if (!this.circleDraft) return;
-		this.updateCircleDraft({
-			radiusKm: radiusFromPoint(this.circleDraft, {
-				latitude,
-				longitude,
-			}),
-		});
-	}
-
-	updateMarkerDraft(patch: Partial<MarkerDraft>): void {
-		if (!this.markerDraft) return;
-		this.markerDraft = { ...this.markerDraft, ...patch };
-		this.error = null;
-	}
-
-	async saveCircleDraft(): Promise<
-		{ ok: true } | { ok: false; error: string }
-	> {
-		const draft = this.circleDraft;
-		if (!draft) return { ok: false, error: "Pick a center on the map." };
-		const coordError = validateCoordinates(draft.latitude, draft.longitude);
-		if (coordError) return { ok: false, error: coordError };
-		const radiusError = validateRadius(draft.radiusKm);
-		if (radiusError) return { ok: false, error: radiusError };
-		const colorError = validateColor(draft.color);
-		if (colorError) return { ok: false, error: colorError };
-		const nameError = validateName(draft.name);
-		if (nameError) return { ok: false, error: nameError };
-
-		const name = normalizeName(draft.name);
-		if (draft.id) {
-			const existing = this.circles.find(
-				(circle) => circle.id === draft.id,
-			);
-			if (!existing) {
-				return {
-					ok: false,
-					error: "That circumference no longer exists.",
-				};
-			}
-			this.circles = this.circles.map((circle) =>
-				circle.id === draft.id
-					? {
-							...circle,
-							latitude: draft.latitude,
-							longitude: draft.longitude,
-							radiusKm: roundRadius(draft.radiusKm),
-							color: draft.color.toLowerCase(),
-							name,
-						}
-					: circle,
-			);
-			await this.#persist();
-			this.selectedCircleId = draft.id;
-			this.circleDraft = {
-				...draft,
-				radiusKm: roundRadius(draft.radiusKm),
-				color: draft.color.toLowerCase(),
-				name: name ?? "",
-			};
-			this.error = null;
-			return { ok: true };
-		}
-
-		const circle: MapCircle = {
-			id: `circle-${crypto.randomUUID()}`,
-			latitude: draft.latitude,
-			longitude: draft.longitude,
-			radiusKm: roundRadius(draft.radiusKm),
-			color: draft.color.toLowerCase(),
-			createdAt: new SvelteDate().toISOString(),
-			name,
-		};
-		this.circles = [...this.circles, circle];
-		await this.#persist();
-		this.resetInteraction();
-		return { ok: true };
-	}
-
-	async saveMarkerDraft(): Promise<
-		{ ok: true } | { ok: false; error: string }
-	> {
-		const draft = this.markerDraft;
-		if (!draft) return { ok: false, error: "Pick a position on the map." };
-		const coordError = validateCoordinates(draft.latitude, draft.longitude);
-		if (coordError) return { ok: false, error: coordError };
-		const titleError = validateTitle(draft.title);
-		if (titleError) return { ok: false, error: titleError };
-
-		const marker: MapMarker = {
-			id: `place-${crypto.randomUUID()}`,
-			latitude: draft.latitude,
-			longitude: draft.longitude,
-			title: draft.title.trim(),
-			createdAt: new SvelteDate().toISOString(),
-		};
-		this.markers = [...this.markers, marker];
-		await this.#persist();
-		this.markerDraft = null;
-		this.mode = "SELECTED_MARKER";
-		this.selectedMarkerId = marker.id;
-		this.error = null;
-		return { ok: true };
-	}
-
-	selectCircle(id: string): void {
-		if (this.mode === "ADD_CIRCLE" || this.mode === "ADD_MARKER") return;
-		if (this.mode === "MARKER_CONFIGURATION") return;
-		const circle = this.circles.find((item) => item.id === id);
-		if (!circle) return;
-		this.mode = "CIRCLE_CONFIGURATION";
-		this.selectedCircleId = id;
-		this.selectedMarkerId = null;
-		this.circleDraft = {
-			id: circle.id,
-			latitude: circle.latitude,
-			longitude: circle.longitude,
-			radiusKm: circle.radiusKm,
-			color: circle.color,
-			name: circle.name ?? "",
-		};
-		this.error = null;
-	}
-
-	selectMarker(id: string): void {
-		if (this.mode === "ADD_CIRCLE" || this.mode === "ADD_MARKER") return;
-		if (
-			this.mode === "CIRCLE_CONFIGURATION" ||
-			this.mode === "MARKER_CONFIGURATION"
-		) {
-			return;
-		}
-		this.mode = "SELECTED_MARKER";
-		this.selectedMarkerId = id;
-		this.selectedCircleId = null;
-	}
-
-	clearSelection(): void {
-		this.mode = "NORMAL";
-		this.selectedCircleId = null;
-		this.selectedMarkerId = null;
-	}
-
-	async deleteCircle(id: string): Promise<void> {
-		this.circles = this.circles.filter((circle) => circle.id !== id);
-		await this.#persist();
-		this.clearSelection();
-	}
-
-	async deleteMarker(id: string): Promise<void> {
+	/** Resolves once the change reached storage; the list is already updated. */
+	deleteMarker(id: string): Promise<void> {
 		this.markers = this.markers.filter((marker) => marker.id !== id);
-		await this.#persist();
-		this.clearSelection();
+		return this.persist();
 	}
 
-	resetInteraction(): void {
-		this.mode = "NORMAL";
-		this.circleDraft = null;
-		this.markerDraft = null;
-		this.selectedCircleId = null;
-		this.selectedMarkerId = null;
-		this.error = null;
+	deleteAllMarkers(): Promise<void> {
+		this.markers = [];
+		return this.persist();
 	}
 
-	async #persist(): Promise<void> {
-		await this.#backend.save({
-			version: 1,
-			circles: this.circles,
-			markers: this.markers,
-		});
+	/**
+	 * Updates coordinates (and optional display fields) of an existing marker
+	 * without changing its id. Used when re-triangulating a saved profile pin.
+	 */
+	updateMarker(
+		id: string,
+		patch: Partial<
+			Pick<
+				MapMarker,
+				"latitude" | "longitude" | "title" | "mediaHash" | "displayName"
+			>
+		>,
+	): Promise<void> {
+		const index = this.markers.findIndex((marker) => marker.id === id);
+		if (index < 0) return Promise.resolve();
+		const next: MapMarker = { ...this.markers[index]!, ...patch };
+		this.markers = [
+			...this.markers.slice(0, index),
+			next,
+			...this.markers.slice(index + 1),
+		];
+		return this.persist();
+	}
+
+	/**
+	 * Removes duplicate pins for the same profileId, keeping the newest by
+	 * createdAt (or the later one if dates are equal).
+	 */
+	dedupeProfileMarkers(): Promise<void> {
+		const byProfile = new SvelteMap<number, MapMarker>();
+		const withoutProfile: MapMarker[] = [];
+		for (const marker of this.markers) {
+			if (marker.profileId === undefined) {
+				withoutProfile.push(marker);
+				continue;
+			}
+			const prev = byProfile.get(marker.profileId);
+			if (!prev) {
+				byProfile.set(marker.profileId, marker);
+				continue;
+			}
+			const newer =
+				Date.parse(marker.createdAt) >= Date.parse(prev.createdAt)
+					? marker
+					: prev;
+			byProfile.set(marker.profileId, newer);
+		}
+		const next = [...withoutProfile, ...byProfile.values()];
+		if (next.length === this.markers.length) return Promise.resolve();
+		this.markers = next;
+		return this.persist();
+	}
+
+	/** Writes the current list; calls made while a write runs share it. */
+	persist(): Promise<void> {
+		this.#dirty = true;
+		this.#writing ??= this.#drain();
+		return this.#writing;
+	}
+
+	async #drain(): Promise<void> {
+		try {
+			while (this.#dirty) {
+				this.#dirty = false;
+				const began = performance.now();
+				const watchdog = setTimeout(
+					() =>
+						trace(
+							`saving pins: no answer after ${SLOW_SAVE_MS} ms`,
+						),
+					SLOW_SAVE_MS,
+				);
+				try {
+					await this.#backend.save({
+						version: 1,
+						markers: $state.snapshot(this.markers),
+					});
+					trace(
+						`saved pins in ${Math.round(performance.now() - began)} ms`,
+					);
+				} catch (error) {
+					this.#reportSaveError(error);
+				} finally {
+					clearTimeout(watchdog);
+				}
+			}
+		} finally {
+			// Same step as the last `#dirty` check: a change made right after
+			// the loop ended starts a new write instead of joining a finished one.
+			this.#writing = null;
+		}
+	}
+
+	#reportSaveError(error: unknown): void {
+		console.error("[map-elements] Failed to save", error);
+		trace("saving pins failed");
+		try {
+			this.onSaveError?.(error);
+		} catch (callbackError) {
+			console.error("[map-elements] onSaveError threw", callbackError);
+		}
 	}
 }

@@ -4,13 +4,21 @@
 
 	const browse = $derived(preferencesSnapshot().browse);
 	const cardVariant = $derived(
-		browse.viewMode === "grid" ? "standard" : browse.viewMode,
+		browse.viewMode === "compact" || browse.viewMode === "detailed"
+			? browse.viewMode
+			: "standard",
 	);
 	const cardRadiusVar = $derived(
 		browse.cardRadius !== null ? `${browse.cardRadius}px` : undefined,
 	);
 	const cardGapVar = $derived(
 		browse.cardGap !== null ? `${browse.cardGap}px` : undefined,
+	);
+
+	const columnsVar = $derived(
+		browse.gridColumns !== null
+			? `repeat(${browse.gridColumns}, minmax(0, 1fr))`
+			: undefined,
 	);
 
 	const now = Date.now();
@@ -59,6 +67,7 @@
 		class={["photo-grid", `photo-grid-${cardVariant}`]}
 		style:--radius-grid={cardRadiusVar}
 		style:gap={cardGapVar}
+		style:grid-template-columns={columnsVar}
 		aria-hidden="true"
 	>
 		{#each sample as person (person.id)}

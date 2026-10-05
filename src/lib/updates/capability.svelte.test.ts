@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { installedBy } from "./updates-test-helpers";
+
 const api = vi.hoisted(() => ({
 	getUpdateCapability: vi.fn(),
 	updatesAvailableHere: vi.fn(),
@@ -34,6 +36,37 @@ describe("the update capability probe", () => {
 		await hydrateUpdateCapability();
 
 		expect(updatesSelfManaged()).toBe(true);
+	});
+
+	it.each([
+		["org.fdroid.fdroid", true],
+		["com.looker.droidify", true],
+		["com.android.vending", false],
+		["dev.imranr.obtainium", false],
+	])(
+		"tells an install by %s as from F-Droid: %s",
+		async (installer, fromFdroid) => {
+			api.getUpdateCapability.mockResolvedValue(installedBy(installer));
+			const { hydrateUpdateCapability, installedFromFdroid } =
+				await import("./capability.svelte");
+
+			await hydrateUpdateCapability();
+
+			expect(installedFromFdroid()).toBe(fromFdroid);
+		},
+	);
+
+	it("never takes a self-managed install for an F-Droid one", async () => {
+		api.getUpdateCapability.mockResolvedValue({
+			state: "supported",
+			detail: { payloadSuffix: "-android.apk", canInstallNow: true },
+		});
+		const { hydrateUpdateCapability, installedFromFdroid } =
+			await import("./capability.svelte");
+
+		await hydrateUpdateCapability();
+
+		expect(installedFromFdroid()).toBe(false);
 	});
 
 	it("probes once even when called concurrently", async () => {
@@ -143,7 +176,7 @@ describe("the update capability probe", () => {
 		["foreignTarget", undefined, true],
 		["foreignSigner", undefined, false],
 	])(
-		"tells whether Open Grind signed the build when %s decides updates",
+		"tells whether Euskal Grindr signed the build when %s decides updates",
 		async (reason, detail, signed) => {
 			api.getUpdateCapability.mockResolvedValue({
 				state: "unsupported",

@@ -16,6 +16,7 @@ import {
 	tagTextByKey,
 } from "$lib/model/users/tags";
 import type { Gender } from "$lib/model/users/genders";
+import type { UnitSystem } from "$lib/util/units";
 
 export const filterIsFavoriteSchema = z.boolean();
 export const filterIsOnlineSchema = z.boolean();
@@ -40,6 +41,23 @@ export const isFullRange = ({
 	min: number;
 	max: number;
 }) => from === min && to === max;
+
+export const rangeBoundTexts = ({
+	floor,
+	ceiling,
+	range: [min = floor, max = ceiling],
+	format,
+	units,
+}: {
+	floor: number;
+	ceiling: number;
+	range: number[];
+	format: (value: number, units: UnitSystem) => string;
+	units: UnitSystem;
+}): [string, string] => [
+	min === floor ? "No min" : format(min, units),
+	max === ceiling ? "No max" : format(max, units),
+];
 
 export const AGE_MIN = 18;
 export const AGE_MAX = 99;
@@ -256,6 +274,39 @@ export const gridSearchFiltersSchema = z.object({
 });
 
 export type GridSearchFilters = z.infer<typeof gridSearchFiltersSchema>;
+
+const ACTIVE_BOOLEAN_KEYS = [
+	"isFavorite",
+	"isOnline",
+	"isRightNow",
+	"isFresh",
+	"haventChattedTodayEnabled",
+] as const satisfies readonly (keyof GridSearchFilters)[];
+
+const ACTIVE_ENABLED_KEYS = [
+	"ageEnabled",
+	"genderEnabled",
+	"tagsEnabled",
+	"positionEnabled",
+	"photosEnabled",
+	"tribesEnabled",
+	"bodyTypesEnabled",
+	"heightEnabled",
+	"weightEnabled",
+	"relationshipStatusesEnabled",
+	"acceptNSFWPicsEnabled",
+	"lookingForEnabled",
+	"meetAtEnabled",
+	"healthPracticesEnabled",
+] as const satisfies readonly (keyof GridSearchFilters)[];
+
+/** How many filters are switched on, as the filter sheets count them. */
+export function countActiveFilters(filters: GridSearchFilters): number {
+	return (
+		ACTIVE_BOOLEAN_KEYS.filter((key) => filters[key]).length +
+		ACTIVE_ENABLED_KEYS.filter((key) => filters[key]).length
+	);
+}
 
 export const defaultFilters: GridSearchFilters = gridSearchFiltersSchema.parse(
 	{},

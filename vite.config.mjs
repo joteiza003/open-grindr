@@ -12,6 +12,17 @@ export default defineConfig(async ({ command }) => ({
 	plugins: [sveltekit(), tailwindcss()],
 	resolve: process.env.VITEST ? { conditions: ["browser"] } : undefined,
 
+	// Lets a diagnostics report say which build it came from.
+	define: {
+		__BUILD_ID__: JSON.stringify(
+			(process.env.GITHUB_SHA ?? "dev").slice(0, 7),
+		),
+	},
+
+	// OPEN_GRIND_STORE already selects the Android manifest overlay; exposing it
+	// here lets the bundle drop what a store build may not carry.
+	envPrefix: ["VITE_", "OPEN_GRIND_"],
+
 	esbuild: { drop: command === "build" ? ["console", "debugger"] : [] },
 
 	optimizeDeps: { include: ["leaflet", "sveaflet"] },
@@ -28,7 +39,11 @@ export default defineConfig(async ({ command }) => ({
 		hmr: host ? { protocol: "ws", host, port: 1421 } : undefined,
 		watch: {
 			// 3. tell Vite to ignore watching `src-tauri`
-			ignored: ["**/src-tauri/**"],
+			// Los editores que escriben de forma atómica dejan directorios
+			// `.<fichero>.<pid>.<uuid>.tmpdir/` dentro de src; el watcher de
+			// Node los abre justo cuando desaparecen y el proceso muere con
+			// EBUSY. Ignorarlos evita ese cierre del servidor de desarrollo.
+			ignored: ["**/src-tauri/**", "**/*.tmpdir/**"],
 		},
 		fs: {
 			allow: [
@@ -40,7 +55,7 @@ export default defineConfig(async ({ command }) => ({
 
 	test: {
 		environment: "jsdom",
-		include: ["src/**/*.test.ts"],
+		include: ["src/**/*.test.ts", "e2e-live/support/**/*.test.ts"],
 		setupFiles: ["src/test-setup.ts"],
 		// tinykeys caches navigator.platform at load, so vi.resetModules() cannot
 		// re-resolve `$mod` unless tinykeys goes through the module runner too.

@@ -13,18 +13,21 @@ export function applyAppearance(): void {
 	if (typeof document === "undefined") return;
 	const root = document.documentElement;
 
-	const { accent, density, animations, theme } =
+	const { accent, density, animations, theme, look } =
 		preferencesSnapshot().appearance;
 	root.dataset.accent = accent;
 	root.dataset.density = density;
-	root.dataset.look = "midnight";
+	// Look de fábrica (src/lib/appearance/looks.ts): "lumen" es neutro y frío,
+	// "midnight" conserva el material anterior (cálido, con grano y lavado
+	// radial del acento), "porcelain" y "slate" ajustan bordes y elevación.
+	root.dataset.look = look;
 	if (animations) root.removeAttribute("data-reduce-motion");
 	else root.setAttribute("data-reduce-motion", "");
 
 	// System stays dark-first so unset devices keep the designed look.
 	root.dataset.theme = theme === "light" ? "light" : "dark";
 	document.body?.classList.toggle("dark", theme !== "light");
-	document.body?.classList.add("og-grain");
+	document.body?.classList.toggle("og-grain", look === "midnight");
 
 	const locale = preferencesSnapshot().locale;
 	root.lang = locale;

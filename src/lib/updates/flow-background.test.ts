@@ -51,7 +51,7 @@ afterEach(() => {
 	vi.restoreAllMocks();
 });
 
-describe("an armed install whose download finishes while Open Grind is hidden", () => {
+describe("an armed install whose download finishes while Euskal Grindr is hidden", () => {
 	async function downloadFinishedWhileAway(
 		kind: "install" | "update" = "install",
 	) {
@@ -68,7 +68,7 @@ describe("an armed install whose download finishes while Open Grind is hidden", 
 		return { flow, view };
 	}
 
-	it("waits for Open Grind to come back before installing", async () => {
+	it("waits for Euskal Grindr to come back before installing", async () => {
 		await downloadFinishedWhileAway();
 
 		expect(api.installUpdate).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe("an armed install whose download finishes while Open Grind is hidden", 
 		expect(api.installUpdate).not.toHaveBeenCalled();
 	});
 
-	it("does not install a download canceled while Open Grind was away", async () => {
+	it("does not install a download canceled while Euskal Grindr was away", async () => {
 		await downloadFinishedWhileAway();
 
 		emitProgress(
@@ -146,7 +146,7 @@ describe("an armed install whose download finishes while Open Grind is hidden", 
 		expect(api.installUpdate).not.toHaveBeenCalled();
 	});
 
-	it("does not install an update withdrawn while Open Grind was away", async () => {
+	it("does not install an update withdrawn while Euskal Grindr was away", async () => {
 		const { flow } = await downloadFinishedWhileAway("update");
 
 		await flow.withdrawUpdate();

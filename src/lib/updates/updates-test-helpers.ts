@@ -2,17 +2,30 @@ import { vi } from "vitest";
 
 import {
 	APP_COMPONENT,
+	COMPONENT_KEYS,
 	COMPONENT_PACKAGE,
 	type ComponentKey,
 	GOOGLE_OAUTH_COMPONENT,
-	RECAPTCHA_COMPONENT,
 } from "./components";
 import type { InstallKind, StagePresenter, UpdateFlow } from "./flow";
 import type * as UpdateApi from "./index";
 import type * as Toasts from "./toasts";
-import type { CheckResult, InstallOutcome, Progress, Readiness } from "./types";
+import type {
+	Capability,
+	CheckResult,
+	InstallOutcome,
+	Progress,
+	Readiness,
+} from "./types";
 
 const PUBLISHED_TAG = "v1.2.0";
+
+export function installedBy(installer: string): Capability {
+	return {
+		state: "unsupported",
+		detail: { reason: "externallyManaged", detail: { installer } },
+	};
+}
 
 export async function settled(): Promise<void> {
 	await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -119,14 +132,16 @@ export function outcomeOf(
 	};
 }
 
+function nothingStagedAnywhere(): Record<ComponentKey, Readiness> {
+	return Object.fromEntries(
+		COMPONENT_KEYS.map((key) => [key, { state: "nothingStaged" }]),
+	) as Record<ComponentKey, Readiness>;
+}
+
 export function updateApiFake() {
 	const progressListeners: Array<(progress: Progress) => void> = [];
 	const outcomeListeners: Array<(outcome: InstallOutcome) => void> = [];
-	const readiness: Record<ComponentKey, Readiness> = {
-		[APP_COMPONENT]: { state: "nothingStaged" },
-		[GOOGLE_OAUTH_COMPONENT]: { state: "nothingStaged" },
-		[RECAPTCHA_COMPONENT]: { state: "nothingStaged" },
-	};
+	const readiness = nothingStagedAnywhere();
 	const api = {
 		cancelUpdateDownload: vi.fn<typeof UpdateApi.cancelUpdateDownload>(),
 		checkForUpdate: vi.fn<typeof UpdateApi.checkForUpdate>(),
@@ -149,9 +164,7 @@ export function updateApiFake() {
 		for (const stub of Object.values(api)) stub.mockReset();
 		progressListeners.length = 0;
 		outcomeListeners.length = 0;
-		readiness[APP_COMPONENT] = { state: "nothingStaged" };
-		readiness[GOOGLE_OAUTH_COMPONENT] = { state: "nothingStaged" };
-		readiness[RECAPTCHA_COMPONENT] = { state: "nothingStaged" };
+		Object.assign(readiness, nothingStagedAnywhere());
 		api.cancelUpdateDownload.mockResolvedValue(undefined);
 		api.checkForUpdate.mockResolvedValue(upToDate);
 		api.discardStagedUpdate.mockResolvedValue(undefined);

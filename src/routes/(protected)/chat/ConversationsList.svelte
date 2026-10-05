@@ -1,48 +1,86 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
-	import { tick } from "svelte";
+	import { ChecksIcon } from "phosphor-svelte";
+	import { onDestroy, tick } from "svelte";
+	import { toast } from "svelte-sonner";
 
+	import { preferencesSnapshot } from "$lib/app-data/preferences.svelte";
 	import { getConversations } from "$lib/chat/conversations-context.svelte";
+	import { sortInbox } from "$lib/chat/inbox-sort";
+	import { markAllConversationsRead } from "$lib/chat/mark-all-conversations";
+	import { markedUnreadIds } from "$lib/chat/marked-unread.svelte";
 	import AlbumLibrary from "$lib/components/chat/AlbumLibrary.svelte";
 	import ApiErrorDisplay from "$lib/components/feedback/ApiErrorDisplay.svelte";
 	import DataRefreshControl from "$lib/components/feedback/DataRefreshControl.svelte";
 	import ScrollToTopButton from "$lib/components/shared/ScrollToTopButton.svelte";
+	import * as AlertDialog from "$lib/components/ui/alert-dialog";
+	import Button from "$lib/components/ui/button/button.svelte";
 	import Skeleton from "$lib/components/ui/skeleton/skeleton.svelte";
+	import { filter as favoriteListFilter } from "$lib/favorites/lists-state.svelte";
 	import { t } from "$lib/i18n";
 	import { dismissOnBackGesture } from "$lib/platform/back-gesture-event.svelte";
 	import { below } from "$lib/util/breakpoints.svelte";
 	import { restoreScrollOnce } from "$lib/util/scroll-restore.svelte";
 	import { SelectionSet } from "$lib/util/selection.svelte";
 	import type { ConversationsState } from "$lib/chat/conversations-state.svelte";
-	import Conversation from "./Conversation.svelte";
 	import ConversationsPagingTail from "./ConversationsPagingTail.svelte";
 	import ConversationsSelectionBar from "./ConversationsSelectionBar.svelte";
 	import DeleteConversationsDialog from "./DeleteConversationsDialog.svelte";
 	import ConversationsFilters from "./filters/ConversationsFilters.svelte";
 	import LazyConversation from "./LazyConversation.svelte";
+	import { MountQueue } from "./mount-queue";
+
+	let {
+		covered = false,
+		class: className,
+	}: { covered?: boolean; class?: import("svelte/elements").ClassValue } =
+		$props();
 
 	const EAGER_COUNT = 10;
 
 	const conversations: ConversationsState = getConversations();
 	const mobile = below("split");
+	const mountQueue = new MountQueue();
+
+	onDestroy(() => mountQueue.destroy());
 
 	$effect(() => {
-		conversations.noteListViewed();
+		if (!covered) conversations.noteListViewed();
 	});
 
 	let container: HTMLDivElement | null = $state(null);
 
-	restoreScrollOnce(() => container, conversations);
-
-	let { class: className }: { class?: import("svelte/elements").ClassValue } =
-		$props();
+	restoreScrollOnce({ container: () => container, state: conversations });
 
 	const selection = new SelectionSet<string>();
 	let selecting = $state(false);
 	let deleteDialogOpen = $state(false);
 	let deleteIds: string[] = $state([]);
 	let tab = $state<"chats" | "albums">("chats");
+
+	// Marcar todo como leído: confirmación, una sola ejecución a la vez y un aviso.
+	let markAllOpen = $state(false);
+	let markingAll = $state(false);
+
+	async function markAllRead() {
+		if (markingAll) return;
+		markingAll = true;
+		try {
+			const result = await markAllConversationsRead(
+				conversations.entries,
+			);
+			if (result.marked === 0 && result.failed === 0) {
+				toast(t("chat.markAllReadNone"));
+			} else if (result.marked > 0) {
+				toast.success(
+					t("chat.markAllReadDone", { count: result.marked }),
+				);
+			}
+		} finally {
+			markingAll = false;
+		}
+	}
 
 	async function compensateScroll() {
 		if (!container) return;
@@ -58,6 +96,24 @@
 			container.scrollTop = Math.max(0, scrollBefore + delta);
 		}
 	}
+
+	// Con una lista de favoritos elegida solo se ven los chats de sus miembros.
+	const shownEntries = $derived.by(() => {
+		const allowed = favoriteListFilter.allowedIds();
+		const visible =
+			allowed === null
+				? conversations.entries
+				: conversations.entries.filter((entry) =>
+						entry.data.participants.some((p) =>
+							allowed.has(p.profileId),
+						),
+					);
+		return sortInbox(visible, {
+			sort: preferencesSnapshot().chat.inboxSort,
+			markedUnread: new Set(markedUnreadIds()),
+			now: Date.now(),
+		});
+	});
 
 	const selectedEntries = $derived(
 		conversations.entries.filter((entry) =>
@@ -90,7 +146,7 @@
 	}
 
 	$effect(() => {
-		if (selecting && (!mobile.current || selection.size === 0)) {
+		if (selecting && (!mobile.current || covered || selection.size === 0)) {
 			exitSelection();
 		}
 	});
@@ -157,6 +213,24 @@
 		onClose={exitSelection}
 	/>
 {/if}
+<AlertDialog.Root bind:open={markAllOpen}>
+	<AlertDialog.Content>
+		<AlertDialog.Header>
+			<AlertDialog.Title>{t("chat.markAllReadTitle")}</AlertDialog.Title>
+			<AlertDialog.Description>
+				{t("chat.markAllReadBody")}
+			</AlertDialog.Description>
+		</AlertDialog.Header>
+		<AlertDialog.Footer>
+			<AlertDialog.Cancel size="lg">
+				{t("common.cancel")}
+			</AlertDialog.Cancel>
+			<AlertDialog.Action size="lg" onclick={() => void markAllRead()}>
+				{t("chat.markAllRead")}
+			</AlertDialog.Action>
+		</AlertDialog.Footer>
+	</AlertDialog.Content>
+</AlertDialog.Root>
 <DeleteConversationsDialog
 	bind:open={deleteDialogOpen}
 	count={deleteIds.length}
@@ -169,34 +243,50 @@
 		data-fixed-header
 		data-slot="conversations-header"
 	>
-		<button
-			type="button"
-			class={[
-				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-				{
-					"bg-primary text-primary-foreground": tab === "chats",
-					"bg-muted text-muted-foreground": tab !== "chats",
-				},
-			]}
-			aria-pressed={tab === "chats"}
-			onclick={() => (tab = "chats")}
-		>
-			{t("chat.chats")}
-		</button>
-		<button
-			type="button"
-			class={[
-				"flex-1 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-				{
-					"bg-primary text-primary-foreground": tab === "albums",
-					"bg-muted text-muted-foreground": tab !== "albums",
-				},
-			]}
-			aria-pressed={tab === "albums"}
-			onclick={() => (tab = "albums")}
-		>
-			{t("chat.albums")}
-		</button>
+		<div class="flex flex-1 items-center gap-0.5 rounded-md bg-inset p-0.5">
+			<button
+				type="button"
+				class={[
+					"flex-1 rounded-sm px-3 py-1.5 text-label font-medium transition-colors",
+					{
+						"bg-surface text-foreground shadow-e1": tab === "chats",
+						"text-secondary": tab !== "chats",
+					},
+				]}
+				aria-pressed={tab === "chats"}
+				onclick={() => (tab = "chats")}
+			>
+				{t("chat.chats")}
+			</button>
+			<button
+				type="button"
+				class={[
+					"flex-1 rounded-sm px-3 py-1.5 text-label font-medium transition-colors",
+					{
+						"bg-surface text-foreground shadow-e1":
+							tab === "albums",
+						"text-secondary": tab !== "albums",
+					},
+				]}
+				aria-pressed={tab === "albums"}
+				onclick={() => (tab = "albums")}
+			>
+				{t("chat.albums")}
+			</button>
+		</div>
+		{#if tab === "chats"}
+			<Button
+				variant="ghost"
+				size="icon"
+				class="size-9 shrink-0 rounded-full"
+				aria-label={t("chat.markAllRead")}
+				title={t("chat.markAllRead")}
+				disabled={markingAll || conversations.loading}
+				onclick={() => (markAllOpen = true)}
+			>
+				<ChecksIcon class="size-5" weight="bold" />
+			</Button>
+		{/if}
 	</div>
 	<div class="relative flex min-h-0 flex-1 flex-col">
 		{#if tab === "albums"}
@@ -235,30 +325,20 @@
 					<div
 						class="flex min-h-overscrollable shrink-0 flex-col gap-0 pb-nav-clear"
 					>
-						{#each conversations.entries as conversation, i (conversation.data.conversationId)}
+						{#each shownEntries as conversation, i (conversation.data.conversationId)}
 							{@const conversationId =
 								conversation.data.conversationId}
-							{#if i < EAGER_COUNT}
-								<Conversation
-									{conversation}
-									selection={selecting ? selection : null}
-									onEnterSelection={mobile.current
-										? () => enterSelection(conversationId)
-										: undefined}
-									onRequestDelete={() =>
-										requestDelete([conversationId])}
-								/>
-							{:else}
-								<LazyConversation
-									{conversation}
-									selection={selecting ? selection : null}
-									onEnterSelection={mobile.current
-										? () => enterSelection(conversationId)
-										: undefined}
-									onRequestDelete={() =>
-										requestDelete([conversationId])}
-								/>
-							{/if}
+							<LazyConversation
+								{conversation}
+								eager={i < EAGER_COUNT}
+								queue={mountQueue}
+								selection={selecting ? selection : null}
+								onEnterSelection={mobile.current
+									? () => enterSelection(conversationId)
+									: undefined}
+								onRequestDelete={() =>
+									requestDelete([conversationId])}
+							/>
 						{/each}
 						<ConversationsPagingTail
 							paging={conversations.paging}

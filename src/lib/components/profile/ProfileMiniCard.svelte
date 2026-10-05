@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { env } from "$env/dynamic/public";
 	import { ChatIcon, StarIcon } from "phosphor-svelte";
 	import type { Snippet } from "svelte";
 
@@ -6,7 +7,10 @@
 	import DistanceFormatted from "$lib/components/profile/DistanceFormatted.svelte";
 	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import UserAvatar from "$lib/components/profile/UserAvatar.svelte";
+	import Frost from "$lib/components/shared/Frost.svelte";
 	import { Badge } from "$lib/components/ui/badge";
+	import { longPressHandlers } from "$lib/util/long-press";
+	import { profileMediaUrl } from "$lib/util/media";
 
 	let {
 		mediaHash = null,
@@ -20,6 +24,8 @@
 		hadRecentChat = false,
 		anonymous = false,
 		href = null,
+		onclick,
+		onLongPress,
 		class: className,
 		overlay,
 		variant = "standard",
@@ -27,6 +33,8 @@
 		showDistance = true,
 		showAge = true,
 		showOnlineStatus = true,
+		showFavoriteBadge = true,
+		showChatBadge = true,
 		nameStyle = "solid",
 	}: {
 		mediaHash?: string | null;
@@ -40,34 +48,66 @@
 		hadRecentChat?: boolean;
 		anonymous?: boolean;
 		href?: string | null;
+		onclick?: (event: MouseEvent) => void;
+		/** Pulsación larga (táctil) o clic derecho (ratón). */
+		onLongPress?: () => void;
 		class?: import("svelte/elements").ClassValue;
-		overlay?: Snippet;
+		overlay?: Snippet<[string | null]>;
 		variant?: "standard" | "compact" | "detailed";
 		showName?: boolean;
 		showDistance?: boolean;
 		showAge?: boolean;
 		showOnlineStatus?: boolean;
+		showFavoriteBadge?: boolean;
+		showChatBadge?: boolean;
 		nameStyle?: "solid" | "gradient" | "none";
 	} = $props();
 
 	const nameVisible = $derived(showName && nameStyle !== "none");
+	const favoriteShown = $derived(isFavorite && showFavoriteBadge);
+	const chatShown = $derived(hadRecentChat && showChatBadge);
+	const longPress = $derived(
+		onLongPress ? longPressHandlers(onLongPress) : {},
+	);
+
+	let loadedMediaHash = $state<string | null>(null);
+	const photo = $derived(
+		!env.PUBLIC_ENABLE_BLUR_EFFECTS &&
+			mediaHash !== null &&
+			loadedMediaHash === mediaHash
+			? profileMediaUrl({ mediaHash, size: "thumb" })
+			: null,
+	);
 </script>
 
 {#snippet content()}
 	<div class="absolute size-full bg-stone-700">
-		<UserAvatar {mediaHash} class="size-full" size="xl" />
+		<UserAvatar
+			{mediaHash}
+			class="size-full"
+			size="xl"
+			onload={() => (loadedMediaHash = mediaHash)}
+		/>
 	</div>
 	{#if showDistance && distance !== null}
 		<span class="profile-card-distance absolute top-1 right-1.5">
 			<DistanceFormatted {distance} />
 		</span>
 	{/if}
-	{#if isFavorite || hadRecentChat}
+	{#if favoriteShown || chatShown}
 		<div
 			class="absolute inset-s-2 top-2 z-1 flex w-1/6 flex-col items-center gap-1"
 		>
-			{#if isFavorite}
-				<div class="badge">
+			{#if favoriteShown}
+				<div
+					class="relative flex aspect-square h-auto w-full media-chip"
+				>
+					<Frost
+						src={photo}
+						blur="chip"
+						class="-inset-px"
+						photoClass="-inset-s-2 -top-2"
+					/>
 					<StarIcon
 						weight="fill"
 						class="m-auto size-4/6 text-yellow-500"
@@ -75,8 +115,21 @@
 					<span class="sr-only">Favorite</span>
 				</div>
 			{/if}
-			{#if hadRecentChat}
-				<div class="badge">
+			{#if chatShown}
+				<div
+					class="relative flex aspect-square h-auto w-full media-chip"
+				>
+					<Frost
+						src={photo}
+						blur="chip"
+						class="-inset-px"
+						photoClass={[
+							"-inset-s-2",
+							favoriteShown
+								? "top-[calc(-0.75rem-100cqw/6)]"
+								: "-top-2",
+						]}
+					/>
 					<ChatIcon
 						weight="fill"
 						class="m-auto size-3/5 -translate-y-px text-sky-400"
@@ -120,8 +173,14 @@
 			{:else if nameVisible}
 				<Badge
 					variant="outline"
-					class="max-w-full min-w-0 shrink gap-0 bg-popover/20 scrim backdrop-filter-(--bd-chip)"
+					class="relative max-w-full min-w-0 shrink gap-0 overflow-visible media-pill"
 				>
+					<Frost
+						src={photo}
+						blur="pill"
+						class="-inset-px"
+						photoClass="-inset-s-0.5 -bottom-0.5"
+					/>
 					{#if showOnlineStatus}
 						<ProfileStatusIndicator
 							{onlineUntil}
@@ -180,15 +239,17 @@
 			{/if}
 		</div>
 	{/if}
-	{@render overlay?.()}
+	{@render overlay?.(photo)}
 {/snippet}
 
 {#if href !== null}
 	<a
 		{href}
+		{onclick}
+		{...longPress}
 		aria-label={anonymous ? "Profile" : undefined}
 		class={[
-			"group profile-card relative flex aspect-square items-end overflow-hidden",
+			"group profile-card @container relative flex aspect-square items-end overflow-hidden",
 			`profile-card-${variant}`,
 			className,
 		]}
@@ -198,7 +259,7 @@
 {:else}
 	<div
 		class={[
-			"group profile-card relative flex aspect-square items-end overflow-hidden",
+			"group profile-card @container relative flex aspect-square items-end overflow-hidden",
 			`profile-card-${variant}`,
 			className,
 		]}
@@ -210,26 +271,14 @@
 <style lang="postcss">
 	@reference "$layout";
 
-	.badge {
-		@apply flex aspect-square h-auto w-full rounded-full border border-white/10 bg-popover/40 scrim backdrop-filter-(--bd-chip);
-	}
-
 	.profile-card {
 		transition:
 			transform var(--motion-normal) var(--ease-standard),
 			box-shadow var(--motion-normal) var(--ease-standard);
 	}
 
-	.profile-card-compact .badge {
-		@apply border-white/8 bg-popover/30;
-	}
-
 	.profile-card-compact .profile-card-distance {
 		@apply text-[0.65rem];
-	}
-
-	.profile-card-detailed .badge {
-		@apply border-white/15 bg-popover/50;
 	}
 
 	@media (hover: hover) and (pointer: fine) {

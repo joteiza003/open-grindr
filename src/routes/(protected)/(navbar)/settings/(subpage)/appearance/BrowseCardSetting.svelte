@@ -8,6 +8,7 @@
 	import * as Item from "$lib/components/ui/item";
 	import { Slider } from "$lib/components/ui/slider";
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
+	import { t } from "$lib/i18n";
 
 	// Defaults that reproduce the built-in grid look, used when the user first
 	// opts into customizing.
@@ -26,11 +27,47 @@
 		});
 	}
 
+	const DEFAULT_COLUMNS = 3;
+
+	function setCustomColumns(on: boolean): void {
+		patch({ gridColumns: on ? DEFAULT_COLUMNS : null });
+	}
+
 	function setCustom(on: boolean): void {
 		if (on) patch({ cardRadius: DEFAULT_RADIUS, cardGap: DEFAULT_GAP });
 		else patch({ cardRadius: null, cardGap: null });
 	}
 </script>
+
+<SwitchField
+	title={t("gridColumns.title")}
+	description={t("gridColumns.hint")}
+	disabled={!preferencesLoaded()}
+	bind:checked={() => browse.gridColumns !== null, setCustomColumns}
+/>
+
+{#if browse.gridColumns !== null}
+	<Item.Root variant="outline" class="gap-3 p-4" data-slot="grid-columns">
+		<Item.Content class="gap-1">
+			<Item.Title>
+				{t("gridColumns.value", { n: browse.gridColumns })}
+			</Item.Title>
+		</Item.Content>
+		<Slider
+			type="single"
+			class="w-full"
+			min={2}
+			max={5}
+			step={1}
+			disabled={!preferencesLoaded()}
+			thumbLabels={[t("gridColumns.title")]}
+			bind:value={
+				() => browse.gridColumns ?? DEFAULT_COLUMNS,
+				(gridColumns: number) => patch({ gridColumns })
+			}
+		/>
+	</Item.Root>
+{/if}
 
 <SwitchField
 	title="Custom corners & spacing"

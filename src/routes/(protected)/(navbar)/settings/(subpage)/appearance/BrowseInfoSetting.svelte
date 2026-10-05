@@ -1,13 +1,17 @@
 <script lang="ts">
+	import { ChatIcon, StarIcon } from "phosphor-svelte";
+
 	import { showErrorToast } from "$lib/api/error-toast";
 	import {
 		preferencesLoaded,
 		preferencesSnapshot,
 		setPreferences,
 	} from "$lib/app-data/preferences.svelte";
+	import ProfileStatusIndicator from "$lib/components/profile/ProfileStatusIndicator.svelte";
 	import * as Item from "$lib/components/ui/item";
 	import SwitchField from "$lib/components/ui/switch-field/SwitchField.svelte";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
+	import { t } from "$lib/i18n";
 
 	type NameStyle = "solid" | "gradient" | "none";
 
@@ -55,6 +59,60 @@
 		(showOnlineStatus: boolean) => patch({ showOnlineStatus })
 	}
 />
+<SwitchField
+	title={t("favoritesStrip.setting")}
+	description={t("favoritesStrip.settingHint")}
+	disabled={!preferencesLoaded()}
+	bind:checked={
+		() => browse.showFavoritesStrip,
+		(showFavoritesStrip: boolean) => patch({ showFavoritesStrip })
+	}
+/>
+<SwitchField
+	title={t("indicators.favorite")}
+	description={t("indicators.favoriteHint")}
+	disabled={!preferencesLoaded()}
+	bind:checked={
+		() => browse.showFavoriteBadge,
+		(showFavoriteBadge: boolean) => patch({ showFavoriteBadge })
+	}
+/>
+<SwitchField
+	title={t("indicators.chat")}
+	description={t("indicators.chatHint")}
+	disabled={!preferencesLoaded()}
+	bind:checked={
+		() => browse.showChatBadge,
+		(showChatBadge: boolean) => patch({ showChatBadge })
+	}
+/>
+
+<Item.Root variant="outline" class="gap-3 p-4" data-slot="indicator-legend">
+	<Item.Content class="gap-2">
+		<Item.Title>{t("indicators.legend")}</Item.Title>
+		<ul class="flex flex-col gap-2 text-sm">
+			<li class="flex items-center gap-2">
+				<ProfileStatusIndicator
+					onlineUntil={Date.now() + 600_000}
+					isVisiting={false}
+				/>
+				{t("indicators.legendOnline")}
+			</li>
+			<li class="flex items-center gap-2">
+				<ProfileStatusIndicator onlineUntil={null} isVisiting={true} />
+				{t("indicators.legendVisiting")}
+			</li>
+			<li class="flex items-center gap-2">
+				<StarIcon weight="fill" class="size-4 text-yellow-500" />
+				{t("indicators.legendFavorite")}
+			</li>
+			<li class="flex items-center gap-2">
+				<ChatIcon weight="fill" class="size-4 text-sky-400" />
+				{t("indicators.legendChat")}
+			</li>
+		</ul>
+	</Item.Content>
+</Item.Root>
 
 <Item.Root variant="outline" class="gap-3 p-4">
 	<Item.Content class="gap-1">

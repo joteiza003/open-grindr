@@ -1,0 +1,547 @@
+<!doctype html>
+<html lang="es" data-theme="dark" data-accent="amber" data-look="lumen">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Grindr + · Guía visual «Lumen»</title>
+		<link rel="stylesheet" crossorigin href="./assets/index-B2eu9oSl.css">
+	</head>
+	<body class="dark bg-background text-foreground">
+		<header class="sg-head">
+			<div class="sg-head-inner">
+				<span class="sg-brand">Grindr + · Lumen</span>
+				<div class="sg-controls">
+					<span class="sg-token">tema</span>
+					<button class="sg-chip" data-theme="dark" aria-pressed="true">oscuro</button>
+					<button class="sg-chip" data-theme="light" aria-pressed="false">claro</button>
+					<span class="sg-token" style="margin-inline-start: 8px">look</span>
+					<button class="sg-chip" data-look="lumen" aria-pressed="true">lumen</button>
+					<button class="sg-chip" data-look="midnight" aria-pressed="false">midnight</button>
+					<span class="sg-token" style="margin-inline-start: 8px">densidad</span>
+					<button class="sg-chip" data-density="comfortable" aria-pressed="true">cómoda</button>
+					<button class="sg-chip" data-density="compact" aria-pressed="false">compacta</button>
+				</div>
+			</div>
+			<div class="sg-head-inner" style="padding-top: 0">
+				<div class="sg-controls" id="accents"></div>
+			</div>
+		</header>
+
+		<main class="sg-shell">
+			<!-- ── Superficies ─────────────────────────────────────────────── -->
+			<section class="sg-section" id="superficies" style="margin-top: 32px">
+				<h2 class="sg-title">Superficies y jerarquía</h2>
+				<p class="sg-lead">
+					Cuatro planos semánticos más un hairline de un píxel. En oscuro la
+					jerarquía la marca el borde; en claro, la sombra. Un elemento nunca
+					lleva borde fuerte y sombra fuerte a la vez.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))">
+					<div class="rounded-lg border border-border bg-inset p-4">
+						<p class="text-label">inset</p>
+						<p class="text-caption text-(--text-tertiary)">campos, huecos, pistas</p>
+					</div>
+					<div class="rounded-lg border border-border bg-background p-4">
+						<p class="text-label">canvas</p>
+						<p class="text-caption text-(--text-tertiary)">fondo de la app</p>
+					</div>
+					<div class="rounded-lg border border-border bg-surface p-4">
+						<p class="text-label">surface</p>
+						<p class="text-caption text-(--text-tertiary)">tarjetas, filas, grupos</p>
+					</div>
+					<div class="rounded-lg border border-border bg-raised p-4">
+						<p class="text-label">raised</p>
+						<p class="text-caption text-(--text-tertiary)">controles, hover</p>
+					</div>
+					<div class="rounded-lg border border-border bg-overlay p-4" style="box-shadow: var(--elevation-2)">
+						<p class="text-label">overlay</p>
+						<p class="text-caption text-(--text-tertiary)">menús, hojas, diálogos</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Color ───────────────────────────────────────────────────── -->
+			<section class="sg-section" id="color">
+				<h2 class="sg-title">Color</h2>
+				<p class="sg-lead">
+					Neutros fríos, un acento con intención y cuatro colores de sistema. El
+					texto sobre el acento es siempre casi negro: el amarillo nunca lleva
+					texto blanco.
+				</p>
+
+				<p class="sg-label">Acento · relleno, suave, borde y texto</p>
+				<div class="sg-row" style="margin-bottom: 24px">
+					<div class="sg-swatch" style="background: var(--accent); color: var(--text-on-accent); width: 120px">accent</div>
+					<div class="sg-swatch" style="background: var(--accent-soft); color: var(--text-primary); width: 120px">accent-soft</div>
+					<div class="sg-swatch" style="background: var(--bg-surface); border-color: var(--accent-border); border-width: 2px; color: var(--text-primary); width: 120px">accent-border</div>
+					<div class="sg-swatch" style="background: var(--bg-surface); color: var(--accent-text); width: 120px">accent-text</div>
+				</div>
+
+				<p class="sg-label">Sistema</p>
+				<div class="sg-swatches" style="margin-bottom: 24px">
+					<div class="sg-swatch" style="background: var(--success); color: oklch(0.18 0.02 155)">success</div>
+					<div class="sg-swatch" style="background: var(--success-soft); color: var(--success-text)">success-soft</div>
+					<div class="sg-swatch" style="background: var(--warning); color: oklch(0.2 0.03 80)">warning</div>
+					<div class="sg-swatch" style="background: var(--warning-soft); color: var(--warning-text)">warning-soft</div>
+					<div class="sg-swatch" style="background: var(--danger); color: white">danger</div>
+					<div class="sg-swatch" style="background: var(--danger-soft); color: var(--danger-text)">danger-soft</div>
+					<div class="sg-swatch" style="background: var(--info); color: oklch(0.18 0.03 240)">info</div>
+					<div class="sg-swatch" style="background: var(--info-soft); color: var(--info-text)">info-soft</div>
+				</div>
+
+				<p class="sg-label">Texto</p>
+				<div class="sg-stack">
+					<p class="text-body-lg text-(--text-primary)">primary · texto principal, 15:1</p>
+					<p class="text-body-lg text-(--text-secondary)">secondary · metadatos y descripciones, 8:1</p>
+					<p class="text-body-lg text-(--text-tertiary)">tertiary · solo ≥ 15 px o decorativo, 5:1</p>
+					<p class="text-body-lg text-(--accent-text)">accent-text · enlaces y estados seleccionados</p>
+				</div>
+			</section>
+
+			<!-- ── Tipografía ─────────────────────────────────────────────── -->
+			<section class="sg-section" id="tipografia">
+				<h2 class="sg-title">Tipografía</h2>
+				<p class="sg-lead">
+					IBM Plex Sans Variable. Ocho pasos y tres pesos (400 / 500 / 600). El
+					tracking se cierra en los tamaños grandes y se abre en los pequeños.
+				</p>
+				<div class="sg-panel">
+					<div class="sg-spec">
+						<span class="sg-token">display 34/40 −0.02</span>
+						<span class="text-display">Cerca de ti</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">title-1 28/34 −0.02</span>
+						<span class="text-title-1">Ajustes</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">title-2 22/28 −0.01</span>
+						<span class="text-title-2">Pablo, 29</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">title-3 18/24 −0.01</span>
+						<span class="text-title-3">Guardar en un álbum</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">body-lg 16/24</span>
+						<span class="text-body-lg">Nos vemos a las nueve en la plaza.</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">body 15/22</span>
+						<span class="text-body">Texto base de la aplicación en cualquier pantalla.</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">label 13/18 +0.01</span>
+						<span class="text-label font-medium">Notificaciones</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">caption 12/16 +0.01</span>
+						<span class="text-caption text-(--text-secondary)">Hace 2 h · a 1,4 km</span>
+					</div>
+					<div class="sg-spec">
+						<span class="sg-token">overline 11/14 +0.08</span>
+						<span class="text-overline uppercase">Cuenta</span>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Espaciado y radios ─────────────────────────────────────── -->
+			<section class="sg-section" id="geometria">
+				<h2 class="sg-title">Espaciado y radios</h2>
+				<p class="sg-lead">
+					Unidad de 4 px y una sola escala de radios. Se acabaron los 17/19/27 px
+					a medida.
+				</p>
+				<div class="sg-panel sg-stack" style="margin-bottom: 24px">
+					<div class="sg-row"><span class="sg-token" style="width: 48px">2</span><span class="sg-bar" style="width: 2px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">4</span><span class="sg-bar" style="width: 4px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">8</span><span class="sg-bar" style="width: 8px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">16</span><span class="sg-bar" style="width: 16px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">24</span><span class="sg-bar" style="width: 24px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">32</span><span class="sg-bar" style="width: 32px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">48</span><span class="sg-bar" style="width: 48px"></span></div>
+					<div class="sg-row"><span class="sg-token" style="width: 48px">64</span><span class="sg-bar" style="width: 64px"></span></div>
+				</div>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(140px, 1fr))">
+					<div class="sg-radius rounded-xs"><span class="sg-token">xs 6</span></div>
+					<div class="sg-radius rounded-sm"><span class="sg-token">sm 10</span></div>
+					<div class="sg-radius rounded-md"><span class="sg-token">md 14</span></div>
+					<div class="sg-radius rounded-lg"><span class="sg-token">lg 18</span></div>
+					<div class="sg-radius rounded-xl"><span class="sg-token">xl 24</span></div>
+					<div class="sg-radius rounded-full"><span class="sg-token">full</span></div>
+				</div>
+			</section>
+
+			<!-- ── Elevación ──────────────────────────────────────────────── -->
+			<section class="sg-section" id="elevacion">
+				<h2 class="sg-title">Elevación</h2>
+				<p class="sg-lead">Cuatro planos, siempre con dos capas de sombra en claro.</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr))">
+					<div class="sg-elev" style="box-shadow: var(--elevation-1)"><span class="sg-token">e1 · tarjeta</span></div>
+					<div class="sg-elev" style="box-shadow: var(--elevation-2)"><span class="sg-token">e2 · menú</span></div>
+					<div class="sg-elev" style="box-shadow: var(--elevation-3)"><span class="sg-token">e3 · hoja</span></div>
+					<div class="sg-elev" style="box-shadow: var(--elevation-4)"><span class="sg-token">e4 · modal</span></div>
+				</div>
+			</section>
+
+			<!-- ── Botones ────────────────────────────────────────────────── -->
+			<section class="sg-section" id="botones">
+				<h2 class="sg-title">Botones</h2>
+				<p class="sg-lead">
+					Una sola acción principal por pantalla. Alturas 36 / 44 / 52, radio 14,
+					foco con anillo de 2 px.
+				</p>
+				<div class="sg-panel sg-stack">
+					<div class="sg-row">
+						<button class="h-11 rounded-md bg-primary px-4 text-label font-medium text-primary-foreground">Principal</button>
+						<button class="h-11 rounded-md border border-border bg-raised px-4 text-label font-medium">Secundario</button>
+						<button class="h-11 rounded-md border border-(--border-strong) px-4 text-label font-medium">Contorno</button>
+						<button class="h-11 rounded-md px-4 text-label font-medium text-(--text-secondary)">Fantasma</button>
+						<button class="h-11 rounded-md bg-danger px-4 text-label font-medium text-white">Destructivo</button>
+						<button class="h-11 rounded-md px-4 text-label font-medium text-(--accent-text)">Enlace</button>
+					</div>
+					<div class="sg-row">
+						<button class="h-9 rounded-md bg-primary px-3 text-caption font-medium text-primary-foreground">sm 36</button>
+						<button class="h-11 rounded-md bg-primary px-4 text-label font-medium text-primary-foreground">md 44</button>
+						<button class="h-13 rounded-md bg-primary px-5 text-body font-medium text-primary-foreground">lg 52</button>
+						<button class="h-11 rounded-md bg-primary px-4 text-label font-medium text-primary-foreground opacity-40">deshabilitado</button>
+					</div>
+					<div class="sg-row">
+						<button class="grid size-11 place-items-center rounded-full bg-(--bg-raised) text-lg" aria-label="Más">⋯</button>
+						<button class="grid size-11 place-items-center rounded-full border border-(--accent-border) bg-(--accent-soft)" aria-label="Activo">★</button>
+						<button class="grid size-11 place-items-center rounded-full border-2 border-(--accent) bg-(--bg-raised)" aria-label="Foco">✓</button>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Formularios ────────────────────────────────────────────── -->
+			<section class="sg-section" id="formularios">
+				<h2 class="sg-title">Formularios</h2>
+				<p class="sg-lead">
+					Etiqueta siempre visible, altura 44, fondo inset y foco con anillo.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))">
+					<div class="sg-panel sg-stack">
+						<label class="sg-label" style="margin: 0">Nombre</label>
+						<div class="h-11 rounded-md border border-border bg-inset px-3.5 leading-[44px] text-body">Joseba</div>
+						<label class="sg-label" style="margin: 0">Con foco</label>
+						<div class="h-11 rounded-md border-2 border-(--accent) bg-surface px-3.5 leading-[42px] text-body" style="box-shadow: 0 0 0 2px var(--accent-soft)">Escribiendo…</div>
+						<label class="sg-label" style="margin: 0">Con error</label>
+						<div class="h-11 rounded-md border border-danger bg-inset px-3.5 leading-[44px] text-body">no-válido</div>
+						<p class="text-caption text-(--danger-text)">Usa solo letras y números.</p>
+					</div>
+					<div class="sg-panel sg-stack">
+						<div class="sg-row" style="justify-content: space-between">
+							<span class="text-label">Modo incógnito</span>
+							<span class="relative inline-block h-[26px] w-11 rounded-full bg-primary"><span class="absolute right-0.5 top-0.5 size-[22px] rounded-full bg-white"></span></span>
+						</div>
+						<div class="sg-row" style="justify-content: space-between">
+							<span class="text-label">Mostrar distancia</span>
+							<span class="relative inline-block h-[26px] w-11 rounded-full bg-raised"><span class="absolute left-0.5 top-0.5 size-[22px] rounded-full bg-white opacity-80"></span></span>
+						</div>
+						<div class="sg-row">
+							<span class="grid size-[22px] place-items-center rounded-xs bg-primary text-[13px] text-primary-foreground">✓</span>
+							<span class="text-label">Casilla marcada</span>
+							<span class="grid size-5 place-items-center rounded-full border-2 border-(--accent)"><span class="size-2 rounded-full bg-primary"></span></span>
+							<span class="text-label">Opción</span>
+						</div>
+						<div>
+							<p class="text-caption text-(--text-tertiary)">Radio del círculo · 12,4 km</p>
+							<div class="relative mt-2 h-1 rounded-full bg-inset">
+								<div class="absolute inset-y-0 left-0 w-2/5 rounded-full bg-primary"></div>
+								<span class="absolute -top-2.5 left-2/5 size-6 -translate-x-1/2 rounded-full border-2 border-(--bg-surface) bg-primary"></span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Listas y tarjetas ──────────────────────────────────────── -->
+			<section class="sg-section" id="listas">
+				<h2 class="sg-title">Listas, filas y tarjetas</h2>
+				<p class="sg-lead">
+					Fila de 56 con hairline sangrado; los grupos van en tarjeta de radio 18.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))">
+					<div class="overflow-hidden rounded-lg border border-border bg-surface">
+						<div class="flex min-h-14 items-center gap-3 border-b border-border px-4">
+							<span class="grid size-10 place-items-center rounded-full bg-raised text-label">JO</span>
+							<span class="flex-1 text-label">Cuenta</span>
+							<span class="text-caption text-(--text-tertiary)">Privacidad · Bloqueados</span>
+							<span class="text-(--text-tertiary)">›</span>
+						</div>
+						<div class="flex min-h-14 items-center gap-3 border-b border-border px-4" style="background: var(--accent-soft)">
+							<span class="grid size-10 place-items-center rounded-full bg-raised text-label">AP</span>
+							<span class="flex-1 text-label">Apariencia</span>
+							<span class="text-caption text-(--text-secondary)">Ámbar · Oscuro</span>
+							<span class="text-(--text-tertiary)">›</span>
+						</div>
+						<div class="flex min-h-14 items-center gap-3 px-4">
+							<span class="grid size-10 place-items-center rounded-full bg-raised text-label">AL</span>
+							<span class="flex-1 text-label">Álbumes</span>
+							<span class="text-caption text-(--text-tertiary)">3</span>
+							<span class="text-(--text-tertiary)">›</span>
+						</div>
+					</div>
+					<div class="sg-stack">
+						<div class="rounded-lg border border-border bg-surface p-4" style="box-shadow: var(--elevation-1)">
+							<p class="text-title-3">Tarjeta</p>
+							<p class="text-body text-(--text-secondary)">Radio 18, padding 16, sombra e1 solo si flota sobre contenido.</p>
+						</div>
+						<div class="sg-row">
+							<span class="rounded-xs bg-(--accent-soft) px-2 py-1 text-caption text-(--accent-text)">chip</span>
+							<span class="rounded-full bg-primary px-2 py-1 text-caption text-primary-foreground">badge 3</span>
+							<span class="rounded-xs border border-(--accent-border) px-2 py-1 text-caption">seleccionado</span>
+							<span class="rounded-xs bg-(--success-soft) px-2 py-1 text-caption text-(--success-text)">en línea</span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Navegación ─────────────────────────────────────────────── -->
+			<section class="sg-section" id="navegacion">
+				<h2 class="sg-title">Navegación</h2>
+				<p class="sg-lead">
+					Barra inferior en píldora translúcida, cabecera de 56 y pestañas
+					segmentadas. La etiqueta del destino activo se lee a 11 px.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr))">
+					<div class="sg-panel">
+						<div class="sg-row" style="justify-content: space-between">
+							<span class="text-(--text-tertiary)">←</span>
+							<span class="text-title-3">Conversación</span>
+							<span class="text-(--text-tertiary)">⋯</span>
+						</div>
+						<div style="height: 1px; background: var(--border-subtle); margin: 12px -16px"></div>
+						<p class="text-body text-(--text-secondary)">Cabecera de pantalla, 56 de alto.</p>
+					</div>
+					<div class="sg-panel">
+						<div class="rounded-full border border-border bg-(--bg-glass) p-1.5" style="box-shadow: var(--elevation-2); backdrop-filter: blur(16px)">
+							<div class="flex items-center gap-1">
+								<span class="flex flex-1 flex-col items-center gap-0.5 rounded-2xl bg-(--accent-soft) px-3 py-1.5 text-overline uppercase">Grid</span>
+								<span class="flex flex-1 flex-col items-center gap-0.5 px-3 py-1.5 text-overline uppercase text-(--text-tertiary)">Ahora</span>
+								<span class="flex flex-1 flex-col items-center gap-0.5 px-3 py-1.5 text-overline uppercase text-(--text-tertiary)">Interés</span>
+								<span class="flex flex-1 flex-col items-center gap-0.5 px-3 py-1.5 text-overline uppercase text-(--text-tertiary)">Chat</span>
+								<span class="size-11 rounded-full border-2 border-(--accent) bg-raised"></span>
+							</div>
+						</div>
+					</div>
+					<div class="sg-panel">
+						<div class="inline-flex rounded-md bg-inset p-0.5">
+							<span class="rounded-sm bg-primary px-3 py-1.5 text-label text-primary-foreground">Toques</span>
+							<span class="px-3 py-1.5 text-label text-(--text-secondary)">Vistas</span>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Superposiciones ────────────────────────────────────────── -->
+			<section class="sg-section" id="superposiciones">
+				<h2 class="sg-title">Superposiciones</h2>
+				<p class="sg-lead">Hoja, diálogo, menú, aviso y vacío, con sus radios y sombras.</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+					<div class="rounded-xl border border-border bg-overlay p-4" style="box-shadow: var(--elevation-3)">
+						<div class="mx-auto mb-3 h-1 w-9 rounded-full bg-(--border-strong)"></div>
+						<p class="text-title-3">Hoja inferior</p>
+						<p class="text-body text-(--text-secondary)">Radio 24 arriba, asa de 36 × 4, acciones al pie.</p>
+						<div class="mt-4 flex gap-2">
+							<button class="h-11 flex-1 rounded-md border border-border text-label">Cancelar</button>
+							<button class="h-11 flex-1 rounded-md bg-primary text-label font-medium text-primary-foreground">Guardar</button>
+						</div>
+					</div>
+					<div class="rounded-xl border border-border bg-overlay p-4" style="box-shadow: var(--elevation-4)">
+						<div class="flex gap-3">
+							<span class="grid size-10 shrink-0 place-items-center rounded-full bg-(--danger-soft) text-(--danger-text)">!</span>
+							<div>
+								<p class="text-title-3">Eliminar álbum</p>
+								<p class="text-body text-(--text-secondary)">Esta acción no se puede deshacer.</p>
+							</div>
+						</div>
+						<div class="mt-4 flex justify-end gap-2">
+							<button class="h-11 rounded-md border border-border px-4 text-label">Cancelar</button>
+							<button class="h-11 rounded-md bg-danger px-4 text-label font-medium text-white">Eliminar</button>
+						</div>
+					</div>
+					<div class="overflow-hidden rounded-lg border border-border bg-overlay p-1.5" style="box-shadow: var(--elevation-2)">
+						<div class="rounded-sm px-2.5 py-2 text-label">Responder</div>
+						<div class="rounded-sm bg-(--bg-raised) px-2.5 py-2 text-label">Copiar texto</div>
+						<div style="height: 1px; background: var(--border-subtle); margin: 6px 0"></div>
+						<div class="rounded-sm px-2.5 py-2 text-label text-(--danger-text)">Bloquear</div>
+					</div>
+					<div class="sg-stack">
+						<div class="flex items-center gap-3 rounded-md border px-3.5 py-3" style="background: var(--warning-soft); border-color: color-mix(in oklch, var(--warning) 30%, transparent)">
+							<span class="text-(--warning-text)">▲</span>
+							<p class="text-caption text-(--text-secondary)">Sin conexión. Reintentando…</p>
+						</div>
+						<div class="flex items-center gap-3 rounded-md border px-3.5 py-3" style="background: var(--danger-soft); border-color: color-mix(in oklch, var(--danger) 30%, transparent)">
+							<span class="text-(--danger-text)">✕</span>
+							<p class="text-caption text-(--text-secondary)">No se pudo enviar el mensaje.</p>
+						</div>
+						<div class="flex items-center gap-3 rounded-xl border border-border bg-overlay px-3.5 py-3" style="box-shadow: var(--elevation-2)">
+							<span class="grid size-10 place-items-center rounded-md bg-raised">↑</span>
+							<div class="flex-1">
+								<p class="text-label">Nuevo mensaje de Pablo</p>
+								<p class="text-caption text-(--text-secondary)">¿Quedamos mañana?</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Chat ───────────────────────────────────────────────────── -->
+			<section class="sg-section" id="chat">
+				<h2 class="sg-title">Chat</h2>
+				<p class="sg-lead">
+					La burbuja propia es la única superficie saturada. Radio 18 con la
+					esquina del rabo a 6; agrupación de 2 px entre mensajes del mismo autor.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr))">
+					<div class="sg-panel sg-stack" style="background: var(--bg-canvas)">
+						<div class="max-w-[78%] self-start rounded-lg rounded-bl-xs bg-(--message-bubble-in) px-3.5 py-2.5 text-body-lg text-(--message-bubble-in-foreground)">
+							¿Sigues por el centro?
+						</div>
+						<div class="max-w-[78%] self-start rounded-lg rounded-bl-xs bg-(--message-bubble-in) px-3.5 py-2.5 text-body-lg text-(--message-bubble-in-foreground)">
+							Hay sitio en la terraza
+						</div>
+						<div class="flex items-end gap-2 self-end">
+							<span class="text-caption text-(--text-tertiary)">21:04</span>
+							<div class="max-w-[78%] rounded-lg rounded-br-xs bg-(--message-bubble-out) px-3.5 py-2.5 text-body-lg text-(--message-bubble-out-foreground)">
+								Voy en diez minutos
+							</div>
+						</div>
+						<div class="mt-2 flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2" style="box-shadow: var(--elevation-2)">
+							<span class="text-(--text-tertiary)">＋</span>
+							<span class="flex-1 text-body text-(--text-tertiary)">Mensaje</span>
+							<span class="grid size-10 place-items-center rounded-full bg-primary text-primary-foreground">➤</span>
+						</div>
+					</div>
+					<div class="sg-stack">
+						<p class="sg-label">Fila de conversación</p>
+						<div class="flex min-h-[72px] items-center gap-3 rounded-lg border border-border bg-surface px-4">
+							<span class="relative grid size-14 place-items-center rounded-full bg-raised text-label">
+								TH
+								<span class="absolute bottom-0.5 right-0.5 size-2.5 rounded-full border-2 border-(--bg-surface) bg-(--success)"></span>
+							</span>
+							<div class="flex-1">
+								<p class="text-body font-medium">Theo</p>
+								<p class="truncate text-caption text-(--text-secondary)">Nos vemos luego entonces</p>
+							</div>
+							<div class="text-right">
+								<p class="text-caption tabular-nums text-(--text-tertiary)">21:04</p>
+								<span class="mt-1 inline-block rounded-full bg-primary px-1.5 text-caption text-primary-foreground">3</span>
+							</div>
+						</div>
+						<p class="sg-label">Fijada</p>
+						<div class="flex min-h-[72px] items-center gap-3 rounded-lg border border-border bg-inset px-4">
+							<span class="grid size-14 place-items-center rounded-full bg-raised text-label">P</span>
+							<div class="flex-1">
+								<p class="text-body font-medium">Pablo</p>
+								<p class="truncate text-caption text-(--text-secondary)">📌 Te paso la dirección</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- ── Medios y estados ───────────────────────────────────────── -->
+			<section class="sg-section" id="medios">
+				<h2 class="sg-title">Medios, avatares y estados vacíos</h2>
+				<p class="sg-lead">
+					La rejilla conserva su mecánica (esquinas exteriores, columnas por
+					contenedor) y solo cambia el acabado.
+				</p>
+				<div class="sg-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))">
+					<div>
+						<p class="sg-label">Rejilla</p>
+						<div class="grid grid-cols-3 gap-1 overflow-hidden rounded-lg">
+							<div class="aspect-square bg-raised"></div>
+							<div class="aspect-square bg-(--bg-overlay)"></div>
+							<div class="relative aspect-square bg-raised">
+								<span class="absolute inset-x-0 bottom-0 h-[72px] rounded-b-lg" style="background: linear-gradient(transparent, oklch(0 0 0 / 65%))"></span>
+								<span class="absolute bottom-1.5 left-2 text-caption text-white/90">1,4 km</span>
+							</div>
+							<div class="aspect-square bg-(--bg-overlay)"></div>
+							<div class="aspect-square bg-raised"></div>
+							<div class="aspect-square bg-(--bg-overlay)"></div>
+						</div>
+					</div>
+					<div>
+						<p class="sg-label">Avatares</p>
+						<div class="sg-row">
+							<span class="grid size-8 place-items-center rounded-full bg-raised text-caption">32</span>
+							<span class="grid size-12 place-items-center rounded-full bg-raised text-label">48</span>
+							<span class="grid size-14 place-items-center rounded-full bg-raised text-label">56</span>
+							<span class="grid size-20 place-items-center rounded-full bg-raised">80</span>
+						</div>
+					</div>
+					<div>
+						<p class="sg-label">Carga y vacío</p>
+						<div class="sg-stack">
+							<div class="h-4 w-2/3 rounded-sm bg-raised"></div>
+							<div class="h-4 w-1/2 rounded-sm bg-raised opacity-70"></div>
+							<div class="rounded-lg border border-dashed border-(--border-strong) p-6 text-center">
+								<p class="text-title-3">Nada por aquí</p>
+								<p class="mt-1 text-body text-(--text-secondary)">Amplía el radio para ver más gente.</p>
+								<button class="mt-3 h-11 rounded-md bg-primary px-4 text-label font-medium text-primary-foreground">Ampliar filtros</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script>
+			const root = document.documentElement;
+			const accents = [
+				["amber", "oklch(0.82 0.17 85)"],
+				["blue", "oklch(0.82 0.15 250)"],
+				["teal", "oklch(0.82 0.13 190)"],
+				["green", "oklch(0.82 0.16 150)"],
+				["violet", "oklch(0.82 0.16 300)"],
+				["pink", "oklch(0.82 0.16 350)"],
+				["orange", "oklch(0.82 0.17 55)"],
+				["red", "oklch(0.82 0.18 25)"],
+			];
+			const host = document.getElementById("accents");
+			host.innerHTML =
+				'<span class="sg-token">acento</span>' +
+				accents
+					.map(
+						([key, color]) =>
+							'<button class="sg-chip" data-accent="' + key + '" aria-pressed="' + (key === "amber") + '">' +
+							'<span style="display:inline-block;width:10px;height:10px;border-radius:999px;background:' + color + ';margin-inline-end:6px"></span>' +
+							key +
+							"</button>",
+					)
+					.join("");
+
+			function press(group, value) {
+				document.querySelectorAll('[data-' + group + ']').forEach((button) => {
+					button.setAttribute("aria-pressed", String(button.dataset[group] === value));
+				});
+			}
+
+			document.addEventListener("click", (event) => {
+				const button = event.target.closest("button");
+				if (!button) return;
+				if (button.dataset.theme) {
+					root.dataset.theme = button.dataset.theme;
+					document.body.classList.toggle("dark", button.dataset.theme !== "light");
+					press("theme", button.dataset.theme);
+				}
+				if (button.dataset.accent) {
+					root.dataset.accent = button.dataset.accent;
+					press("accent", button.dataset.accent);
+				}
+				if (button.dataset.look) {
+					root.dataset.look = button.dataset.look;
+					press("look", button.dataset.look);
+				}
+				if (button.dataset.density) {
+					root.dataset.density = button.dataset.density;
+					press("density", button.dataset.density);
+				}
+			});
+		</script>
+	</body>
+</html>

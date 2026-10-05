@@ -21,6 +21,13 @@ const BLACK = "oklch(0 0 0)";
 const WHITE = "oklch(0.98 0 0)";
 
 export const bubbleColors = [
+	{
+		key: "neutral",
+		label: "Neutral",
+		// Sigue al tema: el recibido se lee como superficie, no como color.
+		bg: "var(--bg-raised)",
+		fg: "var(--text-primary)",
+	},
 	{ key: "amber", label: "Amber", bg: "oklch(0.862 0.197 90)", fg: BLACK },
 	{ key: "blue", label: "Blue", bg: "oklch(0.788 0.145 228)", fg: BLACK },
 	{ key: "teal", label: "Teal", bg: "oklch(0.8 0.13 190)", fg: BLACK },
@@ -50,9 +57,9 @@ export function bubbleColor(key: BubbleColorKey): BubbleColor {
 	return bubbleColors.find((color) => color.key === key) ?? bubbleColors[0];
 }
 
-/** Defaults mirror the app's original bubble colors. */
+/** Defaults: saliente en el acento, entrante neutro (sigue al tema). */
 export const DEFAULT_BUBBLE_OUT: BubbleColorKey = "amber";
-export const DEFAULT_BUBBLE_IN: BubbleColorKey = "blue";
+export const DEFAULT_BUBBLE_IN: BubbleColorKey = "neutral";
 
 /** Curated solid background colors for the chat area. */
 export const chatBackgroundColors = [

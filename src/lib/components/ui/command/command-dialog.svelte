@@ -32,18 +32,21 @@
 </script>
 
 <Dialog.Root bind:open {...restProps}>
-	<Dialog.Header class="sr-only">
-		<Dialog.Title>{title}</Dialog.Title>
-		<Dialog.Description>{description}</Dialog.Description>
-	</Dialog.Header>
 	<Dialog.Content
 		class={cn(
-			"top-1/3 translate-y-0 overflow-hidden rounded-4xl! p-0",
+			// Barra de comandos: hoja centrada de 640 y radio de la escala alta
+			// (design/02-componentes.md §4.5). `sm:max-w-[40rem]` sustituye al
+			// `sm:max-w-md` del diálogo base vía tailwind-merge.
+			"top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0 sm:max-w-[40rem]",
 			className,
 		)}
 		{showCloseButton}
 		{portalProps}
 	>
+		<Dialog.Header class="sr-only">
+			<Dialog.Title>{title}</Dialog.Title>
+			<Dialog.Description>{description}</Dialog.Description>
+		</Dialog.Header>
 		<Command {...restProps} bind:value bind:ref {children} />
 	</Dialog.Content>
 </Dialog.Root>

@@ -58,6 +58,11 @@ export const savedAlbumSchema = z.object({
 	coverPath: z.string().nullable().default(null),
 	items: z.array(savedAlbumItemSchema).default([]),
 
+	/** `photo` = una sola foto guardada desde un mensaje; `album` = álbum compartido. */
+	kind: z.enum(["album", "photo"]).default("album"),
+	/** Bytes que ocupan en el dispositivo los archivos guardados (0 si no se sabe). */
+	sizeBytes: z.number().default(0),
+
 	tags: z.array(z.string()).default([]),
 	favorite: z.boolean().default(false),
 	hidden: z.boolean().default(false),

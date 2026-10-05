@@ -119,10 +119,13 @@ export async function autoTriangulateProfile({
 	profileId,
 	displayName,
 	onProgress,
+	saveMarker = true,
 }: {
 	profileId: number;
 	displayName?: string | null;
 	onProgress?: (p: AutoTriangulateProgress) => void;
+	/** Set to false to only measure; the caller decides what to store. */
+	saveMarker?: boolean;
 }): Promise<AutoTriangulateResult> {
 	const homeGeohash = preferencesSnapshot().geohash;
 	if (!homeGeohash) {
@@ -175,7 +178,7 @@ export async function autoTriangulateProfile({
 			mediaHash: mediaHash ?? undefined,
 			displayName: label,
 		};
-		await addMarker(marker);
+		if (saveMarker) await addMarker(marker);
 
 		return {
 			point: result.point,

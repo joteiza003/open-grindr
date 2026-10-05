@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
 	getMyAlbums: vi.fn(),
+	getAlbumStorageLimits: vi.fn(() => new Promise(() => {})),
 	getAlbumShares: vi.fn(),
 	shareAlbum: vi.fn(),
 	unshareAlbum: vi.fn(),
@@ -193,6 +194,7 @@ describe("composer albums tab", () => {
 		expect(api.shareAlbum).toHaveBeenCalledWith({
 			albumId: UNSHARED_ALBUM,
 			profileIds: [PEER],
+			expirationType: "INDEFINITE",
 		});
 		expect(api.unshareAlbum).not.toHaveBeenCalled();
 	});

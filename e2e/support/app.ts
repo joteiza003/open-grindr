@@ -1,7 +1,31 @@
-import type { CDPSession, Page } from "@playwright/test";
+import type { CDPSession, Locator, Page } from "@playwright/test";
 
-export const DEMO_CONVERSATION = "/chat/100001:123456000";
+export const DEMO_CONVERSATION_ID = "100001:123456000";
+export const DEMO_CONVERSATION = `/chat/${DEMO_CONVERSATION_ID}`;
+export const MESSAGE_ROW = '[role="article"]';
+// only an incoming row pads its end, and only incoming rows swipe rightward
+export const INCOMING_ROW = `${MESSAGE_ROW}.pe-3`;
 export const DEMO_GEOHASH = "u33dc0cpgp00";
+export const FIRST_ROUTE_COMPILE_MS = 120_000;
+
+export const backLink = (page: Page) =>
+	page.getByRole("link", { name: "Back", exact: true });
+export const meTab = (page: Page) =>
+	page.getByRole("link", { name: "Me", exact: true });
+
+export const pathname = (page: Page) => page.evaluate(() => location.pathname);
+export const historyDepth = (page: Page) => page.evaluate(() => history.length);
+
+export function afterTwoFrames(page: Page): Promise<void> {
+	return page.evaluate(
+		() =>
+			new Promise<void>((resolve) =>
+				requestAnimationFrame(() =>
+					requestAnimationFrame(() => resolve()),
+				),
+			),
+	);
+}
 
 declare global {
 	interface Window {
@@ -52,6 +76,19 @@ export async function installEventInjection(page: Page): Promise<void> {
 				handlers.get(id)?.({ event, id, payload });
 		};
 	});
+}
+
+export function emitMessageSent(page: Page, payload: unknown): Promise<void> {
+	return page.evaluate(
+		(message) =>
+			window.__emitTauriEvent?.("grindr:chat_v1_message_sent", {
+				type: "chat.v1.message_sent",
+				notificationId: null,
+				ref: null,
+				payload: message,
+			}),
+		payload,
+	);
 }
 
 export async function captureInvokes(page: Page, command: string) {
@@ -116,7 +153,11 @@ export async function runPaletteCommand(
 	const palette = page.getByRole("combobox");
 	await palette.waitFor();
 	await palette.fill(command);
-	await page.locator(`[role="option"][data-value="${command}"]`).waitFor();
+	await page
+		.locator(
+			`[role="option"][data-value="${command}"][aria-selected="true"]`,
+		)
+		.waitFor();
 	await page.keyboard.press("Enter");
 }
 
@@ -127,46 +168,31 @@ export async function installTauriShim(
 	{ platform = "macos" } = {},
 ): Promise<void> {
 	await page.addInitScript((platformName: string) => {
-		interface FsArgs {
-			path?: string;
-			oldPath?: string;
-			newPath?: string;
-		}
-		interface InvokeOptions {
-			headers?: Record<string, string>;
+		interface AppDataArgs {
+			file?: string;
+			content?: string;
 		}
 
 		const files = new Map<string, Uint8Array>();
 
-		const invoke = (
-			cmd: string,
-			args?: unknown,
-			opts?: unknown,
-		): unknown => {
-			const fs = (args ?? {}) as FsArgs;
-			const headers = ((opts ?? {}) as InvokeOptions).headers ?? {};
+		const invoke = (cmd: string, args?: unknown): unknown => {
+			const { file = "", content = "" } = (args ?? {}) as AppDataArgs;
 
-			if (cmd === "plugin:path|resolve_directory") return "/appdata";
 			if (cmd.startsWith("plugin:event|")) return null;
-			if (cmd === "plugin:fs|exists") return files.has(fs.path ?? "");
-			if (cmd === "plugin:fs|read_file") {
-				const data = files.get(fs.path ?? "");
-				if (!data) throw new Error("ENOENT");
-				return data;
+			if (cmd === "read_app_data") {
+				return files.get(file)?.slice().buffer ?? null;
 			}
-			if (cmd === "plugin:fs|mkdir") return null;
-			if (cmd === "plugin:fs|rename") {
-				const data = files.get(fs.oldPath ?? "");
-				if (data) files.set(fs.newPath ?? "", data);
-				files.delete(fs.oldPath ?? "");
+			if (cmd === "write_app_data") {
+				files.set(
+					file,
+					Uint8Array.from(atob(content), (char) =>
+						char.charCodeAt(0),
+					),
+				);
 				return null;
 			}
-			if (cmd === "plugin:fs|write_file") {
-				const path = decodeURIComponent(headers.path ?? fs.path ?? "");
-				files.set(
-					path,
-					args instanceof Uint8Array ? args : new Uint8Array(),
-				);
+			if (cmd === "remove_app_data") {
+				files.delete(file);
 				return null;
 			}
 			return null;
@@ -193,8 +219,8 @@ export async function installTauriShim(
 					currentWindow: { label: "main" },
 					currentWebview: { label: "main" },
 				},
-				invoke: (cmd: string, args?: unknown, opts?: unknown) =>
-					Promise.resolve(invoke(cmd, args, opts)),
+				invoke: (cmd: string, args?: unknown) =>
+					Promise.resolve(invoke(cmd, args)),
 			},
 		});
 	}, platform);
@@ -242,6 +268,26 @@ export class TrustedTouch {
 		}
 		if (release) await this.end();
 	}
+}
+
+export async function hoverPen({
+	page,
+	target,
+}: {
+	page: Page;
+	target: Locator;
+}): Promise<void> {
+	const box = await target.boundingBox();
+	if (box === null) throw new Error("The pen target has no box");
+	const pen = await page.context().newCDPSession(page);
+	await pen.send("Input.dispatchMouseEvent", {
+		type: "mouseMoved",
+		x: box.x + box.width / 2,
+		y: box.y + box.height / 2,
+		pointerType: "pen",
+		buttons: 0,
+	});
+	await pen.detach();
 }
 
 // One continuous gesture stream with a single lift, the shape a real trackpad

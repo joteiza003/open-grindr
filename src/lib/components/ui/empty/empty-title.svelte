@@ -1,4 +1,4 @@
-<script lang="ts">
+﻿<script lang="ts">
 	import type { HTMLAttributes } from "svelte/elements";
 
 	import { cn, type WithElementRef } from "$lib/util/utils.js";
@@ -14,7 +14,7 @@
 <div
 	bind:this={ref}
 	data-slot="empty-title"
-	class={cn("font-heading text-lg font-medium tracking-tight", className)}
+	class={cn("font-heading text-title-3", className)}
 	{...restProps}
 >
 	{@render children?.()}

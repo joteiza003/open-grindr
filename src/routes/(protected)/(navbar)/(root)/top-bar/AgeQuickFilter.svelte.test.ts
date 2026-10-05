@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("$lib/app-data/preferences.svelte", () => ({
 	getPreferences: vi.fn(() => Promise.resolve({})),
+	preferencesSnapshot: vi.fn(() => ({ locale: "en" })),
 	setPreferences: vi.fn(() => Promise.resolve()),
 }));
 

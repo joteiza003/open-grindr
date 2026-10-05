@@ -10,7 +10,6 @@ export const photoAlbumSchema = z.object({
 	coverImageId: z.string().default(""),
 	imageIds: z.array(z.string().min(1)).default([]),
 	createdAt: z.string().min(1),
-	dynamic: z.enum(["drawer"]).optional(),
 });
 
 export type PhotoAlbum = z.infer<typeof photoAlbumSchema>;
@@ -22,8 +21,6 @@ export const photoAlbumsFileSchema = z.object({
 
 export type PhotoAlbumsFile = z.infer<typeof photoAlbumsFileSchema>;
 
-export const RECENTS_ALBUM_ID = "album-recents";
-
 export function emptyPhotoAlbumsFile(): PhotoAlbumsFile {
 	return { version: 1, albums: [] };
 }
@@ -31,16 +28,5 @@ export function emptyPhotoAlbumsFile(): PhotoAlbumsFile {
 export function parsePhotoAlbumsFile(raw: unknown): PhotoAlbum[] {
 	const parsed = photoAlbumsFileSchema.safeParse(raw);
 	if (!parsed.success) return [];
-	return parsed.data.albums.filter((album) => album.id !== RECENTS_ALBUM_ID);
-}
-
-export function recentsAlbum(imageIds: string[]): PhotoAlbum {
-	return {
-		id: RECENTS_ALBUM_ID,
-		name: "Recents",
-		coverImageId: imageIds[0] ?? "",
-		imageIds,
-		createdAt: "1970-01-01T00:00:00.000Z",
-		dynamic: "drawer",
-	};
+	return parsed.data.albums;
 }

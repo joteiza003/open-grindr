@@ -15,7 +15,7 @@
 	import { t } from "$lib/i18n";
 	import type { DrawerMedia } from "$lib/api/messaging/drawer";
 	import type { PhotoAlbum } from "$lib/model/messaging/photo-albums";
-	import MediaTile from "../attachments/media/MediaTile.svelte";
+	import PhotoAlbumTile from "./PhotoAlbumTile.svelte";
 
 	let {
 		album,
@@ -144,11 +144,10 @@
 				{@const id = String(item.id)}
 				{@const position = selectedIds.indexOf(id)}
 				<div class="relative">
-					<MediaTile
+					<PhotoAlbumTile
 						{item}
 						{index}
 						selected={position !== -1}
-						clickable
 						onclick={() => toggle(id)}
 					/>
 					{#if position !== -1}

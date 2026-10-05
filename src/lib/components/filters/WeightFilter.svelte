@@ -3,10 +3,13 @@
 	import FilterDropdown from "$lib/components/filters/FilterDropdown.svelte";
 	import { Slider } from "$lib/components/ui/slider";
 	import {
+		rangeBoundTexts,
 		WEIGHT_KG_MAX,
 		WEIGHT_KG_MIN,
 	} from "$lib/model/browse/grid/filters";
 	import { formatWeightKg } from "$lib/util/units";
+	import RangeBoundInputs from "./RangeBoundInputs.svelte";
+	import { WEIGHT_SLIDER_SCALE } from "./slider-scale";
 
 	let {
 		checked = $bindable(),
@@ -14,8 +17,16 @@
 	}: { checked: boolean; value: number[] } = $props();
 
 	const units = $derived(preferencesSnapshot().units);
-	const min = $derived(value[0] ?? WEIGHT_KG_MIN);
-	const max = $derived(value[1] ?? WEIGHT_KG_MAX);
+	const imperial = $derived(units === "imperial");
+	const [minText, maxText] = $derived(
+		rangeBoundTexts({
+			floor: WEIGHT_KG_MIN,
+			ceiling: WEIGHT_KG_MAX,
+			range: value,
+			format: formatWeightKg,
+			units,
+		}),
+	);
 </script>
 
 <div class="block w-full space-y-3">
@@ -23,24 +34,42 @@
 		id="weight"
 		label="Weight"
 		bind:checked
-		endLabel={`${min === WEIGHT_KG_MIN ? "No min" : formatWeightKg(min, units)} - ${
-			max === WEIGHT_KG_MAX ? "No max" : formatWeightKg(max, units)
-		}`}
-		contentClass="ps-7 h-6"
+		endLabel={`${minText} - ${maxText}`}
+		contentClass="ps-7"
 	>
-		<Slider
-			type="multiple"
-			bind:value={
-				() => value,
-				(v: number[]) => {
-					checked = true;
-					value = v;
+		<div class="space-y-3 pb-2">
+			<RangeBoundInputs
+				bind:value={
+					() => value,
+					(v: number[]) => {
+						checked = true;
+						value = v;
+					}
 				}
-			}
-			min={WEIGHT_KG_MIN}
-			max={WEIGHT_KG_MAX}
-			step={1}
-			thumbLabels={["Minimum weight", "Maximum weight"]}
-		/>
+				floor={WEIGHT_KG_MIN}
+				ceiling={WEIGHT_KG_MAX}
+				unit={imperial ? "lb" : "kg"}
+				toDisplay={(kg) => (imperial ? kg * 2.2046226218 : kg)}
+				fromDisplay={(typed) =>
+					imperial ? typed / 2.2046226218 : typed}
+				minLabel="Minimum weight"
+				maxLabel="Maximum weight"
+			/>
+			<div class="h-6">
+				<Slider
+					type="multiple"
+					bind:value={
+						() => value,
+						(v: number[]) => {
+							checked = true;
+							value = v;
+						}
+					}
+					scale={WEIGHT_SLIDER_SCALE}
+					thumbValueTexts={[minText, maxText]}
+					thumbLabels={["Minimum weight", "Maximum weight"]}
+				/>
+			</div>
+		</div>
 	</FilterDropdown>
 </div>

@@ -1,0 +1,41 @@
+diff --git a/src/internal/client/reactivity/batch.js b/src/internal/client/reactivity/batch.js
+index 8251f79..942377a 100644
+--- a/src/internal/client/reactivity/batch.js
++++ b/src/internal/client/reactivity/batch.js
+@@ -72,6 +72,9 @@ let last_scheduled_effect = null;
+ export let is_flushing_sync = false;
+ let is_processing = false;
+ 
++// Read by the app's diagnostics report: tells a build with this patch from one without.
++globalThis.__svelte_batch_patched = true;
++
+ /**
+  * During traversal, this is an array. Newly created effects are (if not immediately
+  * executed) pushed to this array, rather than going through the scheduling
+@@ -860,13 +863,19 @@ export class Batch {
+ 		if (current_batch === null) {
+ 			const batch = (current_batch = new Batch());
+ 
+-			if (!is_processing && !is_flushing_sync) {
+-				queue_micro_task(() => {
+-					if (!batch.#started) {
+-						batch.flush();
+-					}
+-				});
+-			}
++			// Always schedule the flush, also while another batch is being processed
++			// or flushed synchronously. The tail of `#process` (or `flushSync`)
++			// normally picks the new batch up first, so `#started` is already true
++			// and this does nothing. But when the batch that was processing leaves
++			// early (merging into an earlier batch) nobody picks it up, the batch
++			// stays unstarted for good, later batches merge into it, and part of
++			// the UI silently stops updating while state and DOM disagree.
++			// See sveltejs/svelte#18761 and #18546.
++			queue_micro_task(() => {
++				if (!batch.#started) {
++					batch.flush();
++				}
++			});
+ 		}
+ 
+ 		return current_batch;

@@ -1,13 +1,18 @@
 <script lang="ts">
-	import { StarIcon } from "phosphor-svelte";
+	import { MagnifyingGlassIcon, StarIcon } from "phosphor-svelte";
 
+	import FavoriteListFilterChip from "$lib/components/favorites/FavoriteListFilterChip.svelte";
 	import QuickFilterButton from "$lib/components/filters/QuickFilterButton.svelte";
 	import ProgressiveBlur from "$lib/components/shared/ProgressiveBlur.svelte";
-	import { buttonVariants } from "$lib/components/ui/button";
+	import { Button, buttonVariants } from "$lib/components/ui/button";
 	import * as ToggleGroup from "$lib/components/ui/toggle-group";
+	import { t } from "$lib/i18n";
+	import { topChrome } from "$lib/util/screen-chrome.svelte";
 	import type { ConversationFilters } from "$lib/chat/conversation-filters.svelte";
 	import type { ConversationFilterValues } from "$lib/model/messaging/conversation-filters";
+	import ChatSearchDialog from "../ChatSearchDialog.svelte";
 	import DistanceQuickFilter from "./DistanceQuickFilter.svelte";
+	import InboxSortChip from "./InboxSortChip.svelte";
 	import PositionQuickFilter from "./PositionQuickFilter.svelte";
 
 	let {
@@ -29,6 +34,7 @@
 	const values = $derived(filters.value);
 
 	let open = $state({ distance: false, position: false });
+	let searchOpen = $state(false);
 </script>
 
 <ProgressiveBlur
@@ -37,8 +43,21 @@
 	class="absolute inset-x-0 top-0 z-10"
 	bgClass="bg-linear-to-b from-background to-transparent"
 	contentClass="scrollbar-thin flex gap-0.5 overflow-x-auto px-4 pt-4 pb-2"
+	contentScrollIntent="x"
 	{inert}
+	{@attach !inert && topChrome}
 >
+	<Button
+		variant="secondary"
+		class="h-9"
+		aria-label={t("search.title")}
+		onclick={() => (searchOpen = true)}
+	>
+		<MagnifyingGlassIcon weight="bold" />
+	</Button>
+	<ChatSearchDialog bind:open={searchOpen} />
+	<FavoriteListFilterChip />
+	<InboxSortChip />
 	<ToggleGroup.Root
 		type="multiple"
 		variant="default"
